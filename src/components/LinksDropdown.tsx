@@ -1,4 +1,5 @@
 import classNames from "classnames";
+import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -6,7 +7,6 @@ import { useNavigate } from "react-router-dom";
 import { base64ToBuffer, decryptData } from "@/backend/accounts/crypto";
 import { UserAvatar } from "@/components/Avatar";
 import { Icon, Icons } from "@/components/Icon";
-import { Transition } from "@/components/utils/Transition";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { conf } from "@/setup/config";
 import { useAuthStore } from "@/stores/auth";
@@ -127,52 +127,70 @@ export function LinksDropdown(props: { children: React.ReactNode }) {
           icon={Icons.CHEVRON_DOWN}
         />
       </div>
-      <Transition animation="slide-down" show={open}>
-        <div className="rounded-lg absolute w-64 bg-dropdown-altBackground top-full mt-3 right-0">
-          {deviceName && bufferSeed ? (
-            <DropdownLink className="text-white" href="/settings">
-              <UserAvatar />
-              {decryptData(deviceName, bufferSeed)}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            className="rounded-lg absolute w-64 bg-dropdown-altBackground top-full mt-3 right-0"
+            style={{ transformOrigin: "top right" }}
+            initial={{ scale: 0.1 }}
+            animate={{ scale: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{
+              type: "spring",
+              stiffness: 350,
+              damping: 15,
+              mass: 0.4,
+            }}
+          >
+            {deviceName && bufferSeed ? (
+              <DropdownLink className="text-white" href="/settings">
+                <UserAvatar />
+                {decryptData(deviceName, bufferSeed)}
+              </DropdownLink>
+            ) : (
+              <DropdownLink href="/login" icon={Icons.RISING_STAR} highlight>
+                {t("navigation.menu.register")}
+              </DropdownLink>
+            )}
+            <Divider />
+            <DropdownLink href="/settings" icon={Icons.SETTINGS}>
+              {t("navigation.menu.settings")}
             </DropdownLink>
-          ) : (
-            <DropdownLink href="/login" icon={Icons.RISING_STAR} highlight>
-              {t("navigation.menu.register")}
+            <DropdownLink href="/about" icon={Icons.CIRCLE_QUESTION}>
+              {t("navigation.menu.about")}
             </DropdownLink>
-          )}
-          <Divider />
-          <DropdownLink href="/settings" icon={Icons.SETTINGS}>
-            {t("navigation.menu.settings")}
-          </DropdownLink>
-          <DropdownLink href="/about" icon={Icons.CIRCLE_QUESTION}>
-            {t("navigation.menu.about")}
-          </DropdownLink>
-          <DropdownLink href="/discover" icon={Icons.RISING_STAR}>
-            {t("navigation.menu.discover")}
-          </DropdownLink>
-          {deviceName ? (
-            <DropdownLink
-              className="!text-type-danger opacity-75 hover:opacity-100"
-              icon={Icons.LOGOUT}
-              onClick={logout}
-            >
-              {t("navigation.menu.logout")}
+            <DropdownLink href="/discover" icon={Icons.RISING_STAR}>
+              {t("navigation.menu.discover")}
             </DropdownLink>
-          ) : null}
-          <Divider />
-          <div className="my-4 flex justify-center items-center gap-4">
-            <CircleDropdownLink
-              href={conf().DISCORD_LINK}
-              icon={Icons.DISCORD}
-            />
-            <CircleDropdownLink href={conf().GITHUB_LINK} icon={Icons.GITHUB} />
-            <CircleDropdownLink
-              href={conf().TWITTER_LINK}
-              icon={Icons.TWITTER}
-            />
-            <CircleDropdownLink href="/support" icon={Icons.MAIL} />
-          </div>
-        </div>
-      </Transition>
+            {deviceName ? (
+              <DropdownLink
+                className="!text-type-danger opacity-75 hover:opacity-100"
+                icon={Icons.LOGOUT}
+                onClick={logout}
+              >
+                {t("navigation.menu.logout")}
+              </DropdownLink>
+            ) : null}
+            <Divider />
+            <div className="my-4 flex justify-center items-center gap-4">
+              <CircleDropdownLink
+                href={conf().DISCORD_LINK}
+                icon={Icons.DISCORD}
+              />
+              <CircleDropdownLink
+                href={conf().GITHUB_LINK}
+                icon={Icons.GITHUB}
+              />
+              <CircleDropdownLink
+                href={conf().TWITTER_LINK}
+                icon={Icons.TWITTER}
+              />
+              <CircleDropdownLink href="/support" icon={Icons.MAIL} />
+            </div>
+          </motion.div>
+        )}
+        : null
+      </AnimatePresence>
     </div>
   );
 }
