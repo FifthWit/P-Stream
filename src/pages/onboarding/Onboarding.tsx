@@ -2,11 +2,16 @@ import { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 
 import { Button } from "@/components/buttons/Button";
+import { Toggle } from "@/components/buttons/Toggle";
 import { Icon, Icons } from "@/components/Icon";
+import { SettingsCard } from "@/components/layout/SettingsCard";
 import { Stepper } from "@/components/layout/Stepper";
 import { BiggerCenterContainer } from "@/components/layout/ThinContainer";
 import { VerticalLine } from "@/components/layout/VerticalLine";
 import { Modal, ModalCard, useModal } from "@/components/overlays/Modal";
+import { MwLink } from "@/components/text/Link";
+import { AuthInputBox } from "@/components/text-inputs/AuthInputBox";
+import { Divider } from "@/components/utils/Divider";
 import { Heading1, Heading2, Paragraph } from "@/components/utils/Text";
 import { MinimalPageLayout } from "@/pages/layouts/MinimalPageLayout";
 import {
@@ -20,10 +25,85 @@ import {
   MiniCardContent,
 } from "@/pages/onboarding/utils";
 import { PageTitle } from "@/pages/parts/util/PageTitle";
+import { useAuthStore } from "@/stores/auth";
 import { getProxyUrls } from "@/utils/proxyUrls";
 
 import { PopupModal } from "../parts/home/PopupModal";
 
+export function OptionalDropdown() {
+  const { t } = useTranslation();
+  const [isExpanded, setIsExpanded] = useState(false);
+  const febboxToken = useAuthStore((s) => s.febboxToken);
+  const setFebboxToken = useAuthStore((s) => s.setFebboxToken);
+
+  return (
+    <div className="mt-12">
+      <SettingsCard>
+        <div className="flex justify-between items-center gap-4">
+          <div className="my-3">
+            <p className="text-white font-bold mb-3">
+              Optional: FED API (Febbox) UI token
+            </p>
+            <p className="max-w-[30rem] font-medium">
+              <Trans i18nKey="settings.connections.febbox.description">
+                Bringing your own UI token allows you to get faster 4K streams.
+                We only have a limited number of tokens, so bringing your own
+                helps speed your streams when traffic is high.
+              </Trans>
+            </p>
+          </div>
+          <div>
+            <Toggle
+              onClick={() => setIsExpanded(!isExpanded)}
+              enabled={isExpanded}
+            />
+          </div>
+        </div>
+        {isExpanded ? (
+          <>
+            <Divider marginClass="my-6 px-8 box-content -mx-8" />
+
+            <div className="my-3">
+              <p className="max-w-[30rem] font-medium">
+                <Trans i18nKey="settings.connections.febbox.description">
+                  To get your UI token:
+                  <br />
+                  1. Go to <MwLink to="https://febbox.com">
+                    febbox.com
+                  </MwLink>{" "}
+                  and log in with Google
+                  <br />
+                  2. Open DevTools or inspect the page
+                  <br />
+                  3. Go to Application tab → Cookies
+                  <br />
+                  4. Copy the &quot;ui&quot; cookie.
+                  <br />
+                  5. Close the tab, but do NOT logout!
+                </Trans>
+              </p>
+              <p className="text-xs mt-2">
+                (This is not a sensitive login cookie or account token)
+              </p>
+            </div>
+
+            <Divider marginClass="my-6 px-8 box-content -mx-8" />
+            <p className="text-white font-bold mb-3">
+              {t("settings.connections.febbox.tokenLabel", "Token")}
+            </p>
+            <AuthInputBox
+              onChange={(newToken) => {
+                setFebboxToken(newToken);
+              }}
+              value={febboxToken ?? ""}
+              placeholder="eyABCdE..."
+            />
+          </>
+        ) : null}
+      </SettingsCard>
+    </div>
+  );
+}
 export function OnboardingPage() {
   const navigate = useNavigateOnboarding();
   const skipModal = useModal("skip");
@@ -95,6 +175,13 @@ export function OnboardingPage() {
                 <br />
                 Uses P-Stream’s built-in proxy. It’s the easiest option but
                 might be slower due to shared bandwidth.
+                <br />
+                <br />
+                <strong>Optional FED API (Febbox) UI token</strong>
+                <br />
+                Bringing your own UI token allows you to get faster 4K streams.
+                We only have a limited number of tokens, so bringing your own
+                helps speed your streams when traffic is high.
                 <br />
                 <br />
                 If you have more questions on how this works, feel free to ask
@@ -239,6 +326,8 @@ export function OnboardingPage() {
             </Card>
           )}
         </div>
+
+        <OptionalDropdown />
       </BiggerCenterContainer>
     </MinimalPageLayout>
   );

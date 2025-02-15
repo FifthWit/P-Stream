@@ -22,6 +22,11 @@ interface BackendEditProps {
   setBackendUrl: Dispatch<SetStateAction<string | null>>;
 }
 
+interface FebboxTokenProps {
+  febboxToken: string | null;
+  setFebboxToken: Dispatch<SetStateAction<string | null>>;
+}
+
 function ProxyEdit({ proxyUrls, setProxyUrls }: ProxyEditProps) {
   const { t } = useTranslation();
   const add = useCallback(() => {
@@ -54,7 +59,7 @@ function ProxyEdit({ proxyUrls, setProxyUrls }: ProxyEditProps) {
           <p className="text-white font-bold mb-3">
             {t("settings.connections.workers.label")}
           </p>
-          <p className="max-w-[20rem] font-medium">
+          <p className="max-w-[30rem] font-medium">
             <Trans i18nKey="settings.connections.workers.description">
               <MwLink to="https://docs.undi.rest/proxy/deploy">
                 Proxy documentation
@@ -125,7 +130,7 @@ function BackendEdit({ backendUrl, setBackendUrl }: BackendEditProps) {
           <p className="text-white font-bold mb-3">
             {t("settings.connections.server.label")}
           </p>
-          <p className="max-w-[20rem] font-medium">
+          <p className="max-w-[30rem] font-medium">
             <Trans i18nKey="settings.connections.server.description">
               <MwLink to="https://docs.undi.rest/backend/deploy">
                 Backend documentation
@@ -135,7 +140,7 @@ function BackendEdit({ backendUrl, setBackendUrl }: BackendEditProps) {
           {user.account && (
             <div>
               <br />
-              <p className="max-w-[20rem] font-medium">
+              <p className="max-w-[30rem] font-medium">
                 <Trans i18nKey="settings.connections.server.migration.description">
                   <MwLink to="/migration">
                     {t("settings.connections.server.migration.link")}
@@ -169,7 +174,75 @@ function BackendEdit({ backendUrl, setBackendUrl }: BackendEditProps) {
   );
 }
 
-export function ConnectionsPart(props: BackendEditProps & ProxyEditProps) {
+function FebboxTokenEdit({ febboxToken, setFebboxToken }: FebboxTokenProps) {
+  const { t } = useTranslation();
+
+  return (
+    <SettingsCard>
+      <div className="flex justify-between items-center gap-4">
+        <div className="my-3">
+          <p className="text-white font-bold mb-3">FED API (Febbox) UI token</p>
+          <p className="max-w-[30rem] font-medium">
+            <Trans i18nKey="settings.connections.febbox.description">
+              Bringing your own UI token allows you to get faster 4K streams. We
+              only have a limited number of tokens, so bringing your own helps
+              speed your streams when traffic is high.
+            </Trans>
+          </p>
+        </div>
+        <div>
+          <Toggle
+            onClick={() => setFebboxToken((s) => (s === null ? "" : null))}
+            enabled={febboxToken !== null}
+          />
+        </div>
+      </div>
+      {febboxToken !== null ? (
+        <>
+          <Divider marginClass="my-6 px-8 box-content -mx-8" />
+
+          <div className="my-3">
+            <p className="max-w-[30rem] font-medium">
+              <Trans i18nKey="settings.connections.febbox.description">
+                To get your UI token:
+                <br />
+                1. Go to <MwLink to="https://febbox.com">febbox.com</MwLink> and
+                log in with Google
+                <br />
+                2. Open DevTools or inspect the page
+                <br />
+                3. Go to Application tab → Cookies
+                <br />
+                4. Copy the &quot;ui&quot; cookie.
+                <br />
+                5. Close the tab, but do NOT logout!
+              </Trans>
+            </p>
+            <p className="text-xs mt-2">
+              (This is not a sensitive login cookie or account token)
+            </p>
+          </div>
+
+          <Divider marginClass="my-6 px-8 box-content -mx-8" />
+          <p className="text-white font-bold mb-3">
+            {t("settings.connections.febbox.tokenLabel", "Token")}
+          </p>
+          <AuthInputBox
+            onChange={(newToken) => {
+              setFebboxToken(newToken);
+            }}
+            value={febboxToken ?? ""}
+            placeholder="eyABCdE..."
+          />
+        </>
+      ) : null}
+    </SettingsCard>
+  );
+}
+
+export function ConnectionsPart(
+  props: BackendEditProps & ProxyEditProps & FebboxTokenProps,
+) {
   const { t } = useTranslation();
   return (
     <div>
@@ -183,6 +256,10 @@ export function ConnectionsPart(props: BackendEditProps & ProxyEditProps) {
         <BackendEdit
           backendUrl={props.backendUrl}
           setBackendUrl={props.setBackendUrl}
+        />
+        <FebboxTokenEdit
+          febboxToken={props.febboxToken}
+          setFebboxToken={props.setFebboxToken}
         />
       </div>
     </div>
