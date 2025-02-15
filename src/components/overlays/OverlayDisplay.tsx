@@ -1,10 +1,10 @@
 import classNames from "classnames";
 import FocusTrap from "focus-trap-react";
+import { AnimatePresence, motion } from "motion/react";
 import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 
-import { Transition } from "@/components/utils/Transition";
 import {
   useInternalOverlayRouter,
   useRouterAnchorUpdate,
@@ -90,33 +90,61 @@ export function OverlayPortal(props: {
     <div ref={ref}>
       {portalElement
         ? createPortal(
-            <Transition show={props.show} animation="none">
-              <FocusTrap>
-                <div className="popout-wrapper fixed overflow-hidden pointer-events-auto inset-0 z-[999] select-none">
-                  <Transition animation="fade" isChild>
-                    <div
+            <AnimatePresence>
+              {props.show && (
+                <FocusTrap>
+                  <motion.div
+                    className="popout-wrapper fixed overflow-hidden pointer-events-auto inset-0 z-[999] select-none"
+                    style={{ transformOrigin: "bottom right" }}
+                    initial={{ opacity: 0, y: 20, x: 10 }}
+                    animate={{ opacity: 1, y: 0, x: 0 }}
+                    exit={{ opacity: 0.5, y: 20, x: 20, scale: 0.6 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 350,
+                      damping: 15,
+                      mass: 0.5,
+                    }}
+                  >
+                    <motion.div
                       onClick={close}
                       className={classNames({
                         "absolute inset-0": true,
                         "bg-black opacity-90": props.darken,
                       })}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0, scale: 0.2 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 350,
+                        damping: 15,
+                        mass: 0.4,
+                      }}
                     />
-                  </Transition>
-                  <Transition
-                    animation="slide-up"
-                    className="absolute inset-0 pointer-events-none"
-                    isChild
-                  >
-                    {/* a tabable index that does nothing - used so focus trap doesn't error when nothing is rendered yet */}
-                    <div
-                      tabIndex={1}
-                      className="focus:ring-0 focus:outline-none opacity-0"
-                    />
-                    {props.children}
-                  </Transition>
-                </div>
-              </FocusTrap>
-            </Transition>,
+                    <motion.div
+                      className="absolute inset-0 pointer-events-none"
+                      initial={{ y: 30, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      exit={{ y: 30, opacity: 0 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 350,
+                        damping: 15,
+                        mass: 0.4,
+                      }}
+                    >
+                      {/* a tabbable index that does nothing - used so focus trap doesn't error when nothing is rendered yet */}
+                      <div
+                        tabIndex={1}
+                        className="focus:ring-0 focus:outline-none opacity-0"
+                      />
+                      {props.children}
+                    </motion.div>
+                  </motion.div>
+                </FocusTrap>
+              )}
+            </AnimatePresence>,
             portalElement,
           )
         : null}
