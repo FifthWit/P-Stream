@@ -9,7 +9,7 @@ const MAX_RETRIES = 3;
 
 export function useSkipTime() {
   const { playerMeta: meta } = usePlayerMeta();
-  const [skiptime, setSkiptime] = useState(null);
+  const [skiptime, setSkiptime] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchSkipTime = async (retries = 0): Promise<void> => {
@@ -29,7 +29,9 @@ export function useSkipTime() {
 
         const data = await response.json();
 
-        const skipTime = data.introSkipTime || null;
+        const skipTime = data.introSkipTime
+          ? parseInt(data.introSkipTime.replace("s", ""), 10)
+          : null;
 
         // eslint-disable-next-line no-console
         console.log("Skip time:", skipTime);
