@@ -1,7 +1,9 @@
 import slugify from "slugify";
 
 import { conf } from "@/setup/config";
+import { usePreferencesStore } from "@/stores/preferences";
 import { MediaItem } from "@/utils/mediaTypes";
+import { getProxyUrls } from "@/utils/proxyUrls";
 
 import { MWMediaMeta, MWMediaType, MWSeasonMeta } from "./types/mw";
 import {
@@ -143,8 +145,8 @@ export function decodeTMDBId(
   };
 }
 
-const tmdbBaseUrl1 = "https://api.themoviedb.org/3";
-const tmdbBaseUrl2 = "https://api.tmdb.org/3";
+const tmdbBaseUrl1 = "https://api.themoviedb.org/3/";
+const tmdbBaseUrl2 = "https://api.tmdb.org/3/";
 
 const apiKey = conf().TMDB_READ_API_KEY;
 
@@ -160,7 +162,33 @@ function abortOnTimeout(timeout: number): AbortSignal {
 }
 
 export async function get<T>(url: string, params?: object): Promise<T> {
+  const proxy = getProxyUrls()[0];
+  const shouldProxyTmdb = usePreferencesStore.getState().proxyTmdb;
   if (!apiKey) throw new Error("TMDB API key not set");
+
+  // directly writing parameters, otherwise it will start the first parameter in the proxied request as "&" instead of "?" because it doesnt understand its proxied
+  const fullUrl = new URL(tmdbBaseUrl1 + url);
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      fullUrl.searchParams.append(key, String(value));
+    });
+  }
+
+  if (proxy && shouldProxyTmdb) {
+    try {
+      return await mwFetch<T>(
+        `/?destination=${encodeURIComponent(fullUrl.toString())}`,
+        {
+          headers: tmdbHeaders,
+          baseURL: proxy,
+          signal: abortOnTimeout(5000),
+        },
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   try {
     return await mwFetch<T>(encodeURI(url), {
       headers: tmdbHeaders,
@@ -238,7 +266,13 @@ export function getMediaDetails<
 }
 
 export function getMediaPoster(posterPath: string | null): string | undefined {
-  if (posterPath) return `https://image.tmdb.org/t/p/w342/${posterPath}`;
+  const shouldProxyTmdb = usePreferencesStore.getState().proxyTmdb;
+  const imgUrl = `https://image.tmdb.org/t/p/w342/${posterPath}`;
+  const proxyUrl = getProxyUrls()[0];
+  if (proxyUrl && shouldProxyTmdb) {
+    return `${proxyUrl}/?destination=${imgUrl}`;
+  }
+  if (posterPath) return imgUrl;
 }
 
 export async function getEpisodes(

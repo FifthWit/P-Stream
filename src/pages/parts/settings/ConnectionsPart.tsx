@@ -12,6 +12,7 @@ import { Heading1 } from "@/components/utils/Text";
 import { SetupPart } from "@/pages/parts/settings/SetupPart";
 import { conf } from "@/setup/config";
 import { useAuthStore } from "@/stores/auth";
+import { usePreferencesStore } from "@/stores/preferences";
 
 interface ProxyEditProps {
   proxyUrls: string[] | null;
@@ -29,6 +30,9 @@ interface FebboxTokenProps {
 }
 
 function ProxyEdit({ proxyUrls, setProxyUrls }: ProxyEditProps) {
+  const proxyTmdb = usePreferencesStore((s) => s.proxyTmdb);
+  const setProxyTmdb = usePreferencesStore((s) => s.setProxyTmdb);
+
   const { t } = useTranslation();
   const add = useCallback(() => {
     setProxyUrls((s) => [...(s ?? []), ""]);
@@ -115,6 +119,18 @@ function ProxyEdit({ proxyUrls, setProxyUrls }: ProxyEditProps) {
           <Button theme="purple" onClick={add}>
             {t("settings.connections.workers.addButton")}
           </Button>
+          <div className="flex flex-col p-4 *:py-2 w-full">
+            <div className="flex flex-row *:mx-3 w-full justify-between">
+              Proxy TMDB:{" "}
+              <Toggle
+                enabled={proxyTmdb}
+                onClick={() => setProxyTmdb(!proxyTmdb)}
+              />
+            </div>
+            <p className="ml-6 border-l-[1px] pl-3 border-search-placeholder">
+              Only needed if for some reason you are unable to use TMDB
+            </p>
+          </div>
         </>
       ) : null}
     </SettingsCard>

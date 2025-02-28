@@ -8,12 +8,14 @@ export interface PreferencesStore {
   enableDiscover: boolean;
   sourceOrder: string[];
   enableSourceOrder: boolean;
+  proxyTmdb: boolean;
 
   setEnableThumbnails(v: boolean): void;
   setEnableAutoplay(v: boolean): void;
   setEnableDiscover(v: boolean): void;
   setSourceOrder(v: string[]): void;
   setEnableSourceOrder(v: boolean): void;
+  setProxyTmdb(v: boolean): void;
 }
 
 export const usePreferencesStore = create(
@@ -24,6 +26,7 @@ export const usePreferencesStore = create(
       enableDiscover: true,
       sourceOrder: [],
       enableSourceOrder: false,
+      proxyTmdb: false,
       setEnableThumbnails(v) {
         set((s) => {
           s.enableThumbnails = v;
@@ -47,6 +50,11 @@ export const usePreferencesStore = create(
       setEnableSourceOrder(v) {
         set((s) => {
           s.enableSourceOrder = v;
+        });
+      },
+      setProxyTmdb(v) {
+        set((s) => {
+          s.proxyTmdb = v;
         });
       },
     })),
