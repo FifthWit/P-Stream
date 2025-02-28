@@ -216,6 +216,7 @@ export function PlayerPart(props: PlayerPartProps) {
       </Player.BottomControls>
 
       <Player.VolumeChangedPopout />
+      <Player.SubtitleDelayPopout />
 
       <Player.NextEpisodeButton
         controlsShowing={showTargets}

@@ -40,6 +40,7 @@ export interface SubtitleStore {
   styling: SubtitleStyling;
   overrideCasing: boolean;
   delay: number;
+  showDelayIndicator: boolean;
   updateStyling(newStyling: Partial<SubtitleStyling>): void;
   resetStyling(): void;
   setLanguage(language: string | null): void;
@@ -49,6 +50,7 @@ export interface SubtitleStore {
   setDelay(delay: number): void;
   importSubtitleLanguage(lang: string | null): void;
   resetSubtitleSpecificSettings(): void;
+  setShowDelayIndicator: (show: boolean) => void;
 }
 
 export const useSubtitleStore = create(
@@ -69,6 +71,7 @@ export const useSubtitleStore = create(
         backgroundBlur: 0.5,
         bold: false,
       },
+      showDelayIndicator: false,
       resetSubtitleSpecificSettings() {
         set((s) => {
           s.delay = 0;
@@ -136,6 +139,11 @@ export const useSubtitleStore = create(
         set((s) => {
           s.lastSelectedLanguage = lang;
           s.lastSync.lastSelectedLanguage = lang;
+        });
+      },
+      setShowDelayIndicator(show: boolean) {
+        set((s) => {
+          s.showDelayIndicator = show;
         });
       },
     })),

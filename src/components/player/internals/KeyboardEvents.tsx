@@ -3,7 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import { useCaptions } from "@/components/player/hooks/useCaptions";
 import { useVolume } from "@/components/player/hooks/useVolume";
 import { useOverlayRouter } from "@/hooks/useOverlayRouter";
+import { useOverlayStack } from "@/stores/interface/overlayStack";
 import { usePlayerStore } from "@/stores/player/store";
+import { useSubtitleStore } from "@/stores/subtitles";
 import { useEmpheralVolumeStore } from "@/stores/volume";
 
 export function KeyboardEvents() {
@@ -17,9 +19,17 @@ export function KeyboardEvents() {
 
   const { toggleLastUsed } = useCaptions();
   const setShowVolume = useEmpheralVolumeStore((s) => s.setShowVolume);
+  const setDelay = useSubtitleStore((s) => s.setDelay);
+  const delay = useSubtitleStore((s) => s.delay);
+  const setShowDelayIndicator = useSubtitleStore(
+    (s) => s.setShowDelayIndicator,
+  );
 
   const [isRolling, setIsRolling] = useState(false);
   const volumeDebounce = useRef<ReturnType<typeof setTimeout> | undefined>();
+  const subtitleDebounce = useRef<ReturnType<typeof setTimeout> | undefined>();
+
+  const setCurrentOverlay = useOverlayStack((s) => s.setCurrentOverlay);
 
   const dataRef = useRef({
     setShowVolume,
@@ -34,6 +44,10 @@ export function KeyboardEvents() {
     isRolling,
     time,
     router,
+    setDelay,
+    delay,
+    setShowDelayIndicator,
+    setCurrentOverlay,
   });
   useEffect(() => {
     dataRef.current = {
@@ -49,6 +63,10 @@ export function KeyboardEvents() {
       isRolling,
       time,
       router,
+      setDelay,
+      delay,
+      setShowDelayIndicator,
+      setCurrentOverlay,
     };
   }, [
     setShowVolume,
@@ -63,6 +81,10 @@ export function KeyboardEvents() {
     isRolling,
     time,
     router,
+    setDelay,
+    delay,
+    setShowDelayIndicator,
+    setCurrentOverlay,
   ]);
 
   useEffect(() => {
@@ -76,10 +98,12 @@ export function KeyboardEvents() {
       // Volume
       if (["ArrowUp", "ArrowDown", "m", "M"].includes(k)) {
         dataRef.current.setShowVolume(true);
+        dataRef.current.setCurrentOverlay("volume");
 
         if (volumeDebounce.current) clearTimeout(volumeDebounce.current);
         volumeDebounce.current = setTimeout(() => {
           dataRef.current.setShowVolume(false);
+          dataRef.current.setCurrentOverlay(null);
         }, 3e3);
       }
       if (k === "ArrowUp")
@@ -147,6 +171,20 @@ export function KeyboardEvents() {
           document.body.removeAttribute("data-no-scroll");
           dataRef.current.setIsRolling(false);
         }, 1e3);
+      }
+
+      // Subtitle sync
+      if (k === "[" || k === "]") {
+        const change = k === "[" ? -0.5 : 0.5;
+        dataRef.current.setDelay(dataRef.current.delay + change);
+        dataRef.current.setShowDelayIndicator(true);
+        dataRef.current.setCurrentOverlay("subtitle");
+
+        if (subtitleDebounce.current) clearTimeout(subtitleDebounce.current);
+        subtitleDebounce.current = setTimeout(() => {
+          dataRef.current.setShowDelayIndicator(false);
+          dataRef.current.setCurrentOverlay(null);
+        }, 3000);
       }
     };
     window.addEventListener("keydown", keyEventHandler);
