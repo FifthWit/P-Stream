@@ -1,5 +1,5 @@
 import c from "classnames";
-import { ReactNode, useEffect, useRef } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import "./Flare.css";
 
 export interface FlareProps {
@@ -39,6 +39,25 @@ function Light(props: FlareProps) {
   const size = props.flareSize ?? SIZE_DEFAULT;
   const cssVar = props.cssColorVar ?? CSS_VAR_DEFAULT;
 
+  const ref = useRef(null);
+  const [isInView, setIsInView] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting);
+      },
+      { threshold: 0.5 },
+    );
+
+    const currentRef = ref.current;
+    if (currentRef) observer.observe(currentRef);
+
+    return () => {
+      if (currentRef) observer.unobserve(currentRef);
+    };
+  }, []);
+
   useEffect(() => {
     function mouseMove(e: MouseEvent) {
       if (!outerRef.current) return;
@@ -53,10 +72,13 @@ function Light(props: FlareProps) {
         `${(e.clientY - rect.top - halfSize).toFixed(0)}px`,
       );
     }
-    document.addEventListener("mousemove", mouseMove);
+
+    if (isInView) {
+      document.addEventListener("mousemove", mouseMove);
+    }
 
     return () => document.removeEventListener("mousemove", mouseMove);
-  }, [size]);
+  }, [size, isInView]);
 
   return (
     <div
@@ -69,13 +91,18 @@ function Light(props: FlareProps) {
         },
       )}
       style={{
-        backgroundImage: `radial-gradient(circle at center, rgba(var(${cssVar}) / 1), rgba(var(${cssVar}) / 0) 70%)`,
-        backgroundPosition: `var(--bg-x) var(--bg-y)`,
-        backgroundRepeat: "no-repeat",
-        backgroundSize: `${size.toFixed(0)}px ${size.toFixed(0)}px`,
+        ...(isInView
+          ? {
+              backgroundImage: `radial-gradient(circle at center, rgba(var(${cssVar}) / 0.1), rgba(var(${cssVar}) / 0) 70%)`,
+              backgroundPosition: `var(--bg-x) var(--bg-y)`,
+              backgroundRepeat: "no-repeat",
+              backgroundSize: `${size.toFixed(0)}px ${size.toFixed(0)}px`,
+            }
+          : {}),
       }}
     >
       <div
+        ref={ref}
         className={c(
           "absolute inset-[1px] overflow-hidden",
           props.className,
@@ -85,10 +112,14 @@ function Light(props: FlareProps) {
         <div
           className="absolute inset-0 opacity-10"
           style={{
-            background: `radial-gradient(circle at center, rgba(var(${cssVar}) / 1), rgba(var(${cssVar}) / 0) 70%)`,
-            backgroundPosition: `var(--bg-x) var(--bg-y)`,
-            backgroundRepeat: "no-repeat",
-            backgroundSize: `${size.toFixed(0)}px ${size.toFixed(0)}px`,
+            ...(isInView
+              ? {
+                  background: `radial-gradient(circle at center, rgba(var(${cssVar}) / 1), rgba(var(${cssVar}) / 0) 70%)`,
+                  backgroundPosition: `var(--bg-x) var(--bg-y)`,
+                  backgroundRepeat: "no-repeat",
+                  backgroundSize: `${size.toFixed(0)}px ${size.toFixed(0)}px`,
+                }
+              : {}),
           }}
         />
       </div>
