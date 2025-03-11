@@ -317,6 +317,10 @@ export function makeVideoElementDisplayInterface(): DisplayInterface {
     videoElement.addEventListener("ratechange", () => {
       if (videoElement) emit("playbackrate", videoElement.playbackRate);
     });
+
+    videoElement.addEventListener("durationchange", () => {
+      emit("duration", videoElement?.duration ?? 0);
+    });
   }
 
   function unloadSource() {
