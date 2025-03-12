@@ -190,7 +190,7 @@ function EpisodesView({
 
           <div
             ref={carouselRef}
-            className="md:flex md:overflow-x-auto flex-col md:flex-row space-y-2 sm:space-y-4 md:space-y-0 md:space-x-4 pb-4 pt-2 md:px-20 scrollbar-hide no-scrollbar overflow-y-auto md:overflow-y-hidden max-h-[60vh] md:max-h-none"
+            className="md:flex md:overflow-x-auto flex-col md:flex-row space-y-2 sm:space-y-4 md:space-y-0 md:space-x-4 pb-4 pt-2 sm:pt-2 md:px-20 scrollbar-hide no-scrollbar md:h-auto"
             style={{
               scrollbarWidth: "none",
               msOverflowStyle: "none",
@@ -225,7 +225,7 @@ function EpisodesView({
                 return (
                   <Fragment key={ep.id}>
                     {/* Compact layout for very small screens (xs only) */}
-                    <div className="block sm:hidden w-full">
+                    <div className="block sm:hidden w-full px-3">
                       <Menu.Link
                         onClick={() => playEpisode(ep.id)}
                         active={ep.id === meta?.episode?.tmdbId}
@@ -254,7 +254,7 @@ function EpisodesView({
                     <div
                       onClick={() => playEpisode(ep.id)}
                       className={classNames(
-                        "flex-shrink-0 md:w-64 w-full rounded-lg overflow-hidden transition-all duration-200 relative pb-1 cursor-pointer",
+                        "flex-shrink-0 md:w-64 w-full rounded-lg overflow-hidden transition-all duration-200 relative md:pb-1 cursor-pointer",
                         "hidden sm:flex md:inline-block" /* Hidden on xs, flex on sm, inline-block on md+ */,
                         isActive
                           ? "bg-video-context-hoverColor/50"
@@ -280,12 +280,12 @@ function EpisodesView({
                         )}
 
                         {/* Episode Number Badge */}
-                        <div className="absolute top-2 left-2 bg-black bg-opacity-70 text-video-context-type-main text-sm px-2 py-1 rounded">
-                          {t("player.menus.episodes.episodeBadge", {
-                            episode: ep.number,
-                          })}
+                        <div className="absolute top-2 left-2 flex items-center space-x-2">
+                          <span className="p-0.5 px-2 rounded inline bg-video-context-hoverColor bg-opacity-80 text-video-context-type-main text-sm">
+                            E{ep.number}
+                          </span>
                           {!isAired && (
-                            <span className="ml-2 text-video-context-type-main/70">
+                            <span className="text-video-context-type-main/70 text-sm">
                               (Unreleased)
                             </span>
                           )}
