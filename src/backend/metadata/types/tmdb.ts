@@ -14,6 +14,8 @@ export type TMDBEpisodeShort = {
   id: number;
   episode_number: number;
   air_date: string;
+  still_path: string | null;
+  overview: string;
 };
 
 export type TMDBMediaResult = {

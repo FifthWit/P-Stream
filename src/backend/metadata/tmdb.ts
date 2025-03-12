@@ -84,6 +84,8 @@ export function formatTMDBMeta(
               number: v.episode_number,
               title: v.title,
               air_date: v.air_date,
+              still_path: v.still_path,
+              overview: v.overview,
             })),
         }
       : (undefined as any),
@@ -312,6 +314,8 @@ export async function getEpisodes(
     episode_number: e.episode_number,
     title: e.name,
     air_date: e.air_date,
+    still_path: e.still_path,
+    overview: e.overview,
   }));
 }
 
