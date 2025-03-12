@@ -1,37 +1,30 @@
-// I'm sorry this is so confusing 😭
-
 import classNames from "classnames";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { useCopyToClipboard } from "react-use";
 
+import { getMetaFromId } from "@/backend/metadata/getmeta";
 import { mediaItemToId } from "@/backend/metadata/tmdb";
+import { MWMediaType, MWSeasonMeta } from "@/backend/metadata/types/mw";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/overlays/DropdownMenu";
 import { DotList } from "@/components/text/DotList";
 import { Flare } from "@/components/utils/Flare";
 import { useSearchQuery } from "@/hooks/useSearchQuery";
-import { usePreferencesStore } from "@/stores/preferences";
 import { MediaItem } from "@/utils/mediaTypes";
 
 import { MediaBookmarkButton } from "./MediaBookmark";
 import { Button } from "../buttons/Button";
 import { IconPatch } from "../buttons/IconPatch";
 import { Icon, Icons } from "../Icon";
-import { InfoPopout } from "./InfoPopout";
-
-export interface MediaCardProps {
-  media: MediaItem;
-  linkable?: boolean;
-  series?: {
-    episode: number;
-    season?: number;
-    episodeId: string;
-    seasonId: string;
-  };
-  percentage?: number;
-  closable?: boolean;
-  onClose?: () => void;
-}
 
 function checkReleased(media: MediaItem): boolean {
   const isReleasedYear = Boolean(
@@ -51,6 +44,191 @@ function getBaseUrl(): string {
   return window.location.origin;
 }
 
+interface EpisodeSelectorProps {
+  closable?: boolean;
+  series: {
+    season?: number;
+    episode: number;
+    episodeId: string;
+    seasonId: string;
+  };
+  tmdbId: string | number;
+}
+
+interface EpisodeSelectorProps {
+  closable?: boolean;
+  series: {
+    season?: number;
+    episode: number;
+    episodeId: string;
+    seasonId: string;
+  };
+  tmdbId: string | number;
+}
+
+// very perfect implementation because I totally know a ton about react!
+
+function EpisodeSelector({ closable, series, tmdbId }: EpisodeSelectorProps) {
+  const { t } = useTranslation();
+  const [currentSeasonId, setCurrentSeasonId] = useState(series.seasonId);
+  const [show, setShow] = useState("");
+  const [currentSeason, setCurrentSeason] = useState(series.season || 1);
+  const [seasons, setSeasons] = useState<MWSeasonMeta[]>([]);
+  const [episodes, setEpisodes] = useState<any[]>([]);
+  const [isLoadingEpisodes, setIsLoadingEpisodes] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    async function fetchSeasons() {
+      try {
+        const data = await getMetaFromId(MWMediaType.SERIES, tmdbId.toString());
+        if (data?.meta?.type === MWMediaType.SERIES && data.meta.seasons) {
+          setSeasons(data.meta.seasons);
+          setShow(data.meta.title);
+        }
+      } catch (error) {
+        console.error("Failed to fetch seasons", error);
+      }
+    }
+
+    fetchSeasons();
+  }, [tmdbId]);
+
+  useEffect(() => {
+    async function fetchEpisodes() {
+      setIsLoadingEpisodes(true);
+      try {
+        const data = await getMetaFromId(
+          MWMediaType.SERIES,
+          tmdbId.toString(),
+          currentSeasonId,
+        );
+        if (
+          data?.meta?.type === MWMediaType.SERIES &&
+          data.meta.seasonData?.episodes
+        ) {
+          setEpisodes(data.meta.seasonData.episodes);
+        }
+      } catch (error) {
+        console.error("error", error);
+      } finally {
+        setIsLoadingEpisodes(false);
+      }
+    }
+
+    if (currentSeasonId) {
+      fetchEpisodes();
+    }
+  }, [tmdbId, currentSeasonId]);
+
+  const handleSeasonChange = (seasonId: string, seasonNumber: number) => {
+    setCurrentSeasonId(seasonId);
+    setCurrentSeason(seasonNumber);
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          ref={buttonRef}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          className="absolute right-2 top-2 rounded-lg bg-mediaCard-badge px-2 py-1 transition-colors flex items-center z-10"
+        >
+          <p
+            className={`text-center text-xs font-bold text-mediaCard-badgeText transition-colors ${closable ? "" : "group-hover:text-white"}`}
+          >
+            {t("media.episodeDisplay", {
+              season: series.season,
+              episode: series.episode,
+            })}
+          </p>
+          <Icon className="ml-1" icon={Icons.CHEVRON_DOWN} />
+        </button>
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent
+        className="w-56 rounded-xl overflow-hidden shadow-lg focus:outline-none"
+        align="end"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger className="sticky top-0 z-10 bg-mediaCard-badge bg-opacity-30 text-type-main rounded-t-xl">
+            <span className="font-medium">Season {currentSeason}</span>
+          </DropdownMenuSubTrigger>
+
+          <DropdownMenuSubContent className="max-h-60 overflow-y-auto rounded-xl shadow-lg focus:outline-none">
+            {seasons.map((season) => (
+              <DropdownMenuItem
+                key={season.id}
+                className={`px-4 py-2 text-sm hover:bg-mediaCard-hoverBackground cursor-pointer ${
+                  season.id === currentSeasonId
+                    ? "bg-mediaCard-badge bg-opacity-50"
+                    : ""
+                }`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSeasonChange(season.id, season.number);
+                }}
+              >
+                {season.title}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+
+        {/* Episode list */}
+        <div className="py-1 h-60 overflow-y-auto">
+          {isLoadingEpisodes ? (
+            <div className="px-4 py-2 text-sm text-type-secondary">
+              Loading episodes...
+            </div>
+          ) : (
+            <>
+              {episodes.map((episode) => (
+                <DropdownMenuItem
+                  key={episode.id}
+                  asChild
+                  className="px-1 hover:bg-mediaCard-hoverBackground"
+                >
+                  <Link
+                    to={`/media/tmdb-tv-${tmdbId}-${show.replace(/\s+/g, "-")}/${currentSeasonId}/${episode.id}`}
+                    className="flex items-center px-4 py-2 text-sm text-type-main hover:bg-mediaCard-hoverBackground rounded-lg"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <span className="p-0.5 px-2 mr-2 rounded-md inline bg-video-context-hoverColor bg-opacity-50">
+                      {episode.number}
+                    </span>
+                    <span className="line-clamp-1">{episode.title}</span>
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+            </>
+          )}
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+export interface MediaCardProps {
+  media: MediaItem;
+  linkable?: boolean;
+  series?: {
+    episode: number;
+    season?: number;
+    episodeId: string;
+    seasonId: string;
+  };
+  percentage?: number;
+  closable?: boolean;
+  onClose?: () => void;
+}
+
 function MediaCardContent({
   media,
   linkable,
@@ -63,14 +241,12 @@ function MediaCardContent({
   handleMouseEnter,
   handleMouseLeave,
   link,
-  isHoveringCard,
 }: MediaCardProps & {
   overlayVisible: boolean;
   setOverlayVisible: React.Dispatch<React.SetStateAction<boolean>>;
   handleMouseEnter: () => void;
   handleMouseLeave: () => void;
   link: string;
-  isHoveringCard: boolean;
 }) {
   const { t } = useTranslation();
   const percentageString = `${Math.round(percentage ?? 0).toFixed(0)}%`;
@@ -94,7 +270,7 @@ function MediaCardContent({
     setOverlayVisible(false);
   }
 
-  if (isReleased() && media.year) {
+  if (media.year) {
     dotListContent.push(media.year.toFixed());
   }
 
@@ -157,7 +333,7 @@ function MediaCardContent({
         />
         <Flare.Child
           className={`pointer-events-auto relative mb-2 p-[0.4em] transition-transform duration-300 ${
-            canLink ? (isHoveringCard ? "scale-95" : "") : "opacity-60"
+            canLink ? "group-hover:scale-95" : "opacity-60"
           }`}
         >
           <div
@@ -179,23 +355,11 @@ function MediaCardContent({
             {!overlayVisible ? (
               <div>
                 {series ? (
-                  <div
-                    className={[
-                      "absolute right-2 top-2 rounded-md bg-mediaCard-badge px-2 py-1 transition-colors",
-                    ].join(" ")}
-                  >
-                    <p
-                      className={[
-                        "text-center text-xs font-bold text-mediaCard-badgeText transition-colors",
-                        closable ? "" : "group-hover:text-white",
-                      ].join(" ")}
-                    >
-                      {t("media.episodeDisplay", {
-                        season: series.season || 1,
-                        episode: series.episode,
-                      })}
-                    </p>
-                  </div>
+                  <EpisodeSelector
+                    tmdbId={media.id}
+                    closable={!!closable}
+                    series={series}
+                  />
                 ) : null}
 
                 {percentage !== undefined ? (
@@ -350,7 +514,6 @@ function MediaCardContent({
                 type="button"
                 onClick={(e) => {
                   e.preventDefault();
-                  e.stopPropagation();
                   setOverlayVisible(!overlayVisible);
                 }}
               >
@@ -370,63 +533,20 @@ function MediaCardContent({
 export function MediaCard(props: MediaCardProps) {
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
-  const [showHoverInfo, setShowHoverInfo] = useState(false);
-  const hoverTimer = useRef<NodeJS.Timeout>();
-  const [isHoveringCard, setIsHoveringCard] = useState(false);
-  const [isHoveringInfo, setIsHoveringInfo] = useState(false);
-  const [isBigScreen, setIsBigScreen] = useState(false);
-  const enablePopDetails = usePreferencesStore((s) => s.enablePopDetails);
-
-  useEffect(() => {
-    const checkScreenSize = () => {
-      setIsBigScreen(window.innerWidth >= 768); // md breakpoint
-    };
-    checkScreenSize();
-    window.addEventListener("resize", checkScreenSize);
-    return () => window.removeEventListener("resize", checkScreenSize);
-  }, []);
-
-  const handleMouseEnter = () => {
-    setIsHoveringCard(true);
-
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-      setTimeoutId(null);
-    }
-
-    if (hoverTimer.current) {
-      clearTimeout(hoverTimer.current);
-    }
-
-    if (isBigScreen && !overlayVisible) {
-      hoverTimer.current = setTimeout(() => {
-        setShowHoverInfo(true);
-      }, 200); // 0.2 second delay
-    }
-  };
 
   const handleMouseLeave = () => {
-    setIsHoveringCard(false);
-    if (hoverTimer.current) {
-      clearTimeout(hoverTimer.current);
-    }
-
-    if (!isHoveringInfo) {
-      setShowHoverInfo(false);
-    }
-
     const id = setTimeout(() => {
       setOverlayVisible(false);
     }, 2000); // 2 seconds
     setTimeoutId(id);
   };
 
-  const shouldShowHoverInfo =
-    showHoverInfo &&
-    !overlayVisible &&
-    isBigScreen &&
-    enablePopDetails &&
-    !props.closable;
+  const handleMouseEnter = () => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      setTimeoutId(null);
+    }
+  };
 
   const isReleased = useCallback(
     () => checkReleased(props.media),
@@ -448,17 +568,6 @@ export function MediaCard(props: MediaCardProps) {
     }
   }
 
-  const hoverMedia = {
-    ...props.media,
-    onHoverInfoEnter: () => setIsHoveringInfo(true),
-    onHoverInfoLeave: () => {
-      setIsHoveringInfo(false);
-      if (!isHoveringCard && !overlayVisible) {
-        setShowHoverInfo(false);
-      }
-    },
-  };
-
   const content = (
     <MediaCardContent
       {...props}
@@ -467,17 +576,10 @@ export function MediaCard(props: MediaCardProps) {
       handleMouseEnter={handleMouseEnter}
       handleMouseLeave={handleMouseLeave}
       link={link}
-      isHoveringCard={isHoveringCard}
     />
   );
 
-  if (!canLink)
-    return (
-      <span className="relative">
-        {content}{" "}
-        <InfoPopout media={hoverMedia} visible={shouldShowHoverInfo} />
-      </span>
-    );
+  if (!canLink) return <span>{content}</span>;
   return (
     <div className="relative">
       {!overlayVisible ? (
@@ -488,8 +590,6 @@ export function MediaCard(props: MediaCardProps) {
             "tabbable",
             props.closable ? "hover:cursor-default" : "",
           )}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
         >
           {content}
         </Link>
@@ -500,15 +600,9 @@ export function MediaCard(props: MediaCardProps) {
             "tabbable",
             props.closable ? "hover:cursor-default" : "",
           )}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
         >
           {content}
         </div>
-      )}
-
-      {shouldShowHoverInfo && (
-        <InfoPopout media={hoverMedia} visible={shouldShowHoverInfo} />
       )}
     </div>
   );
