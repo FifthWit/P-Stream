@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { get } from "@/backend/metadata/tmdb";
+import { IdOnlyMediaCard } from "@/components/media/IdOnlyMediaCard";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import {
   Genre,
@@ -18,6 +19,7 @@ import { LazyTabContent } from "./components/LazyTabContent";
 import { MediaCarousel } from "./components/MediaCarousel";
 import { RandomMovieButton } from "./components/RandomMovieButton";
 import { ScrollToTopButton } from "./components/ScrollToTopButton";
+import { EDITOR_PICKS_MOVIES, EDITOR_PICKS_TV_SHOWS } from "./EditorPicks";
 import { useTMDBData } from "./hooks/useTMDBData";
 
 const MOVIE_PROVIDERS = [
@@ -41,54 +43,293 @@ const TV_PROVIDERS = [
   { name: "fubuTV", id: "257" },
 ];
 
-// Editor Picks lists
-const EDITOR_PICKS_MOVIES = [
-  { id: 9342, type: "movie" }, // The Mask of Zorro
-  { id: 293, type: "movie" }, // A River Runs Through It
-  { id: 370172, type: "movie" }, // No Time To Die
-  { id: 661374, type: "movie" }, // The Glass Onion
-  { id: 207, type: "movie" }, // Dead Poets Society
-  { id: 378785, type: "movie" }, // The Best of the Blues Brothers
-  { id: 335984, type: "movie" }, // Blade Runner 2049
-  { id: 13353, type: "movie" }, // It's the Great Pumpkin, Charlie Brown
-  { id: 27205, type: "movie" }, // Inception
-  { id: 106646, type: "movie" }, // The Wolf of Wall Street
-  { id: 334533, type: "movie" }, // Captain Fantastic
-  { id: 693134, type: "movie" }, // Dune: Part Two
-  { id: 765245, type: "movie" }, // Swan Song
-  { id: 264660, type: "movie" }, // Ex Machina
-  { id: 92591, type: "movie" }, // Bernie
-  { id: 976893, type: "movie" }, // Perfect Days
-  { id: 13187, type: "movie" }, // A Charlie Brown Christmas
-  { id: 11527, type: "movie" }, // Excalibur
-  { id: 120, type: "movie" }, // LOTR: The Fellowship of the Ring
-  { id: 157336, type: "movie" }, // Interstellar
-  { id: 762, type: "movie" }, // Monty Python and the Holy Grail
-  { id: 666243, type: "movie" }, // The Witcher: Nightmare of the Wolf
-  { id: 545611, type: "movie" }, // Everything Everywhere All at Once
-  { id: 329, type: "movie" }, // Jurrassic Park
-  { id: 330459, type: "movie" }, // Rogue One: A Star Wars Story
-  { id: 279, type: "movie" }, // Amadeus
-  { id: 823219, type: "movie" }, // Flow
-];
+// Modal component to show all items
+function MoreItemsModal({
+  isModalOpen,
+  modalTitle,
+  modalItems,
+  onClose,
+}: {
+  isModalOpen: boolean;
+  modalTitle: string;
+  modalItems: { id: string; type: "movie" | "show" }[];
+  onClose: () => void;
+}) {
+  if (!isModalOpen) return null;
 
-const EDITOR_PICKS_TV_SHOWS = [
-  { id: 456, type: "show" }, // The Simpsons
-  { id: 73021, type: "show" }, // Disenchantment
-  { id: 1434, type: "show" }, // Family Guy
-  { id: 1695, type: "show" }, // Monk
-  { id: 1408, type: "show" }, // House
-  { id: 93740, type: "show" }, // Foundation
-  { id: 60625, type: "show" }, // Rick and Morty
-  { id: 1396, type: "show" }, // Breaking Bad
-  { id: 44217, type: "show" }, // Vikings
-  { id: 90228, type: "show" }, // Dune Prophecy
-  { id: 13916, type: "show" }, // Death Note
-  { id: 71912, type: "show" }, // The Witcher
-  { id: 61222, type: "show" }, // Bojack Horseman
-  { id: 93405, type: "show" }, // Squid Game
-  { id: 87108, type: "show" }, // Chernobyl
-];
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+      onClick={onClose}
+    >
+      <div
+        className="bg-background-main rounded-xl max-w-[90vw] max-h-[90vh] overflow-y-auto p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">{modalTitle}</h2>
+          <button
+            type="button"
+            className="p-2 rounded-full hover:bg-gray-700/50"
+            onClick={onClose}
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          {modalItems.map((item) => (
+            <div key={item.id}>
+              <IdOnlyMediaCard id={item.id} mediaType={item.type} linkable />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BackendDiscoverContent() {
+  interface TraktMovie {
+    title: string;
+    year: number;
+    ids: {
+      trakt: number;
+      slug: string;
+      tmdb: number;
+    };
+  }
+
+  interface DiscoverResponse {
+    mostWatched: {
+      watcher_count: number;
+      play_count: number;
+      collected_count: number;
+      movie: TraktMovie;
+    }[];
+    lastWeekend: {
+      revenue: number;
+      movie: TraktMovie;
+    }[];
+    trending: TraktMovie[];
+    traktLists: {
+      name: string;
+      likes: number;
+      items: {
+        type: "movie" | "show";
+        name: string;
+        year: number;
+        id: number; // TMDbID
+      }[];
+    }[];
+  }
+
+  const [discoverData, setDiscoverData] = useState<DiscoverResponse | null>(
+    null,
+  );
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [visibleListCount, setVisibleListCount] = useState(5);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalItems, setModalItems] = useState<
+    { id: string; type: "movie" | "show" }[]
+  >([]);
+  const [modalTitle, setModalTitle] = useState("");
+
+  const carouselRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  useEffect(() => {
+    const fetchDiscoverData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const response = await fetch("https://backend.fifthwit.net/discover");
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch discover data: ${response.status}`);
+        }
+
+        const data: DiscoverResponse = await response.json();
+        setDiscoverData(data);
+      } catch (err) {
+        console.error("Error fetching discover data:", err);
+        setError("Failed to load discover content. Please try again later.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDiscoverData();
+  }, []);
+
+  const openModal = (items: any[], title: string) => {
+    const formattedItems = items.map((item) => {
+      if ("movie" in item) {
+        return {
+          id: item.movie.ids.tmdb.toString(),
+          type: "movie",
+        };
+      }
+      if ("ids" in item) {
+        return {
+          id: item.ids.tmdb.toString(),
+          type: "movie",
+        };
+      }
+      return {
+        id: item.id.toString(),
+        type: item.type,
+      };
+    });
+
+    setModalItems(formattedItems);
+    setModalTitle(title);
+    setIsModalOpen(true);
+  };
+
+  const loadMoreLists = () => {
+    setVisibleListCount((prev) => prev + 5);
+  };
+
+  const renderCarouselSection = (
+    title: string,
+    items: any[],
+    keyPrefix: string,
+    type: "movie" | "show" = "movie",
+  ) => {
+    if (!items?.length) return null;
+
+    const limitedItems = items.slice(0, 20);
+    const hasMoreItems = items.length > 20;
+
+    return (
+      <div
+        className="section mb-8"
+        ref={(el) => {
+          carouselRefs.current[keyPrefix] = el;
+        }}
+      >
+        <h2 className="text-2xl font-bold mb-4 px-4">{title}</h2>
+        <div className="relative">
+          <div className="flex overflow-x-auto scrollbar-hide py-4 px-4 gap-4">
+            {limitedItems.map((item) => (
+              <div
+                key={`${crypto.randomUUID()}`} // THANKS ESLINT
+                className="flex-none w-[160px] md:w-[200px]"
+              >
+                <IdOnlyMediaCard
+                  id={
+                    "movie" in item
+                      ? item.movie.ids.tmdb.toString()
+                      : "ids" in item
+                        ? item.ids.tmdb.toString()
+                        : item.id.toString()
+                  }
+                  mediaType={"type" in item ? item.type : type}
+                  linkable
+                />
+              </div>
+            ))}
+            {hasMoreItems && (
+              <div
+                className="flex-none w-[160px] md:w-[200px] aspect-[2/3] rounded-xl bg-mediaCard-hoverBackground/30 flex items-center justify-center cursor-pointer hover:bg-mediaCard-hoverBackground/50 transition-colors"
+                onClick={() => openModal(items, title)}
+              >
+                <div className="text-center p-4">
+                  <div className="text-xl font-bold mb-2">View All</div>
+                  <div className="text-sm">{items.length} items</div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="animate-pulse flex flex-col gap-4 w-full max-w-4xl">
+          <div className="h-8 bg-mediaCard-hoverBackground/20 rounded-md w-2/5 mx-auto" />
+          <div className="flex overflow-x-auto py-4 gap-4 px-4">
+            {[...Array(6)].map((_) => (
+              <div
+                key={`${crypto.randomUUID}`}
+                className="flex-none w-[160px] md:w-[200px] aspect-[2/3] rounded-xl bg-mediaCard-hoverBackground/20"
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !discoverData) {
+    return (
+      <div className="flex justify-center items-center min-h-[300px]">
+        <div className="text-center p-4 max-w-md">
+          <h3 className="text-xl font-semibold mb-2">Something went wrong</h3>
+          <p className="text-type-secondary">
+            {error || "Failed to load content"}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const visibleTraktLists =
+    discoverData.traktLists?.slice(0, visibleListCount) || [];
+  const hasMoreLists =
+    discoverData.traktLists &&
+    visibleListCount < discoverData.traktLists.length;
+
+  return (
+    <div className="backend-discover-container py-6 space-y-4">
+      {renderCarouselSection(
+        "Most Watched",
+        discoverData.mostWatched,
+        "most-watched",
+      )}
+      {renderCarouselSection(
+        "Box Office",
+        discoverData.lastWeekend,
+        "box-office",
+      )}
+      {renderCarouselSection("Trending", discoverData.trending, "trending")}
+
+      {visibleTraktLists.map((list) =>
+        renderCarouselSection(
+          list.name,
+          list.items,
+          `list-${list.name}`,
+          "type" in list.items[0] ? undefined : "movie",
+        ),
+      )}
+
+      {hasMoreLists && (
+        <div className="flex justify-center py-4">
+          <button
+            type="button"
+            className="px-6 py-2 bg-mediaCard-hoverBackground/30 rounded-full hover:bg-mediaCard-hoverBackground/50 transition-colors"
+            onClick={loadMoreLists}
+          >
+            Load More Lists
+          </button>
+        </div>
+      )}
+
+      {/* Modal for showing all items */}
+      <MoreItemsModal
+        isModalOpen={isModalOpen}
+        modalTitle={modalTitle}
+        modalItems={modalItems}
+        onClose={() => setIsModalOpen(false)}
+      />
+    </div>
+  );
+}
 
 export function DiscoverContent() {
   // State management
@@ -125,6 +366,7 @@ export function DiscoverContent() {
   const isMoviesTab = selectedCategory === "movies";
   const isTVShowsTab = selectedCategory === "tvshows";
   const isEditorPicksTab = selectedCategory === "editorpicks";
+  const isBackendTab = selectedCategory === "backend";
 
   // Fetch TV show genres
   useEffect(() => {
@@ -302,7 +544,7 @@ export function DiscoverContent() {
   // Render Editor Picks content
   const renderEditorPicksContent = () => {
     return (
-      <>
+      <div>
         <LazyMediaCarousel
           preloadedMedia={editorPicksMovies}
           title="Editor Picks"
@@ -317,7 +559,7 @@ export function DiscoverContent() {
           isMobile={isMobile}
           carouselRefs={carouselRefs}
         />
-      </>
+      </div>
     );
   };
 
@@ -403,18 +645,17 @@ export function DiscoverContent() {
 
   return (
     <div className="pt-6">
-      {/* Random Movie Button */}
+      \{/* Random Movie Button */}
       <RandomMovieButton
         countdown={countdown}
         onClick={handleRandomMovieClick}
         randomMovieTitle={randomMovie ? randomMovie.title : null}
       />
-
       {/* Category Tabs */}
       <div className="mt-8 pb-2 w-full max-w-screen-xl mx-auto">
         <div className="relative flex justify-center mb-4">
           <div className="flex space-x-4">
-            {["movies", "tvshows", "editorpicks"].map((category) => (
+            {["movies", "tvshows", "editorpicks", "backend"].map((category) => (
               <button
                 key={category}
                 type="button"
@@ -429,43 +670,47 @@ export function DiscoverContent() {
                   ? "Movies"
                   : category === "tvshows"
                     ? "TV Shows"
-                    : "Editor Picks"}
+                    : category === "editorpicks"
+                      ? "Editor Picks"
+                      : "Discover"}
               </button>
             ))}
           </div>
         </div>
 
         {/* Only show provider and genre buttons for movies and tvshows categories */}
-        {selectedCategory !== "editorpicks" && (
-          <>
-            <div className="flex justify-center overflow-x-auto">
-              <CategoryButtons
-                categories={
-                  selectedCategory === "movies" ? MOVIE_PROVIDERS : TV_PROVIDERS
-                }
-                onCategoryClick={handleProviderClick}
-                categoryType="providers"
-                isMobile={isMobile}
-                showAlwaysScroll={false}
-              />
-            </div>
-            <div className="flex overflow-x-auto">
-              <CategoryButtons
-                categories={
-                  selectedCategory === "movies"
-                    ? [...categories, ...genres]
-                    : [...tvCategories, ...tvGenres]
-                }
-                onCategoryClick={handleCategoryClick}
-                categoryType="movies"
-                isMobile={isMobile}
-                showAlwaysScroll
-              />
-            </div>
-          </>
-        )}
+        {selectedCategory !== "editorpicks" &&
+          selectedCategory !== "backend" && (
+            <>
+              <div className="flex justify-center overflow-x-auto">
+                <CategoryButtons
+                  categories={
+                    selectedCategory === "movies"
+                      ? MOVIE_PROVIDERS
+                      : TV_PROVIDERS
+                  }
+                  onCategoryClick={handleProviderClick}
+                  categoryType="providers"
+                  isMobile={isMobile}
+                  showAlwaysScroll={false}
+                />
+              </div>
+              <div className="flex overflow-x-auto">
+                <CategoryButtons
+                  categories={
+                    selectedCategory === "movies"
+                      ? [...categories, ...genres]
+                      : [...tvCategories, ...tvGenres]
+                  }
+                  onCategoryClick={handleCategoryClick}
+                  categoryType="movies"
+                  isMobile={isMobile}
+                  showAlwaysScroll
+                />
+              </div>
+            </>
+          )}
       </div>
-
       {/* Content Section with Lazy Loading Tabs */}
       <div className="w-full md:w-[90%] max-w-[2400px] mx-auto">
         {/* Movies Tab */}
@@ -482,8 +727,12 @@ export function DiscoverContent() {
         <LazyTabContent isActive={isEditorPicksTab}>
           {renderEditorPicksContent()}
         </LazyTabContent>
-      </div>
 
+        {/* Amazing data from backend.fifthwit.net/discover */}
+        <LazyTabContent isActive={isBackendTab}>
+          <BackendDiscoverContent />
+        </LazyTabContent>
+      </div>
       <ScrollToTopButton />
     </div>
   );
