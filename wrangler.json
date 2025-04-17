@@ -1,0 +1,9 @@
+{
+  "name": "p-stream",
+  "compatibility_date": "2024-06-01",
+  "pages_build_output_dir": "dist",
+  "build": {
+    "command": "npm run build"
+  },
+  "workers_dev": true
+}
