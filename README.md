@@ -1,6 +1,10 @@
 # P-Stream
 [![P-Stream Image](.github/P-Stream.png)](https://docs.pstream.org)  
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fp-stream%2Fp-stream)
+
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/p-stream/p-stream)
+
 **I *do not* endorse piracy of any kind I simply enjoy programming and large user counts.**
 
 ## Links And Resources
