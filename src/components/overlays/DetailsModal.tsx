@@ -655,11 +655,17 @@ function DetailsContent({
               <Dropdown
                 options={data.seasonData.seasons.map((season) => ({
                   id: season.season_number.toString(),
-                  name: `${t("details.season")} ${season.season_number}`,
+                  name:
+                    season.season_number === 0
+                      ? "Specials"
+                      : `${t("details.season")} ${season.season_number}`,
                 }))}
                 selectedItem={{
                   id: selectedSeason.toString(),
-                  name: `${t("details.season")} ${selectedSeason}`,
+                  name:
+                    selectedSeason === 0
+                      ? "Specials"
+                      : `${t("details.season")} ${selectedSeason}`,
                 }}
                 setSelectedItem={(item) => setSelectedSeason(Number(item.id))}
               />
