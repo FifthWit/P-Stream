@@ -20,8 +20,12 @@ import { SubPageLayout } from "../layouts/SubPageLayout";
 import { CategoryButtons } from "./components/CategoryButtons";
 import { DiscoverNavigation } from "./components/DiscoverNavigation";
 import { FeaturedCarousel } from "./components/FeaturedCarousel";
+import type { FeaturedMedia } from "./components/FeaturedCarousel";
 import { RandomMovieButton } from "./components/RandomMovieButton";
-import DiscoverContent from "./discoverContent";
+import DiscoverContent, {
+  EDITOR_PICKS_MOVIES,
+  EDITOR_PICKS_TV_SHOWS,
+} from "./discoverContent";
 import { useTMDBData } from "./hooks/useTMDBData";
 import { PageTitle } from "../parts/util/PageTitle";
 
@@ -50,6 +54,7 @@ const TV_PROVIDERS = [
 interface FeaturedMovie extends Movie {
   backdrop_path: string;
   overview: string;
+  type: "movie";
 }
 
 interface DiscoverContentProps {
@@ -66,7 +71,7 @@ function DiscoverContentWithProps(props: DiscoverContentProps) {
 
 export function Discover() {
   const [selectedCategory, setSelectedCategory] = useState("movies");
-  const [featuredMedia, setFeaturedMedia] = useState<FeaturedMovie[]>([]);
+  const [featuredMedia, setFeaturedMedia] = useState<FeaturedMedia[]>([]);
   const [selectedProvider, setSelectedProvider] = useState({
     name: "",
     id: "",
@@ -109,18 +114,72 @@ export function Discover() {
   useEffect(() => {
     const fetchFeaturedMedia = async () => {
       try {
-        const data = await get<any>("/movie/popular", {
-          api_key: conf().TMDB_READ_API_KEY,
-          language: formattedLanguage,
-        });
-        setFeaturedMedia(data.results.slice(0, 5));
+        if (selectedCategory === "movies") {
+          const data = await get<any>("/movie/popular", {
+            api_key: conf().TMDB_READ_API_KEY,
+            language: formattedLanguage,
+          });
+          setFeaturedMedia(
+            data.results.slice(0, 5).map((movie: any) => ({
+              ...movie,
+              type: "movie" as const,
+            })),
+          );
+        } else if (selectedCategory === "tvshows") {
+          const data = await get<any>("/tv/popular", {
+            api_key: conf().TMDB_READ_API_KEY,
+            language: formattedLanguage,
+          });
+          setFeaturedMedia(
+            data.results.slice(0, 5).map((show: any) => ({
+              ...show,
+              type: "show" as const,
+            })),
+          );
+        } else if (selectedCategory === "editorpicks") {
+          // Fetch editor picks movies
+          const moviePromises = EDITOR_PICKS_MOVIES.slice(0, 3).map((item) =>
+            get<any>(`/movie/${item.id}`, {
+              api_key: conf().TMDB_READ_API_KEY,
+              language: formattedLanguage,
+            }),
+          );
+
+          // Fetch editor picks TV shows
+          const showPromises = EDITOR_PICKS_TV_SHOWS.slice(0, 2).map((item) =>
+            get<any>(`/tv/${item.id}`, {
+              api_key: conf().TMDB_READ_API_KEY,
+              language: formattedLanguage,
+            }),
+          );
+
+          const [movieResults, showResults] = await Promise.all([
+            Promise.all(moviePromises),
+            Promise.all(showPromises),
+          ]);
+
+          const movies = movieResults.map((movie) => ({
+            ...movie,
+            type: "movie" as const,
+          }));
+          const shows = showResults.map((show) => ({
+            ...show,
+            type: "show" as const,
+          }));
+
+          // Combine and shuffle
+          const combined = [...movies, ...shows].sort(
+            () => 0.5 - Math.random(),
+          );
+          setFeaturedMedia(combined);
+        }
       } catch (error) {
         console.error("Error fetching featured media:", error);
       }
     };
 
     fetchFeaturedMedia();
-  }, [formattedLanguage]);
+  }, [formattedLanguage, selectedCategory]);
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
@@ -139,7 +198,7 @@ export function Discover() {
       `carousel-${categorySlugBase}-tv`,
     );
 
-    const element = movieElement || tvElement;
+    const element = selectedCategory === "tvshows" ? tvElement : movieElement;
     if (element) {
       element.scrollIntoView({
         behavior: "smooth",
@@ -148,10 +207,10 @@ export function Discover() {
     }
   };
 
-  const handleShowDetails = (media: FeaturedMovie) => {
+  const handleShowDetails = (media: FeaturedMedia) => {
     setDetailsData({
       id: Number(media.id),
-      type: "movie",
+      type: media.type,
     });
     detailsModal.show();
   };

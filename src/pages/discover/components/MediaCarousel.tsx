@@ -81,7 +81,9 @@ export function MediaCarousel({
     }
 
     if (categoryName === "Editor Picks") {
-      return t("discover.carousel.title.editorPicks");
+      return isTVShow
+        ? t("discover.carousel.title.editorPicksShows")
+        : t("discover.carousel.title.editorPicksMovies");
     }
 
     return isTVShowCondition

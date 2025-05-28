@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
@@ -18,13 +18,14 @@ import { useLanguageStore } from "@/stores/language";
 import { getTmdbLanguageCode } from "@/utils/language";
 import { MediaItem } from "@/utils/mediaTypes";
 
+import type { FeaturedMedia } from "./components/FeaturedCarousel";
 import { LazyMediaCarousel } from "./components/LazyMediaCarousel";
 import { LazyTabContent } from "./components/LazyTabContent";
 import { MediaCarousel } from "./components/MediaCarousel";
 import { ScrollToTopButton } from "./components/ScrollToTopButton";
 
 // Editor Picks lists
-const EDITOR_PICKS_MOVIES = [
+export const EDITOR_PICKS_MOVIES = [
   { id: 9342, type: "movie" }, // The Mask of Zorro
   { id: 293, type: "movie" }, // A River Runs Through It
   { id: 370172, type: "movie" }, // No Time To Die
@@ -58,7 +59,7 @@ const EDITOR_PICKS_MOVIES = [
   { id: 152601, type: "movie" }, // Her
 ];
 
-const EDITOR_PICKS_TV_SHOWS = [
+export const EDITOR_PICKS_TV_SHOWS = [
   { id: 456, type: "show" }, // The Simpsons
   { id: 73021, type: "show" }, // Disenchantment
   { id: 1434, type: "show" }, // Family Guy
@@ -199,8 +200,11 @@ export function DiscoverContent({
         );
 
         const results = await Promise.all(moviePromises);
-        const shuffled = [...results].sort(() => 0.5 - Math.random());
-        setEditorPicksMovies(shuffled);
+        const moviesWithType = results.map((movie) => ({
+          ...movie,
+          type: "movie" as const,
+        }));
+        setEditorPicksMovies(moviesWithType);
       } catch (error) {
         console.error("Error fetching editor picks movies:", error);
       }
@@ -224,8 +228,11 @@ export function DiscoverContent({
         );
 
         const results = await Promise.all(tvShowPromises);
-        const shuffled = [...results].sort(() => 0.5 - Math.random());
-        setEditorPicksTVShows(shuffled);
+        const showsWithType = results.map((show) => ({
+          ...show,
+          type: "show" as const,
+        }));
+        setEditorPicksTVShows(showsWithType);
       } catch (error) {
         console.error("Error fetching editor picks TV shows:", error);
       }
@@ -234,7 +241,14 @@ export function DiscoverContent({
     fetchEditorPicksTVShows();
   }, [isEditorPicksTab, formattedLanguage]);
 
-  const handleShowDetails = async (media: MediaItem) => {
+  // Combine editor picks movies and TV shows for the featured carousel
+  const combinedEditorPicks = useMemo(() => {
+    if (!isEditorPicksTab) return [];
+    const combined = [...editorPicksMovies, ...editorPicksTVShows];
+    return combined.sort(() => 0.5 - Math.random());
+  }, [isEditorPicksTab, editorPicksMovies, editorPicksTVShows]);
+
+  const handleShowDetails = async (media: MediaItem | FeaturedMedia) => {
     setDetailsData({
       id: Number(media.id),
       type: media.type === "movie" ? "movie" : "show",

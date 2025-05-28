@@ -5,11 +5,14 @@ import { getMediaLogo } from "@/backend/metadata/tmdb";
 import { TMDBContentTypes } from "@/backend/metadata/types/tmdb";
 import { Button } from "@/components/buttons/Button";
 import { Icon, Icons } from "@/components/Icon";
-import { Movie } from "@/pages/discover/common";
+import { Movie, TVShow } from "@/pages/discover/common";
 
-interface FeaturedMedia extends Movie {
+export interface FeaturedMedia extends Partial<Movie & TVShow> {
   backdrop_path: string;
   overview: string;
+  title?: string;
+  name?: string;
+  type: "movie" | "show";
 }
 
 interface FeaturedCarouselProps {
@@ -41,7 +44,9 @@ export function FeaturedCarousel({
       if (!media[currentIndex]?.id) return;
       const logo = await getMediaLogo(
         media[currentIndex].id.toString(),
-        TMDBContentTypes.MOVIE,
+        media[currentIndex].type === "movie"
+          ? TMDBContentTypes.MOVIE
+          : TMDBContentTypes.TV,
       );
       setLogoUrl(logo);
     };
@@ -64,6 +69,9 @@ export function FeaturedCarousel({
   }, [isAutoPlaying, media.length]);
 
   if (media.length === 0) return null;
+
+  const currentMedia = media[currentIndex];
+  const mediaTitle = currentMedia.title || currentMedia.name;
 
   return (
     <div className="relative h-[80vh] w-full overflow-hidden">
@@ -127,21 +135,21 @@ export function FeaturedCarousel({
             {logoUrl ? (
               <img
                 src={logoUrl}
-                alt={media[currentIndex]?.title}
-                className="max-w-[14rem] md:max-w-[24rem] object-contain drop-shadow-lg bg-transparent mb-4"
+                alt={mediaTitle}
+                className="max-w-[14rem] md:max-w-[22rem] object-contain drop-shadow-lg bg-transparent mb-4"
                 style={{ background: "none" }}
               />
             ) : (
               <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
-                {media[currentIndex]?.title}
+                {mediaTitle}
               </h1>
             )}
             <p className="text-lg text-white/80 mb-6 line-clamp-2">
-              {media[currentIndex]?.overview}
+              {currentMedia.overview}
             </p>
             <div className="flex gap-4">
               <Button
-                onClick={() => onShowDetails(media[currentIndex])}
+                onClick={() => onShowDetails(currentMedia)}
                 theme="secondary"
                 className="gap-2 h-12 rounded-lg px-6 py-2 transition-transform hover:scale-105 duration-100 text-md text-white flex items-center justify-center bg-buttons-purple bg-opacity-45 hover:bg-buttons-purpleHover hover:bg-opacity-25 backdrop-blur-md border-2 border-gray-400 border-opacity-20"
               >
@@ -151,7 +159,7 @@ export function FeaturedCarousel({
               <Button
                 onClick={() =>
                   navigate(
-                    `/media/tmdb-movie-${media[currentIndex]?.id}-${media[currentIndex]?.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+                    `/media/tmdb-${currentMedia.type}-${currentMedia.id}-${mediaTitle?.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
                   )
                 }
                 theme="secondary"
