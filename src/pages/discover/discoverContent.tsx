@@ -9,6 +9,7 @@ import { useIsMobile } from "@/hooks/useIsMobile";
 import {
   Genre,
   Movie,
+  TVShow,
   categories,
   tvCategories,
 } from "@/pages/discover/common";
@@ -17,35 +18,10 @@ import { useLanguageStore } from "@/stores/language";
 import { getTmdbLanguageCode } from "@/utils/language";
 import { MediaItem } from "@/utils/mediaTypes";
 
-import { CategoryButtons } from "./components/CategoryButtons";
 import { LazyMediaCarousel } from "./components/LazyMediaCarousel";
 import { LazyTabContent } from "./components/LazyTabContent";
 import { MediaCarousel } from "./components/MediaCarousel";
-import { RandomMovieButton } from "./components/RandomMovieButton";
 import { ScrollToTopButton } from "./components/ScrollToTopButton";
-import { useTMDBData } from "./hooks/useTMDBData";
-
-const MOVIE_PROVIDERS = [
-  { name: "Netflix", id: "8" },
-  { name: "Apple TV+", id: "2" },
-  { name: "Amazon Prime Video", id: "10" },
-  { name: "Hulu", id: "15" },
-  { name: "Max", id: "1899" },
-  { name: "Paramount Plus", id: "531" },
-  { name: "Disney Plus", id: "337" },
-  { name: "Shudder", id: "99" },
-];
-
-const TV_PROVIDERS = [
-  { name: "Netflix", id: "8" },
-  { name: "Apple TV+", id: "350" },
-  { name: "Amazon Prime Video", id: "10" },
-  { name: "Paramount Plus", id: "531" },
-  { name: "Hulu", id: "15" },
-  { name: "Max", id: "1899" },
-  { name: "Disney Plus", id: "337" },
-  { name: "fubuTV", id: "257" },
-];
 
 // Editor Picks lists
 const EDITOR_PICKS_MOVIES = [
@@ -101,19 +77,25 @@ const EDITOR_PICKS_TV_SHOWS = [
   { id: 105248, type: "show" }, // Cyberpunk: Edgerunners
 ];
 
-export function DiscoverContent() {
+interface DiscoverContentProps {
+  selectedCategory?: string;
+  selectedProvider?: {
+    name: string;
+    id: string;
+  };
+  genreMovies?: { [id: number]: Movie[] | TVShow[] };
+  genreTVShows?: { [id: number]: Movie[] | TVShow[] };
+}
+
+export function DiscoverContent({
+  selectedCategory = "movies",
+  selectedProvider = { name: "", id: "" },
+  genreMovies,
+  genreTVShows,
+}: DiscoverContentProps) {
   // State management
-  const [selectedCategory, setSelectedCategory] = useState("movies");
   const [genres, setGenres] = useState<Genre[]>([]);
   const [tvGenres, setTVGenres] = useState<Genre[]>([]);
-  const [randomMovie, setRandomMovie] = useState<Movie | null>(null);
-  const [countdown, setCountdown] = useState<number | null>(null);
-  const [countdownTimeout, setCountdownTimeout] =
-    useState<NodeJS.Timeout | null>(null);
-  const [selectedProvider, setSelectedProvider] = useState({
-    name: "",
-    id: "",
-  });
   const [providerMovies, setProviderMovies] = useState<Movie[]>([]);
   const [providerTVShows, setProviderTVShows] = useState<any[]>([]);
   const [editorPicksMovies, setEditorPicksMovies] = useState<Movie[]>([]);
@@ -127,12 +109,6 @@ export function DiscoverContent() {
   // Hooks
   const navigate = useNavigate();
   const { isMobile } = useIsMobile();
-  const { genreMedia: genreMovies } = useTMDBData(genres, categories, "movie");
-  // const { genreMedia: genreTVShows } = useTMDBData(
-  //   tvGenres,
-  //   tvCategories,
-  //   "tv",
-  // );
   const { t } = useTranslation();
 
   const userLanguage = useLanguageStore.getState().language;
@@ -142,6 +118,33 @@ export function DiscoverContent() {
   const isMoviesTab = selectedCategory === "movies";
   const isTVShowsTab = selectedCategory === "tvshows";
   const isEditorPicksTab = selectedCategory === "editorpicks";
+
+  // Fetch provider content when selectedProvider changes
+  useEffect(() => {
+    const fetchProviderContent = async () => {
+      if (!selectedProvider.id) return;
+
+      try {
+        const endpoint =
+          selectedCategory === "movies" ? "/discover/movie" : "/discover/tv";
+        const setData =
+          selectedCategory === "movies"
+            ? setProviderMovies
+            : setProviderTVShows;
+        const data = await get<any>(endpoint, {
+          api_key: conf().TMDB_READ_API_KEY,
+          with_watch_providers: selectedProvider.id,
+          watch_region: "US",
+          language: formattedLanguage,
+        });
+        setData(data.results);
+      } catch (error) {
+        console.error("Error fetching provider movies/shows:", error);
+      }
+    };
+
+    fetchProviderContent();
+  }, [selectedProvider, selectedCategory, formattedLanguage]);
 
   // Fetch TV show genres
   useEffect(() => {
@@ -153,7 +156,6 @@ export function DiscoverContent() {
           api_key: conf().TMDB_READ_API_KEY,
           language: formattedLanguage,
         });
-        // Fetch only the first 10 TV show genres
         setTVGenres(data.genres.slice(0, 10));
       } catch (error) {
         console.error("Error fetching TV show genres:", error);
@@ -173,8 +175,6 @@ export function DiscoverContent() {
           api_key: conf().TMDB_READ_API_KEY,
           language: formattedLanguage,
         });
-
-        // Fetch only the first 12 genres
         setGenres(data.genres.slice(0, 12));
       } catch (error) {
         console.error("Error fetching genres:", error);
@@ -199,7 +199,6 @@ export function DiscoverContent() {
         );
 
         const results = await Promise.all(moviePromises);
-        // Shuffle the results to display them randomly
         const shuffled = [...results].sort(() => 0.5 - Math.random());
         setEditorPicksMovies(shuffled);
       } catch (error) {
@@ -225,7 +224,6 @@ export function DiscoverContent() {
         );
 
         const results = await Promise.all(tvShowPromises);
-        // Shuffle the results to display them randomly
         const shuffled = [...results].sort(() => 0.5 - Math.random());
         setEditorPicksTVShows(shuffled);
       } catch (error) {
@@ -235,94 +233,6 @@ export function DiscoverContent() {
 
     fetchEditorPicksTVShows();
   }, [isEditorPicksTab, formattedLanguage]);
-
-  useEffect(() => {
-    let countdownInterval: NodeJS.Timeout;
-    if (countdown !== null && countdown > 0) {
-      countdownInterval = setInterval(() => {
-        setCountdown((prev) => (prev !== null ? prev - 1 : prev));
-      }, 1000);
-    }
-    return () => clearInterval(countdownInterval);
-  }, [countdown]);
-
-  // Handlers
-  const handleCategoryChange = (
-    eventOrValue: React.ChangeEvent<HTMLSelectElement> | string,
-  ) => {
-    const value =
-      typeof eventOrValue === "string"
-        ? eventOrValue
-        : eventOrValue.target.value;
-    setSelectedCategory(value);
-  };
-
-  const handleRandomMovieClick = () => {
-    const allMovies = Object.values(genreMovies).flat();
-    const uniqueTitles = new Set(allMovies.map((movie) => movie.title));
-    const uniqueTitlesArray = Array.from(uniqueTitles);
-    const randomIndex = Math.floor(Math.random() * uniqueTitlesArray.length);
-    const selectedMovie = allMovies.find(
-      (movie) => movie.title === uniqueTitlesArray[randomIndex],
-    );
-
-    if (selectedMovie) {
-      if (countdown !== null && countdown > 0) {
-        setCountdown(null);
-        if (countdownTimeout) {
-          clearTimeout(countdownTimeout);
-          setCountdownTimeout(null);
-          setRandomMovie(null);
-        }
-      } else {
-        setRandomMovie(selectedMovie as Movie);
-        setCountdown(5);
-        const timeoutId = setTimeout(() => {
-          navigate(`/media/tmdb-movie-${selectedMovie.id}-discover-random`);
-        }, 5000);
-        setCountdownTimeout(timeoutId);
-      }
-    }
-  };
-
-  const handleProviderClick = async (id: string, name: string) => {
-    try {
-      setSelectedProvider({ name, id });
-      const endpoint =
-        selectedCategory === "movies" ? "/discover/movie" : "/discover/tv";
-      const setData =
-        selectedCategory === "movies" ? setProviderMovies : setProviderTVShows;
-      const data = await get<any>(endpoint, {
-        api_key: conf().TMDB_READ_API_KEY,
-        with_watch_providers: id,
-        watch_region: "US",
-        language: formattedLanguage,
-      });
-      setData(data.results);
-    } catch (error) {
-      console.error("Error fetching provider movies/shows:", error);
-    }
-  };
-
-  const handleCategoryClick = (id: string, name: string) => {
-    // Try both movie and tv versions of the category slug
-    const categorySlugBase = name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-    const movieElement = document.getElementById(
-      `carousel-${categorySlugBase}-movie`,
-    );
-    const tvElement = document.getElementById(
-      `carousel-${categorySlugBase}-tv`,
-    );
-
-    // Scroll to the first element that exists
-    const element = movieElement || tvElement;
-    if (element) {
-      element.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-    }
-  };
 
   const handleShowDetails = async (media: MediaItem) => {
     setDetailsData({
@@ -393,6 +303,7 @@ export function DiscoverContent() {
             isMobile={isMobile}
             carouselRefs={carouselRefs}
             onShowDetails={handleShowDetails}
+            preloadedMedia={genreMovies?.[genre.id]}
           />
         ))}
       </>
@@ -436,6 +347,7 @@ export function DiscoverContent() {
             isMobile={isMobile}
             carouselRefs={carouselRefs}
             onShowDetails={handleShowDetails}
+            preloadedMedia={genreTVShows?.[genre.id]}
           />
         ))}
       </>
@@ -443,66 +355,7 @@ export function DiscoverContent() {
   };
 
   return (
-    <div className="pt-6">
-      {/* Random Movie Button */}
-      <RandomMovieButton
-        countdown={countdown}
-        onClick={handleRandomMovieClick}
-        randomMovieTitle={randomMovie ? randomMovie.title : null}
-      />
-
-      {/* Category Tabs */}
-      <div className="mt-8 pb-2 w-full max-w-screen-xl mx-auto">
-        <div className="relative flex justify-center mb-4">
-          <div className="flex space-x-4">
-            {["movies", "tvshows", "editorpicks"].map((category) => (
-              <button
-                key={category}
-                type="button"
-                className={`text-xl md:text-2xl font-bold p-2 bg-transparent text-center rounded-full cursor-pointer flex items-center transition-transform duration-200 ${
-                  selectedCategory === category
-                    ? "transform scale-105 text-type-link"
-                    : "text-type-secondary"
-                }`}
-                onClick={() => handleCategoryChange(category)}
-              >
-                {t(`discover.tabs.${category}`)}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Only show provider and genre buttons for movies and tvshows categories */}
-        {selectedCategory !== "editorpicks" && (
-          <>
-            <div className="flex justify-center overflow-x-auto">
-              <CategoryButtons
-                categories={
-                  selectedCategory === "movies" ? MOVIE_PROVIDERS : TV_PROVIDERS
-                }
-                onCategoryClick={handleProviderClick}
-                categoryType="providers"
-                isMobile={isMobile}
-                showAlwaysScroll={false}
-              />
-            </div>
-            <div className="flex overflow-x-auto">
-              <CategoryButtons
-                categories={
-                  selectedCategory === "movies"
-                    ? [...categories, ...genres]
-                    : [...tvCategories, ...tvGenres]
-                }
-                onCategoryClick={handleCategoryClick}
-                categoryType="movies"
-                isMobile={isMobile}
-                showAlwaysScroll
-              />
-            </div>
-          </>
-        )}
-      </div>
-
+    <div className="relative min-h-screen">
       {/* Content Section with Lazy Loading Tabs */}
       <div className="w-full md:w-[90%] max-w-[2400px] mx-auto">
         {/* Movies Tab */}

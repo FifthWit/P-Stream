@@ -3,23 +3,31 @@ import { Helmet } from "react-helmet-async";
 import { useTranslation } from "react-i18next";
 import { To, useNavigate } from "react-router-dom";
 
+import { get } from "@/backend/metadata/tmdb";
 import { WideContainer } from "@/components/layout/WideContainer";
 import { DetailsModal } from "@/components/overlays/DetailsModal";
 import { useModal } from "@/components/overlays/Modal";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useRandomTranslation } from "@/hooks/useRandomTranslation";
 import { useSearchQuery } from "@/hooks/useSearchQuery";
+import { Movie, categories, tvCategories } from "@/pages/discover/common";
+import { DiscoverNavigation } from "@/pages/discover/components/DiscoverNavigation";
 import DiscoverContent from "@/pages/discover/discoverContent";
+import { useTMDBData } from "@/pages/discover/hooks/useTMDBData";
 import { HomeLayout } from "@/pages/layouts/HomeLayout";
 import { BookmarksPart } from "@/pages/parts/home/BookmarksPart";
 import { HeroPart } from "@/pages/parts/home/HeroPart";
 import { WatchingPart } from "@/pages/parts/home/WatchingPart";
 import { SearchListPart } from "@/pages/parts/search/SearchListPart";
 import { SearchLoadingPart } from "@/pages/parts/search/SearchLoadingPart";
+import { conf } from "@/setup/config";
+import { useLanguageStore } from "@/stores/language";
 import { usePreferencesStore } from "@/stores/preferences";
+import { getTmdbLanguageCode } from "@/utils/language";
 import { MediaItem } from "@/utils/mediaTypes";
 
 import { Button } from "./About";
+import { RandomMovieButton } from "./discover/components/RandomMovieButton";
 
 function useSearch(search: string) {
   const [searching, setSearching] = useState<boolean>(false);
@@ -56,6 +64,45 @@ export function HomePage() {
   const [detailsData, setDetailsData] = useState<any>();
   // const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const detailsModal = useModal("details");
+  const [genres, setGenres] = useState<any[]>([]);
+  const [tvGenres, setTVGenres] = useState<any[]>([]);
+  const userLanguage = useLanguageStore.getState().language;
+  const formattedLanguage = getTmdbLanguageCode(userLanguage);
+  const [selectedCategory, setSelectedCategory] = useState("movies");
+  const [selectedProvider, setSelectedProvider] = useState({
+    name: "",
+    id: "",
+  });
+  const { genreMedia: genreMovies } = useTMDBData(genres, categories, "movie");
+  const { genreMedia: genreTVShows } = useTMDBData(
+    tvGenres,
+    tvCategories,
+    "tv",
+  );
+
+  // Fetch genres
+  useEffect(() => {
+    const fetchGenres = async () => {
+      try {
+        const [movieData, tvData] = await Promise.all([
+          get<any>("/genre/movie/list", {
+            api_key: conf().TMDB_READ_API_KEY,
+            language: formattedLanguage,
+          }),
+          get<any>("/genre/tv/list", {
+            api_key: conf().TMDB_READ_API_KEY,
+            language: formattedLanguage,
+          }),
+        ]);
+        setGenres(movieData.genres.slice(0, 12));
+        setTVGenres(tvData.genres.slice(0, 10));
+      } catch (error) {
+        console.error("Error fetching genres:", error);
+      }
+    };
+
+    fetchGenres();
+  }, [formattedLanguage]);
 
   const handleClick = (path: To) => {
     window.scrollTo(0, 0);
@@ -70,6 +117,32 @@ export function HomePage() {
       type: media.type === "movie" ? "movie" : "show",
     });
     detailsModal.show();
+  };
+
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+  };
+
+  const handleProviderClick = (id: string, name: string) => {
+    setSelectedProvider({ name, id });
+  };
+
+  const handleCategoryClick = (id: string, name: string) => {
+    const categorySlugBase = name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const movieElement = document.getElementById(
+      `carousel-${categorySlugBase}-movie`,
+    );
+    const tvElement = document.getElementById(
+      `carousel-${categorySlugBase}-tv`,
+    );
+
+    const element = movieElement || tvElement;
+    if (element) {
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
   };
 
   // const { loggedIn } = useAuth(); // Adjust padding for popup show button based on logged in state
@@ -221,7 +294,26 @@ export function HomePage() {
       </WideContainer>
       {enableDiscover ? (
         <div className="pt-12 w-full max-w-[100dvw] justify-center items-center">
-          <DiscoverContent />
+          <RandomMovieButton
+            allMovies={Object.values(genreMovies)
+              .flat()
+              .filter((media): media is Movie => "title" in media)}
+          />
+          <DiscoverNavigation
+            selectedCategory={selectedCategory}
+            selectedProvider={selectedProvider}
+            genres={genres}
+            tvGenres={tvGenres}
+            onCategoryChange={handleCategoryChange}
+            onProviderClick={handleProviderClick}
+            onCategoryClick={handleCategoryClick}
+          />
+          <DiscoverContent
+            selectedCategory={selectedCategory}
+            selectedProvider={selectedProvider}
+            genreMovies={genreMovies}
+            genreTVShows={genreTVShows}
+          />
         </div>
       ) : (
         <div className="flex flex-col justify-center items-center h-40 space-y-4">

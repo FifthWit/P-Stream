@@ -1,13 +1,152 @@
+import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useTranslation } from "react-i18next";
 
-import DiscoverContent from "@/pages/discover/discoverContent";
+import { get } from "@/backend/metadata/tmdb";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import {
+  Genre,
+  Movie,
+  categories,
+  tvCategories,
+} from "@/pages/discover/common";
+import { conf } from "@/setup/config";
+import { useLanguageStore } from "@/stores/language";
+import { getTmdbLanguageCode } from "@/utils/language";
 
 import { SubPageLayout } from "../layouts/SubPageLayout";
+import { CategoryButtons } from "./components/CategoryButtons";
+import { DiscoverNavigation } from "./components/DiscoverNavigation";
+import { FeaturedCarousel } from "./components/FeaturedCarousel";
+import { RandomMovieButton } from "./components/RandomMovieButton";
+import DiscoverContent from "./discoverContent";
+import { useTMDBData } from "./hooks/useTMDBData";
 import { PageTitle } from "../parts/util/PageTitle";
 
+const MOVIE_PROVIDERS = [
+  { name: "Netflix", id: "8" },
+  { name: "Apple TV+", id: "2" },
+  { name: "Amazon Prime Video", id: "10" },
+  { name: "Hulu", id: "15" },
+  { name: "Max", id: "1899" },
+  { name: "Paramount Plus", id: "531" },
+  { name: "Disney Plus", id: "337" },
+  { name: "Shudder", id: "99" },
+];
+
+const TV_PROVIDERS = [
+  { name: "Netflix", id: "8" },
+  { name: "Apple TV+", id: "350" },
+  { name: "Amazon Prime Video", id: "10" },
+  { name: "Paramount Plus", id: "531" },
+  { name: "Hulu", id: "15" },
+  { name: "Max", id: "1899" },
+  { name: "Disney Plus", id: "337" },
+  { name: "fubuTV", id: "257" },
+];
+
+interface FeaturedMovie extends Movie {
+  backdrop_path: string;
+  overview: string;
+}
+
+interface DiscoverContentProps {
+  selectedCategory: string;
+  selectedProvider: {
+    name: string;
+    id: string;
+  };
+}
+
+function DiscoverContentWithProps(props: DiscoverContentProps) {
+  return <DiscoverContent {...props} />;
+}
+
 export function Discover() {
+  const [selectedCategory, setSelectedCategory] = useState("movies");
+  const [featuredMedia, setFeaturedMedia] = useState<FeaturedMovie[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState({
+    name: "",
+    id: "",
+  });
+  const [genres, setGenres] = useState<Genre[]>([]);
+  const [tvGenres, setTVGenres] = useState<Genre[]>([]);
+  const { genreMedia: genreMovies } = useTMDBData(genres, categories, "movie");
+  const { isMobile } = useIsMobile();
   const { t } = useTranslation();
+  const userLanguage = useLanguageStore.getState().language;
+  const formattedLanguage = getTmdbLanguageCode(userLanguage);
+
+  // Fetch genres
+  useEffect(() => {
+    const fetchGenres = async () => {
+      try {
+        const [movieData, tvData] = await Promise.all([
+          get<any>("/genre/movie/list", {
+            api_key: conf().TMDB_READ_API_KEY,
+            language: formattedLanguage,
+          }),
+          get<any>("/genre/tv/list", {
+            api_key: conf().TMDB_READ_API_KEY,
+            language: formattedLanguage,
+          }),
+        ]);
+        setGenres(movieData.genres.slice(0, 12));
+        setTVGenres(tvData.genres.slice(0, 10));
+      } catch (error) {
+        console.error("Error fetching genres:", error);
+      }
+    };
+
+    fetchGenres();
+  }, [formattedLanguage]);
+
+  // Fetch featured media
+  useEffect(() => {
+    const fetchFeaturedMedia = async () => {
+      try {
+        const data = await get<any>("/movie/popular", {
+          api_key: conf().TMDB_READ_API_KEY,
+          language: formattedLanguage,
+        });
+        setFeaturedMedia(data.results.slice(0, 5));
+      } catch (error) {
+        console.error("Error fetching featured media:", error);
+      }
+    };
+
+    fetchFeaturedMedia();
+  }, [formattedLanguage]);
+
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+  };
+
+  const handleProviderClick = async (id: string, name: string) => {
+    setSelectedProvider({ name, id });
+  };
+
+  const handleCategoryClick = (id: string, name: string) => {
+    const categorySlugBase = name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const movieElement = document.getElementById(
+      `carousel-${categorySlugBase}-movie`,
+    );
+    const tvElement = document.getElementById(
+      `carousel-${categorySlugBase}-tv`,
+    );
+
+    const element = movieElement || tvElement;
+    if (element) {
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  };
+
+  const handleShowDetails = (media: FeaturedMovie) => {
+    // This will be handled by DiscoverContent
+  };
 
   return (
     <SubPageLayout>
@@ -23,27 +162,46 @@ export function Discover() {
 
       <PageTitle subpage k="global.pages.discover" />
 
-      <div className="relative w-full max-w-screen-xl mx-auto px-4 text-center mt-12 mb-12">
-        <div
-          className="absolute inset-0 mx-auto h-[400px] max-w-[800px] rounded-full blur-[100px] opacity-20 transform -translate-y-[100px] pointer-events-none"
-          style={{
-            backgroundImage: `linear-gradient(to right, rgba(var(--colors-buttons-purpleHover)), rgba(var(--colors-progress-filled)))`,
-          }}
-        />
-        <h1
-          className="relative text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text z-10"
-          style={{
-            backgroundImage: `linear-gradient(to right, rgba(var(--colors-buttons-purpleHover)), rgba(var(--colors-progress-filled)))`,
-          }}
-        >
-          {t("discover.page.title")}
-        </h1>
-        <p className="relative text-lg mt-4 text-gray-400 z-10">
-          {t("discover.page.subtitle")}
-        </p>
+      {/* Main background */}
+      <div className="fixed inset-0 bg-background-main" />
+
+      <div className="!mt-[-170px]">
+        {/* Featured Carousel */}
+        {featuredMedia.length > 0 && (
+          <FeaturedCarousel
+            media={featuredMedia}
+            onShowDetails={handleShowDetails}
+          />
+        )}
       </div>
 
-      <DiscoverContent />
+      {/* Random Movie Button */}
+      <RandomMovieButton
+        allMovies={Object.values(genreMovies)
+          .flat()
+          .filter((media): media is Movie => "title" in media)}
+      />
+
+      {/* Navigation */}
+      <div className="relative z-30">
+        <DiscoverNavigation
+          selectedCategory={selectedCategory}
+          selectedProvider={selectedProvider}
+          genres={genres}
+          tvGenres={tvGenres}
+          onCategoryChange={handleCategoryChange}
+          onProviderClick={handleProviderClick}
+          onCategoryClick={handleCategoryClick}
+        />
+      </div>
+
+      {/* Main Content */}
+      <div className="relative z-20">
+        <DiscoverContentWithProps
+          selectedCategory={selectedCategory}
+          selectedProvider={selectedProvider}
+        />
+      </div>
     </SubPageLayout>
   );
 }
