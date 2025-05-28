@@ -3,6 +3,8 @@ import { Helmet } from "react-helmet-async";
 import { useTranslation } from "react-i18next";
 
 import { get } from "@/backend/metadata/tmdb";
+import { DetailsModal } from "@/components/overlays/DetailsModal";
+import { useModal } from "@/components/overlays/Modal";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import {
   Genre,
@@ -71,6 +73,8 @@ export function Discover() {
   });
   const [genres, setGenres] = useState<Genre[]>([]);
   const [tvGenres, setTVGenres] = useState<Genre[]>([]);
+  const [detailsData, setDetailsData] = useState<any>();
+  const detailsModal = useModal("discover-details");
   const { genreMedia: genreMovies } = useTMDBData(genres, categories, "movie");
   const { isMobile } = useIsMobile();
   const { t } = useTranslation();
@@ -145,7 +149,11 @@ export function Discover() {
   };
 
   const handleShowDetails = (media: FeaturedMovie) => {
-    // This will be handled by DiscoverContent
+    setDetailsData({
+      id: Number(media.id),
+      type: "movie",
+    });
+    detailsModal.show();
   };
 
   return (
@@ -202,6 +210,8 @@ export function Discover() {
           selectedProvider={selectedProvider}
         />
       </div>
+
+      {detailsData && <DetailsModal id="discover-details" data={detailsData} />}
     </SubPageLayout>
   );
 }
