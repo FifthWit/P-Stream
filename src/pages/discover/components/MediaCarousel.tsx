@@ -1,5 +1,7 @@
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 
+import { Icon, Icons } from "@/components/Icon";
 import { MediaCard } from "@/components/media/MediaCard";
 import { Media } from "@/pages/discover/common";
 import { MediaItem } from "@/utils/mediaTypes";
@@ -15,6 +17,7 @@ interface MediaCarouselProps {
     [key: string]: HTMLDivElement | null;
   }>;
   onShowDetails?: (media: MediaItem) => void;
+  genreId?: number;
 }
 
 function MediaCardSkeleton() {
@@ -35,6 +38,7 @@ export function MediaCarousel({
   isMobile,
   carouselRefs,
   onShowDetails,
+  genreId,
 }: MediaCarouselProps) {
   const { t } = useTranslation();
   const categorySlug = `${category.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${isTVShow ? "tv" : "movie"}`;
@@ -105,9 +109,18 @@ export function MediaCarousel({
 
   return (
     <>
-      <h2 className="ml-2 md:ml-8 mt-2 text-2xl cursor-default font-bold text-white md:text-2xl mx-auto pl-5 text-balance">
-        {displayCategory}
-      </h2>
+      <div className="flex items-center justify-between ml-2 md:ml-8 mt-2">
+        <h2 className="text-2xl cursor-default font-bold text-white md:text-2xl pl-5 text-balance">
+          {displayCategory}
+        </h2>
+        <Link
+          to={`/discover/more/${categorySlug}${genreId ? `/${genreId}` : ""}`}
+          className="flex items-center justify-center"
+        >
+          <span className="mr-2">{t("discover.carousel.more")}</span>
+          <Icon className="text-xl" icon={Icons.ARROW_RIGHT} />
+        </Link>
+      </div>
       <div className="relative overflow-hidden carousel-container">
         <div
           id={`carousel-${categorySlug}`}

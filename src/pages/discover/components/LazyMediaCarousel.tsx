@@ -1,23 +1,27 @@
 import { useEffect, useState } from "react";
 
-import { Category, Genre, Media } from "@/pages/discover/common";
 import { useIntersectionObserver } from "@/pages/discover/hooks/useIntersectionObserver";
 import { useLazyTMDBData } from "@/pages/discover/hooks/useTMDBData";
 import { MediaItem } from "@/utils/mediaTypes";
 
 import { MediaCarousel } from "./MediaCarousel";
+import { Genre, Media, Movie, TVShow } from "../common";
 
 interface LazyMediaCarouselProps {
-  category?: Category | null;
-  genre?: Genre | null;
+  category?: {
+    name: string;
+    endpoint: string;
+  };
+  genre?: Genre;
   mediaType: "movie" | "tv";
   isMobile: boolean;
   carouselRefs: React.MutableRefObject<{
     [key: string]: HTMLDivElement | null;
   }>;
-  preloadedMedia?: Media[];
-  title?: string;
   onShowDetails?: (media: MediaItem) => void;
+  preloadedMedia?: Movie[] | TVShow[];
+  genreId?: number;
+  title?: string;
 }
 
 export function LazyMediaCarousel({
@@ -26,9 +30,10 @@ export function LazyMediaCarousel({
   mediaType,
   isMobile,
   carouselRefs,
-  preloadedMedia,
-  title,
   onShowDetails,
+  preloadedMedia,
+  genreId,
+  title,
 }: LazyMediaCarouselProps) {
   const [medias, setMedias] = useState<Media[]>([]);
 
@@ -54,16 +59,25 @@ export function LazyMediaCarousel({
     }
   }, [media, preloadedMedia]);
 
-  const categoryName = title || category?.name || genre?.name || "";
+  const categoryName = category?.name || genre?.name || title || "";
   const categorySlug = `${categoryName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${mediaType}`;
 
-  // Test intersection observer
-  // useEffect(() => {
-  //   // eslint-disable-next-line no-console
-  //   console.log(
-  //     `Carousel ${categoryName}: ${isIntersecting ? "loaded ✅" : "unloaded ❌"}`,
-  //   );
-  // }, [isIntersecting, categoryName]);
+  if (isLoading) {
+    return (
+      <div className="relative overflow-hidden carousel-container">
+        <div id={`carousel-${categorySlug}`}>
+          <h2 className="ml-2 md:ml-8 mt-2 text-2xl cursor-default font-bold text-white md:text-2xl mx-auto pl-5 text-balance">
+            {categoryName} {mediaType === "tv" ? "Shows" : "Movies"}
+          </h2>
+          <div className="flex whitespace-nowrap pt-0 pb-4 overflow-auto scrollbar rounded-xl overflow-y-hidden h-[300px] animate-pulse bg-background-secondary/20">
+            <div className="w-full text-center flex items-center justify-center">
+              {isLoading ? "Loading..." : ""}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div ref={targetRef as React.RefObject<HTMLDivElement>}>
@@ -75,6 +89,7 @@ export function LazyMediaCarousel({
           isMobile={isMobile}
           carouselRefs={carouselRefs}
           onShowDetails={onShowDetails}
+          genreId={genreId}
         />
       ) : (
         <div className="relative overflow-hidden carousel-container">
@@ -84,7 +99,7 @@ export function LazyMediaCarousel({
             </h2>
             <div className="flex whitespace-nowrap pt-0 pb-4 overflow-auto scrollbar rounded-xl overflow-y-hidden h-[300px] animate-pulse bg-background-secondary/20">
               <div className="w-full text-center flex items-center justify-center">
-                {isLoading ? "Loading..." : ""}
+                Loading...
               </div>
             </div>
           </div>

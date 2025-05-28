@@ -86,10 +86,12 @@ export function FeaturedCarousel({
               backgroundImage: `url(https://image.tmdb.org/t/p/original${item.backdrop_path})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
+              maskImage:
+                "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 100px)",
+              WebkitMaskImage:
+                "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 100px)",
             }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-t from-background-main via-background-main/50 to-transparent" />
-          </div>
+          />
         ))}
       </div>
 
@@ -136,7 +138,7 @@ export function FeaturedCarousel({
               <img
                 src={logoUrl}
                 alt={mediaTitle}
-                className="max-w-[14rem] md:max-w-[22rem] object-contain drop-shadow-lg bg-transparent mb-4"
+                className="max-w-[14rem] md:max-w-[22rem] max-h-[20dvh] object-contain drop-shadow-lg bg-transparent mb-4"
                 style={{ background: "none" }}
               />
             ) : (
@@ -149,14 +151,6 @@ export function FeaturedCarousel({
             </p>
             <div className="flex gap-4">
               <Button
-                onClick={() => onShowDetails(currentMedia)}
-                theme="secondary"
-                className="gap-2 h-12 rounded-lg px-6 py-2 transition-transform hover:scale-105 duration-100 text-md text-white flex items-center justify-center bg-buttons-purple bg-opacity-45 hover:bg-buttons-purpleHover hover:bg-opacity-25 backdrop-blur-md border-2 border-gray-400 border-opacity-20"
-              >
-                <Icon icon={Icons.CIRCLE_QUESTION} className="text-white" />
-                <span className="text-white text-sm">More Info</span>
-              </Button>
-              <Button
                 onClick={() =>
                   navigate(
                     `/media/tmdb-${currentMedia.type}-${currentMedia.id}-${mediaTitle?.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
@@ -167,6 +161,14 @@ export function FeaturedCarousel({
               >
                 <Icon icon={Icons.PLAY} className="text-white" />
                 <span className="text-white text-sm">Play Now</span>
+              </Button>
+              <Button
+                onClick={() => onShowDetails(currentMedia)}
+                theme="secondary"
+                className="gap-2 h-12 rounded-lg px-6 py-2 transition-transform hover:scale-105 duration-100 text-md text-white flex items-center justify-center bg-buttons-purple bg-opacity-45 hover:bg-buttons-purpleHover hover:bg-opacity-25 backdrop-blur-md border-2 border-gray-400 border-opacity-20"
+              >
+                <Icon icon={Icons.CIRCLE_QUESTION} className="text-white" />
+                <span className="text-white text-sm">More Info</span>
               </Button>
             </div>
           </div>

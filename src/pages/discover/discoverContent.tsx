@@ -327,6 +327,7 @@ export function DiscoverContent({
             carouselRefs={carouselRefs}
             onShowDetails={handleShowDetails}
             preloadedMedia={genreMovies?.[genre.id]}
+            genreId={genre.id}
           />
         ))}
       </>
@@ -371,6 +372,7 @@ export function DiscoverContent({
             carouselRefs={carouselRefs}
             onShowDetails={handleShowDetails}
             preloadedMedia={genreTVShows?.[genre.id]}
+            genreId={genre.id}
           />
         ))}
       </>

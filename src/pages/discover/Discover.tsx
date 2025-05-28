@@ -80,6 +80,14 @@ export function Discover() {
   const [tvGenres, setTVGenres] = useState<Genre[]>([]);
   const [detailsData, setDetailsData] = useState<any>();
   const detailsModal = useModal("discover-details");
+
+  // Clear details data when modal is closed
+  useEffect(() => {
+    if (!detailsModal.isShown) {
+      setDetailsData(undefined);
+    }
+  }, [detailsModal.isShown]);
+
   const { genreMedia: genreMovies } = useTMDBData(genres, categories, "movie");
   const { isMobile } = useIsMobile();
   const { t } = useTranslation();
@@ -229,10 +237,7 @@ export function Discover() {
 
       <PageTitle subpage k="global.pages.discover" />
 
-      {/* Main background */}
-      <div className="fixed inset-0 bg-background-main" />
-
-      <div className="!mt-[-170px] !mb-[-50px]">
+      <div className="!mt-[-170px] !mb-[-20px]">
         {/* Featured Carousel */}
         {featuredMedia.length > 0 && (
           <FeaturedCarousel
@@ -243,11 +248,11 @@ export function Discover() {
       </div>
 
       {/* Random Movie Button */}
-      <RandomMovieButton
+      {/* <RandomMovieButton
         allMovies={Object.values(genreMovies)
           .flat()
           .filter((media): media is Movie => "title" in media)}
-      />
+      /> */}
 
       {/* Navigation */}
       <div className="relative z-30">

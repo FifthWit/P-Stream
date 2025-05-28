@@ -895,7 +895,8 @@
         "popularOn": "Popular {{type}} on {{provider}}",
         "editorPicksMovies": "Editor Picks Movies",
         "editorPicksShows": "Editor Picks Shows"
-      }
+      },
+      "more": "View more"
     },
     "providers": {
       "netflix": "Netflix",
@@ -917,7 +918,8 @@
     },
     "page": {
       "title": "Discover Movies & TV",
-      "subtitle": "Explore the latest hits and timeless classics."
+      "subtitle": "Explore the latest hits and timeless classics.",
+      "back": "Go back"
     },
     "scrollToTop": "Back to top"
   },
