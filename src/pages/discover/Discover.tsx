@@ -1,13 +1,33 @@
+import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { useTranslation } from "react-i18next";
 
-import DiscoverContent from "@/pages/discover/discoverContent";
+import { DetailsModal } from "@/components/overlays/DetailsModal";
+import { useModal } from "@/components/overlays/Modal";
 
 import { SubPageLayout } from "../layouts/SubPageLayout";
+import { FeaturedCarousel } from "./components/FeaturedCarousel";
+import type { FeaturedMedia } from "./components/FeaturedCarousel";
+import DiscoverContent from "./discoverContent";
 import { PageTitle } from "../parts/util/PageTitle";
 
 export function Discover() {
-  const { t } = useTranslation();
+  const [detailsData, setDetailsData] = useState<any>();
+  const detailsModal = useModal("discover-details");
+
+  // Clear details data when modal is closed
+  useEffect(() => {
+    if (!detailsModal.isShown) {
+      setDetailsData(undefined);
+    }
+  }, [detailsModal.isShown]);
+
+  const handleShowDetails = (media: FeaturedMedia) => {
+    setDetailsData({
+      id: Number(media.id),
+      type: media.type,
+    });
+    detailsModal.show();
+  };
 
   return (
     <SubPageLayout>
@@ -23,27 +43,17 @@ export function Discover() {
 
       <PageTitle subpage k="global.pages.discover" />
 
-      <div className="relative w-full max-w-screen-xl mx-auto px-4 text-center mt-12 mb-12">
-        <div
-          className="absolute inset-0 mx-auto h-[400px] max-w-[800px] rounded-full blur-[100px] opacity-20 transform -translate-y-[100px] pointer-events-none"
-          style={{
-            backgroundImage: `linear-gradient(to right, rgba(var(--colors-buttons-purpleHover)), rgba(var(--colors-progress-filled)))`,
-          }}
-        />
-        <h1
-          className="relative text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text z-10"
-          style={{
-            backgroundImage: `linear-gradient(to right, rgba(var(--colors-buttons-purpleHover)), rgba(var(--colors-progress-filled)))`,
-          }}
-        >
-          {t("discover.page.title")}
-        </h1>
-        <p className="relative text-lg mt-4 text-gray-400 z-10">
-          {t("discover.page.subtitle")}
-        </p>
+      <div className="!mt-[-170px]">
+        {/* Featured Carousel */}
+        <FeaturedCarousel onShowDetails={handleShowDetails} />
       </div>
 
-      <DiscoverContent />
+      {/* Main Content */}
+      <div className="relative z-20">
+        <DiscoverContent />
+      </div>
+
+      {detailsData && <DetailsModal id="discover-details" data={detailsData} />}
     </SubPageLayout>
   );
 }

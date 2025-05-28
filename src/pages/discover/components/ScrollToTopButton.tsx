@@ -40,7 +40,7 @@ export function ScrollToTopButton() {
       <button
         type="button"
         onClick={scrollToTop}
-        className={`relative flex items-center justify-center space-x-2 rounded-full px-4 py-3 text-lg font-semibold text-white bg-pill-background bg-opacity-80 hover:bg-pill-backgroundHover transition-opacity hover:scale-105 duration-500 ease-in-out ${
+        className={`relative backdrop-blur-sm flex items-center justify-center space-x-2 rounded-full px-4 py-3 text-lg font-semibold text-white bg-pill-background bg-opacity-80 hover:bg-pill-backgroundHover transition-opacity hover:scale-105 duration-500 ease-in-out ${
           isVisible ? "opacity-100 visible" : "opacity-0 invisible"
         }`}
         style={{

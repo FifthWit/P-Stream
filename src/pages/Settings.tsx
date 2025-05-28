@@ -151,10 +151,16 @@ export function SettingsPage() {
   const enableDiscover = usePreferencesStore((s) => s.enableDiscover);
   const setEnableDiscover = usePreferencesStore((s) => s.setEnableDiscover);
 
+  const enableFeatured = usePreferencesStore((s) => s.enableFeatured);
+  const setEnableFeatured = usePreferencesStore((s) => s.setEnableFeatured);
+
   const enableDetailsModal = usePreferencesStore((s) => s.enableDetailsModal);
   const setEnableDetailsModal = usePreferencesStore(
     (s) => s.setEnableDetailsModal,
   );
+
+  const enableImageLogos = usePreferencesStore((s) => s.enableImageLogos);
+  const setEnableImageLogos = usePreferencesStore((s) => s.setEnableImageLogos);
 
   const enableSourceOrder = usePreferencesStore((s) => s.enableSourceOrder);
   const setEnableSourceOrder = usePreferencesStore(
@@ -201,11 +207,13 @@ export function SettingsPage() {
     enableThumbnails,
     enableAutoplay,
     enableDiscover,
+    enableFeatured,
     enableDetailsModal,
     sourceOrder,
     enableSourceOrder,
     proxyTmdb,
     enableSkipCredits,
+    enableImageLogos,
   );
 
   const availableSources = useMemo(() => {
@@ -279,7 +287,9 @@ export function SettingsPage() {
     setEnableAutoplay(state.enableAutoplay.state);
     setEnableSkipCredits(state.enableSkipCredits.state);
     setEnableDiscover(state.enableDiscover.state);
+    setEnableFeatured(state.enableFeatured.state);
     setEnableDetailsModal(state.enableDetailsModal.state);
+    setEnableImageLogos(state.enableImageLogos.state);
     setSourceOrder(state.sourceOrder.state);
     setAppLanguage(state.appLanguage.state);
     setTheme(state.theme.state);
@@ -313,7 +323,9 @@ export function SettingsPage() {
     setEnableAutoplay,
     setEnableSkipCredits,
     setEnableDiscover,
+    setEnableFeatured,
     setEnableDetailsModal,
+    setEnableImageLogos,
     setSourceOrder,
     setAppLanguage,
     setTheme,
@@ -382,8 +394,12 @@ export function SettingsPage() {
             setTheme={setThemeWithPreview}
             enableDiscover={state.enableDiscover.state}
             setEnableDiscover={state.enableDiscover.set}
+            enableFeatured={state.enableFeatured.state}
+            setEnableFeatured={state.enableFeatured.set}
             enableDetailsModal={state.enableDetailsModal.state}
             setEnableDetailsModal={state.enableDetailsModal.set}
+            enableImageLogos={state.enableImageLogos.state}
+            setEnableImageLogos={state.enableImageLogos.set}
           />
         </div>
         <div id="settings-captions" className="mt-28">

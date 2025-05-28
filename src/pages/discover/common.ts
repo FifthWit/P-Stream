@@ -29,31 +29,49 @@ export interface Genre {
 export interface Category {
   name: string;
   endpoint: string;
+  urlPath: string;
+  mediaType: "movie" | "tv";
 }
 
 // Define the categories
 export const categories: Category[] = [
   {
     name: "Now Playing",
-    endpoint: "/movie/now_playing?language=en-US",
+    endpoint: "/movie/now_playing",
+    urlPath: "now-playing",
+    mediaType: "movie",
   },
   {
     name: "Top Rated",
-    endpoint: "/movie/top_rated?language=en-US",
+    endpoint: "/movie/top_rated",
+    urlPath: "top-rated",
+    mediaType: "movie",
   },
   {
     name: "Most Popular",
-    endpoint: "/movie/popular?language=en-US",
+    endpoint: "/movie/popular",
+    urlPath: "popular",
+    mediaType: "movie",
   },
 ];
 
 export const tvCategories: Category[] = [
   {
+    name: "On The Air",
+    endpoint: "/tv/on_the_air",
+    urlPath: "on-air",
+    mediaType: "tv",
+  },
+  {
     name: "Top Rated",
-    endpoint: "/tv/top_rated?language=en-US",
+    endpoint: "/tv/top_rated",
+    urlPath: "top-rated",
+    mediaType: "tv",
   },
   {
     name: "Most Popular",
-    endpoint: "/tv/popular?language=en-US",
+    endpoint: "/tv/popular",
+    urlPath: "popular",
+    mediaType: "tv",
   },
 ];

@@ -821,5 +821,50 @@
         "episodes": "Folgen",
         "season": "Staffel",
         "runtime": "Laufzeit:"
+    },
+    "discover": {
+        "tabs": {
+            "movies": "Filme",
+            "tvshows": "Serien",
+            "editorpicks": "Empfehlungen der Redaktion"
+        },
+        "carousel": {
+            "title": {
+            "movies": "{{category}} Filme",
+            "tvshows": "{{category}} Serien",
+            "inCinemas": "Jetzt im Kino",
+            "popularOn": "Beliebte {{type}} auf {{provider}}",
+            "editorPicksMovies": "Redaktionsempfehlungen Filme",
+            "editorPicksShows": "Redaktionsempfehlungen Serien",
+            "moviesOn": "Filme auf {{provider}}",
+            "tvshowsOn": "Serien auf {{provider}}",
+            "recommended": "Weil du geschaut hast: {{title}}",
+            "genreMovies": "{{genre}} Filme",
+            "genreShows": "{{genre}} Serien",
+            "categoryMovies": "{{category}} Filme",
+            "categoryShows": "{{category}} Serien"
+            },
+            "change": "Ändern",
+            "more": "Mehr anzeigen"
+        },
+        "featured": {
+            "playNow": "Jetzt abspielen",
+            "moreInfo": "Mehr Infos"
+        },
+        "randomMovie": {
+            "button": "Zufälligen Titel abspielen",
+            "cancel": "Countdown abbrechen",
+            "countdown": "{{countdown}}s",
+            "nowPlaying": "Jetzt läuft",
+            "in": "in"
+        },
+        "page": {
+            "title": "Filme & Serien entdecken",
+            "subtitle": "Entdecke aktuelle Highlights und zeitlose Klassiker.",
+            "loadMore": "Mehr laden",
+            "loading": "Lade...",
+            "back": "Zurück"
+        },
+        "scrollToTop": "Nach oben"
     }
 }

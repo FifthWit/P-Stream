@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
 
 import { get } from "@/backend/metadata/tmdb";
 import { DetailsModal } from "@/components/overlays/DetailsModal";
@@ -9,46 +8,72 @@ import { useIsMobile } from "@/hooks/useIsMobile";
 import {
   Genre,
   Movie,
+  TVShow,
   categories,
   tvCategories,
 } from "@/pages/discover/common";
 import { conf } from "@/setup/config";
+import { useDiscoverStore } from "@/stores/discover";
 import { useLanguageStore } from "@/stores/language";
+import { ProgressMediaItem, useProgressStore } from "@/stores/progress";
 import { getTmdbLanguageCode } from "@/utils/language";
 import { MediaItem } from "@/utils/mediaTypes";
 
-import { CategoryButtons } from "./components/CategoryButtons";
+import { DiscoverNavigation } from "./components/DiscoverNavigation";
+import type { FeaturedMedia } from "./components/FeaturedCarousel";
 import { LazyMediaCarousel } from "./components/LazyMediaCarousel";
 import { LazyTabContent } from "./components/LazyTabContent";
 import { MediaCarousel } from "./components/MediaCarousel";
-import { RandomMovieButton } from "./components/RandomMovieButton";
 import { ScrollToTopButton } from "./components/ScrollToTopButton";
-import { useTMDBData } from "./hooks/useTMDBData";
 
-const MOVIE_PROVIDERS = [
+// Provider constants moved from DiscoverNavigation
+export const MOVIE_PROVIDERS = [
   { name: "Netflix", id: "8" },
   { name: "Apple TV+", id: "2" },
   { name: "Amazon Prime Video", id: "10" },
   { name: "Hulu", id: "15" },
+  { name: "Disney Plus", id: "337" },
   { name: "Max", id: "1899" },
   { name: "Paramount Plus", id: "531" },
-  { name: "Disney Plus", id: "337" },
   { name: "Shudder", id: "99" },
+  { name: "Crunchyroll", id: "283" },
+  { name: "fuboTV", id: "257" },
+  { name: "AMC+", id: "526" },
+  { name: "Starz", id: "43" },
+  { name: "PBS", id: "209" },
+  { name: "Lifetime", id: "157" },
+  { name: "National Geographic", id: "1964" },
 ];
 
-const TV_PROVIDERS = [
+export const TV_PROVIDERS = [
   { name: "Netflix", id: "8" },
   { name: "Apple TV+", id: "350" },
   { name: "Amazon Prime Video", id: "10" },
   { name: "Paramount Plus", id: "531" },
   { name: "Hulu", id: "15" },
   { name: "Max", id: "1899" },
+  { name: "Adult Swim", id: "318" },
   { name: "Disney Plus", id: "337" },
   { name: "fubuTV", id: "257" },
+  { name: "Crunchyroll", id: "283" },
+  { name: "fuboTV", id: "257" },
+  { name: "Shudder", id: "99" },
+  { name: "Discovery +", id: "520" },
+  { name: "National Geographic", id: "1964" },
+  { name: "Fox", id: "328" },
 ];
 
+const shuffleArray = <T,>(array: T[]): T[] => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
 // Editor Picks lists
-const EDITOR_PICKS_MOVIES = [
+export const EDITOR_PICKS_MOVIES = shuffleArray([
   { id: 9342, type: "movie" }, // The Mask of Zorro
   { id: 293, type: "movie" }, // A River Runs Through It
   { id: 370172, type: "movie" }, // No Time To Die
@@ -80,9 +105,9 @@ const EDITOR_PICKS_MOVIES = [
   { id: 18971, type: "movie" }, // Rosencrantz and Guildenstern Are Dead
   { id: 26388, type: "movie" }, // Buried
   { id: 152601, type: "movie" }, // Her
-];
+]);
 
-const EDITOR_PICKS_TV_SHOWS = [
+export const EDITOR_PICKS_TV_SHOWS = shuffleArray([
   { id: 456, type: "show" }, // The Simpsons
   { id: 73021, type: "show" }, // Disenchantment
   { id: 1434, type: "show" }, // Family Guy
@@ -99,41 +124,50 @@ const EDITOR_PICKS_TV_SHOWS = [
   { id: 93405, type: "show" }, // Squid Game
   { id: 87108, type: "show" }, // Chernobyl
   { id: 105248, type: "show" }, // Cyberpunk: Edgerunners
-];
+]);
 
 export function DiscoverContent() {
-  // State management
-  const [selectedCategory, setSelectedCategory] = useState("movies");
-  const [genres, setGenres] = useState<Genre[]>([]);
-  const [tvGenres, setTVGenres] = useState<Genre[]>([]);
-  const [randomMovie, setRandomMovie] = useState<Movie | null>(null);
-  const [countdown, setCountdown] = useState<number | null>(null);
-  const [countdownTimeout, setCountdownTimeout] =
-    useState<NodeJS.Timeout | null>(null);
+  const { selectedCategory, setSelectedCategory } = useDiscoverStore();
   const [selectedProvider, setSelectedProvider] = useState({
     name: "",
     id: "",
   });
+  const [selectedGenre, setSelectedGenre] = useState({
+    name: "",
+    id: "",
+  });
+  const [genres, setGenres] = useState<Genre[]>([]);
+  const [tvGenres, setTVGenres] = useState<Genre[]>([]);
   const [providerMovies, setProviderMovies] = useState<Movie[]>([]);
-  const [providerTVShows, setProviderTVShows] = useState<any[]>([]);
-  const [editorPicksMovies, setEditorPicksMovies] = useState<Movie[]>([]);
-  const [editorPicksTVShows, setEditorPicksTVShows] = useState<any[]>([]);
+  const [providerTVShows, setProviderTVShows] = useState<TVShow[]>([]);
+  const [filteredGenreMovies, setFilteredGenreMovies] = useState<Movie[]>([]);
+  const [filteredGenreTVShows, setFilteredGenreTVShows] = useState<TVShow[]>(
+    [],
+  );
   const [detailsData, setDetailsData] = useState<any>();
   const detailsModal = useModal("discover-details");
+  const [movieRecommendations, setMovieRecommendations] = useState<any[]>([]);
+  const [tvRecommendations, setTVRecommendations] = useState<any[]>([]);
+  const [movieRecommendationTitle, setMovieRecommendationTitle] = useState("");
+  const [tvRecommendationTitle, setTVRecommendationTitle] = useState("");
+  const [movieRecommendationSourceId, setMovieRecommendationSourceId] =
+    useState<string>("");
+  const [tvRecommendationSourceId, setTVRecommendationSourceId] =
+    useState<string>("");
+  const [movieRecommendationSources, setMovieRecommendationSources] = useState<
+    Array<{ id: string; title: string }>
+  >([]);
+  const [tvRecommendationSources, setTVRecommendationSources] = useState<
+    Array<{ id: string; title: string }>
+  >([]);
+  const [selectedMovieSource, setSelectedMovieSource] = useState<string>("");
+  const [selectedTVSource, setSelectedTVSource] = useState<string>("");
+  const progressStore = useProgressStore();
+  const { t } = useTranslation();
 
-  // Refs
   const carouselRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
-  // Hooks
-  const navigate = useNavigate();
   const { isMobile } = useIsMobile();
-  const { genreMedia: genreMovies } = useTMDBData(genres, categories, "movie");
-  // const { genreMedia: genreTVShows } = useTMDBData(
-  //   tvGenres,
-  //   tvCategories,
-  //   "tv",
-  // );
-  const { t } = useTranslation();
 
   const userLanguage = useLanguageStore.getState().language;
   const formattedLanguage = getTmdbLanguageCode(userLanguage);
@@ -142,6 +176,93 @@ export function DiscoverContent() {
   const isMoviesTab = selectedCategory === "movies";
   const isTVShowsTab = selectedCategory === "tvshows";
   const isEditorPicksTab = selectedCategory === "editorpicks";
+
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category as "movies" | "tvshows" | "editorpicks");
+  };
+
+  // Set initial provider when component mounts or category changes
+  useEffect(() => {
+    const providers =
+      selectedCategory === "movies" ? MOVIE_PROVIDERS : TV_PROVIDERS;
+    if (providers.length > 0 && !selectedProvider.id) {
+      setSelectedProvider({
+        name: providers[0].name,
+        id: providers[0].id,
+      });
+    }
+  }, [selectedCategory, selectedProvider.id]);
+
+  // Set initial genre when component mounts or category changes
+  useEffect(() => {
+    const genreList = selectedCategory === "movies" ? genres : tvGenres;
+    if (genreList.length > 0) {
+      // Always reset genre when switching categories to ensure we use the correct genre IDs
+      if (selectedCategory === "movies") {
+        setSelectedGenre({
+          name: genres[0].name,
+          id: genres[0].id.toString(),
+        });
+      } else if (selectedCategory === "tvshows") {
+        setSelectedGenre({
+          name: tvGenres[0].name,
+          id: tvGenres[0].id.toString(),
+        });
+      }
+    }
+  }, [selectedCategory, genres, tvGenres]);
+
+  // Fetch provider content when selectedProvider changes
+  useEffect(() => {
+    const fetchProviderContent = async () => {
+      if (!selectedProvider.id) return;
+
+      try {
+        const endpoint =
+          selectedCategory === "movies" ? "/discover/movie" : "/discover/tv";
+        const setData =
+          selectedCategory === "movies"
+            ? setProviderMovies
+            : setProviderTVShows;
+        const data = await get<any>(endpoint, {
+          api_key: conf().TMDB_READ_API_KEY,
+          with_watch_providers: selectedProvider.id,
+          watch_region: "US",
+          language: formattedLanguage,
+        });
+        setData(data.results);
+      } catch (error) {
+        console.error("Error fetching provider movies/shows:", error);
+      }
+    };
+
+    fetchProviderContent();
+  }, [selectedProvider, selectedCategory, formattedLanguage]);
+
+  // Fetch genre content when selectedGenre changes
+  useEffect(() => {
+    const fetchGenreContent = async () => {
+      if (!selectedGenre.id) return;
+      try {
+        const endpoint =
+          selectedCategory === "movies" ? "/discover/movie" : "/discover/tv";
+        const setData =
+          selectedCategory === "movies"
+            ? setFilteredGenreMovies
+            : setFilteredGenreTVShows;
+        const data = await get<any>(endpoint, {
+          api_key: conf().TMDB_READ_API_KEY,
+          with_genres: selectedGenre.id,
+          language: formattedLanguage,
+        });
+        setData(data.results);
+      } catch (error) {
+        console.error("Error fetching genre movies/shows:", error);
+      }
+    };
+
+    fetchGenreContent();
+  }, [selectedGenre, selectedCategory, formattedLanguage]);
 
   // Fetch TV show genres
   useEffect(() => {
@@ -153,8 +274,7 @@ export function DiscoverContent() {
           api_key: conf().TMDB_READ_API_KEY,
           language: formattedLanguage,
         });
-        // Fetch only the first 10 TV show genres
-        setTVGenres(data.genres.slice(0, 10));
+        setTVGenres(data.genres.slice(0, 50));
       } catch (error) {
         console.error("Error fetching TV show genres:", error);
       }
@@ -173,9 +293,7 @@ export function DiscoverContent() {
           api_key: conf().TMDB_READ_API_KEY,
           language: formattedLanguage,
         });
-
-        // Fetch only the first 12 genres
-        setGenres(data.genres.slice(0, 12));
+        setGenres(data.genres.slice(0, 50));
       } catch (error) {
         console.error("Error fetching genres:", error);
       }
@@ -199,9 +317,11 @@ export function DiscoverContent() {
         );
 
         const results = await Promise.all(moviePromises);
-        // Shuffle the results to display them randomly
-        const shuffled = [...results].sort(() => 0.5 - Math.random());
-        setEditorPicksMovies(shuffled);
+        const moviesWithType = results.map((movie) => ({
+          ...movie,
+          type: "movie" as const,
+        }));
+        setFilteredGenreMovies(moviesWithType);
       } catch (error) {
         console.error("Error fetching editor picks movies:", error);
       }
@@ -225,9 +345,11 @@ export function DiscoverContent() {
         );
 
         const results = await Promise.all(tvShowPromises);
-        // Shuffle the results to display them randomly
-        const shuffled = [...results].sort(() => 0.5 - Math.random());
-        setEditorPicksTVShows(shuffled);
+        const showsWithType = results.map((show) => ({
+          ...show,
+          type: "show" as const,
+        }));
+        setFilteredGenreTVShows(showsWithType);
       } catch (error) {
         console.error("Error fetching editor picks TV shows:", error);
       }
@@ -236,95 +358,137 @@ export function DiscoverContent() {
     fetchEditorPicksTVShows();
   }, [isEditorPicksTab, formattedLanguage]);
 
+  // Update recommendations effect to store multiple sources
   useEffect(() => {
-    let countdownInterval: NodeJS.Timeout;
-    if (countdown !== null && countdown > 0) {
-      countdownInterval = setInterval(() => {
-        setCountdown((prev) => (prev !== null ? prev - 1 : prev));
-      }, 1000);
-    }
-    return () => clearInterval(countdownInterval);
-  }, [countdown]);
+    const fetchRecommendations = async () => {
+      if (!progressStore.items || Object.keys(progressStore.items).length === 0)
+        return;
 
-  // Handlers
-  const handleCategoryChange = (
-    eventOrValue: React.ChangeEvent<HTMLSelectElement> | string,
-  ) => {
-    const value =
-      typeof eventOrValue === "string"
-        ? eventOrValue
-        : eventOrValue.target.value;
-    setSelectedCategory(value);
-  };
+      try {
+        // Get all movies and TV shows from progress
+        const progressItems = Object.entries(progressStore.items) as [
+          string,
+          ProgressMediaItem,
+        ][];
+        const movies = progressItems.filter(
+          ([_, item]) => item.type === "movie",
+        );
+        const tvShows = progressItems.filter(
+          ([_, item]) => item.type === "show",
+        );
 
-  const handleRandomMovieClick = () => {
-    const allMovies = Object.values(genreMovies).flat();
-    const uniqueTitles = new Set(allMovies.map((movie) => movie.title));
-    const uniqueTitlesArray = Array.from(uniqueTitles);
-    const randomIndex = Math.floor(Math.random() * uniqueTitlesArray.length);
-    const selectedMovie = allMovies.find(
-      (movie) => movie.title === uniqueTitlesArray[randomIndex],
-    );
+        // Store all movie sources
+        if (movies.length > 0) {
+          const movieSources = movies.map(([id, item]) => ({
+            id,
+            title: item.title || "",
+          }));
+          setMovieRecommendationSources(movieSources);
 
-    if (selectedMovie) {
-      if (countdown !== null && countdown > 0) {
-        setCountdown(null);
-        if (countdownTimeout) {
-          clearTimeout(countdownTimeout);
-          setCountdownTimeout(null);
-          setRandomMovie(null);
+          // Set initial source if not set
+          if (!selectedMovieSource && movieSources.length > 0) {
+            setSelectedMovieSource(movieSources[0].id);
+          }
         }
-      } else {
-        setRandomMovie(selectedMovie as Movie);
-        setCountdown(5);
-        const timeoutId = setTimeout(() => {
-          navigate(`/media/tmdb-movie-${selectedMovie.id}-discover-random`);
-        }, 5000);
-        setCountdownTimeout(timeoutId);
+
+        // Store all TV show sources
+        if (tvShows.length > 0) {
+          const tvSources = tvShows.map(([id, item]) => ({
+            id,
+            title: item.title || "",
+          }));
+          setTVRecommendationSources(tvSources);
+
+          // Set initial source if not set
+          if (!selectedTVSource && tvSources.length > 0) {
+            setSelectedTVSource(tvSources[0].id);
+          }
+        }
+      } catch (error) {
+        console.error("Error setting up recommendation sources:", error);
       }
-    }
-  };
+    };
 
-  const handleProviderClick = async (id: string, name: string) => {
-    try {
-      setSelectedProvider({ name, id });
-      const endpoint =
-        selectedCategory === "movies" ? "/discover/movie" : "/discover/tv";
-      const setData =
-        selectedCategory === "movies" ? setProviderMovies : setProviderTVShows;
-      const data = await get<any>(endpoint, {
-        api_key: conf().TMDB_READ_API_KEY,
-        with_watch_providers: id,
-        watch_region: "US",
-        language: formattedLanguage,
-      });
-      setData(data.results);
-    } catch (error) {
-      console.error("Error fetching provider movies/shows:", error);
-    }
-  };
+    fetchRecommendations();
+  }, [progressStore.items, selectedMovieSource, selectedTVSource]);
 
-  const handleCategoryClick = (id: string, name: string) => {
-    // Try both movie and tv versions of the category slug
-    const categorySlugBase = name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-    const movieElement = document.getElementById(
-      `carousel-${categorySlugBase}-movie`,
-    );
-    const tvElement = document.getElementById(
-      `carousel-${categorySlugBase}-tv`,
-    );
+  // Add new effect to fetch recommendations when source changes
+  useEffect(() => {
+    const fetchRecommendationsForSource = async () => {
+      if (!selectedMovieSource && !selectedTVSource) return;
 
-    // Scroll to the first element that exists
-    const element = movieElement || tvElement;
-    if (element) {
-      element.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-    }
-  };
+      try {
+        // Fetch movie recommendations if we have a selected movie source
+        if (selectedMovieSource) {
+          const movieResults = await get<any>(
+            `/movie/${selectedMovieSource}/recommendations`,
+            {
+              api_key: conf().TMDB_READ_API_KEY,
+              language: formattedLanguage,
+            },
+          );
 
-  const handleShowDetails = async (media: MediaItem) => {
+          if (movieResults.results?.length > 0) {
+            setMovieRecommendations(movieResults.results);
+            const sourceMovie = movieRecommendationSources.find(
+              (m) => m.id === selectedMovieSource,
+            );
+            if (sourceMovie) {
+              setMovieRecommendationTitle(
+                t("discover.carousel.title.recommended", {
+                  title: sourceMovie.title,
+                }),
+              );
+              setMovieRecommendationSourceId(selectedMovieSource);
+            }
+          }
+        }
+
+        // Fetch TV show recommendations if we have a selected TV source
+        if (selectedTVSource) {
+          const tvResults = await get<any>(
+            `/tv/${selectedTVSource}/recommendations`,
+            {
+              api_key: conf().TMDB_READ_API_KEY,
+              language: formattedLanguage,
+            },
+          );
+
+          if (tvResults.results?.length > 0) {
+            setTVRecommendations(tvResults.results);
+            const sourceTV = tvRecommendationSources.find(
+              (show) => show.id === selectedTVSource,
+            );
+            if (sourceTV) {
+              setTVRecommendationTitle(
+                t("discover.carousel.title.recommended", {
+                  title: sourceTV.title,
+                }),
+              );
+              setTVRecommendationSourceId(selectedTVSource);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching recommendations:", error);
+      }
+    };
+
+    fetchRecommendationsForSource();
+  }, [
+    selectedMovieSource,
+    selectedTVSource,
+    movieRecommendationSources,
+    tvRecommendationSources,
+    formattedLanguage,
+    setMovieRecommendationTitle,
+    setTVRecommendationTitle,
+    setMovieRecommendationSourceId,
+    setTVRecommendationSourceId,
+    t,
+  ]);
+
+  const handleShowDetails = async (media: MediaItem | FeaturedMedia) => {
     setDetailsData({
       id: Number(media.id),
       type: media.type === "movie" ? "movie" : "show",
@@ -337,20 +501,22 @@ export function DiscoverContent() {
     return (
       <>
         <LazyMediaCarousel
-          preloadedMedia={editorPicksMovies}
+          preloadedMedia={filteredGenreMovies}
           title="Editor Picks"
           mediaType="movie"
           isMobile={isMobile}
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
+          moreContent
         />
         <LazyMediaCarousel
-          preloadedMedia={editorPicksTVShows}
+          preloadedMedia={filteredGenreTVShows}
           title="Editor Picks"
           mediaType="tv"
           isMobile={isMobile}
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
+          moreContent
         />
       </>
     );
@@ -360,41 +526,86 @@ export function DiscoverContent() {
   const renderMoviesContent = () => {
     return (
       <>
-        {/* Provider Movies */}
-        {providerMovies.length > 0 && (
+        {/* Movie Recommendations */}
+        {movieRecommendations.length > 0 && (
           <MediaCarousel
-            medias={providerMovies}
-            category={selectedProvider.name}
+            medias={movieRecommendations}
+            category={movieRecommendationTitle}
             isTVShow={false}
             isMobile={isMobile}
             carouselRefs={carouselRefs}
             onShowDetails={handleShowDetails}
+            moreLink={`/discover/more/recommendations/${movieRecommendationSourceId}/movie`}
+            moreContent
+            recommendationSources={movieRecommendationSources}
+            selectedRecommendationSource={selectedMovieSource}
+            onRecommendationSourceChange={setSelectedMovieSource}
           />
         )}
 
-        {/* Categories */}
-        {categories.map((category) => (
-          <LazyMediaCarousel
-            key={category.name}
-            category={category}
-            mediaType="movie"
-            isMobile={isMobile}
-            carouselRefs={carouselRefs}
-            onShowDetails={handleShowDetails}
-          />
-        ))}
+        {/* In Cinemas */}
+        <LazyMediaCarousel
+          category={categories[0]}
+          mediaType="movie"
+          isMobile={isMobile}
+          carouselRefs={carouselRefs}
+          onShowDetails={handleShowDetails}
+          moreContent
+        />
 
-        {/* Genres */}
-        {genres.map((genre) => (
-          <LazyMediaCarousel
-            key={genre.id}
-            genre={genre}
-            mediaType="movie"
-            isMobile={isMobile}
-            carouselRefs={carouselRefs}
-            onShowDetails={handleShowDetails}
-          />
-        ))}
+        {/* Top Rated */}
+        <LazyMediaCarousel
+          category={categories[1]}
+          mediaType="movie"
+          isMobile={isMobile}
+          carouselRefs={carouselRefs}
+          onShowDetails={handleShowDetails}
+          moreContent
+        />
+
+        {/* Popular */}
+        <LazyMediaCarousel
+          category={categories[2]}
+          mediaType="movie"
+          isMobile={isMobile}
+          carouselRefs={carouselRefs}
+          onShowDetails={handleShowDetails}
+          moreContent
+        />
+
+        {/* Provider Movies */}
+        <MediaCarousel
+          medias={providerMovies}
+          category={`Movies on ${selectedProvider.name || ""}`}
+          isTVShow={false}
+          isMobile={isMobile}
+          carouselRefs={carouselRefs}
+          onShowDetails={handleShowDetails}
+          relatedButtons={MOVIE_PROVIDERS.map((p) => ({
+            name: p.name,
+            id: p.id,
+          }))}
+          onButtonClick={(id, name) => setSelectedProvider({ id, name })}
+          moreLink={`/discover/more/provider/${selectedProvider.id}/movie`}
+          moreContent
+        />
+
+        {/* Genre Movies */}
+        <MediaCarousel
+          medias={filteredGenreMovies}
+          category={`${selectedGenre.name || ""}`}
+          isTVShow={false}
+          isMobile={isMobile}
+          carouselRefs={carouselRefs}
+          onShowDetails={handleShowDetails}
+          relatedButtons={genres.map((g) => ({
+            name: g.name,
+            id: g.id.toString(),
+          }))}
+          onButtonClick={(id, name) => setSelectedGenre({ id, name })}
+          moreLink={`/discover/more/genre/${selectedGenre.id}/movie`}
+          moreContent
+        />
       </>
     );
   };
@@ -403,106 +614,96 @@ export function DiscoverContent() {
   const renderTVShowsContent = () => {
     return (
       <>
-        {/* Provider TV Shows */}
-        {providerTVShows.length > 0 && (
+        {/* TV Show Recommendations */}
+        {tvRecommendations.length > 0 && (
           <MediaCarousel
-            medias={providerTVShows}
-            category={selectedProvider.name}
+            medias={tvRecommendations}
+            category={tvRecommendationTitle}
             isTVShow
             isMobile={isMobile}
             carouselRefs={carouselRefs}
             onShowDetails={handleShowDetails}
+            moreLink={`/discover/more/recommendations/${tvRecommendationSourceId}/tv`}
+            moreContent
+            recommendationSources={tvRecommendationSources}
+            selectedRecommendationSource={selectedTVSource}
+            onRecommendationSourceChange={setSelectedTVSource}
           />
         )}
 
-        {/* Categories */}
-        {tvCategories.map((category) => (
-          <LazyMediaCarousel
-            key={category.name}
-            category={category}
-            mediaType="tv"
-            isMobile={isMobile}
-            carouselRefs={carouselRefs}
-            onShowDetails={handleShowDetails}
-          />
-        ))}
+        {/* On Air */}
+        <LazyMediaCarousel
+          category={tvCategories[0]}
+          mediaType="tv"
+          isMobile={isMobile}
+          carouselRefs={carouselRefs}
+          onShowDetails={handleShowDetails}
+          moreContent
+        />
 
-        {/* Genres */}
-        {tvGenres.map((genre) => (
-          <LazyMediaCarousel
-            key={genre.id}
-            genre={genre}
-            mediaType="tv"
-            isMobile={isMobile}
-            carouselRefs={carouselRefs}
-            onShowDetails={handleShowDetails}
-          />
-        ))}
+        {/* Top Rated */}
+        <LazyMediaCarousel
+          category={tvCategories[1]}
+          mediaType="tv"
+          isMobile={isMobile}
+          carouselRefs={carouselRefs}
+          onShowDetails={handleShowDetails}
+          moreContent
+        />
+
+        {/* Popular */}
+        <LazyMediaCarousel
+          category={tvCategories[2]}
+          mediaType="tv"
+          isMobile={isMobile}
+          carouselRefs={carouselRefs}
+          onShowDetails={handleShowDetails}
+          moreContent
+        />
+
+        {/* Provider TV Shows */}
+        <MediaCarousel
+          medias={providerTVShows}
+          category={`Shows on ${selectedProvider.name || ""}`}
+          isTVShow
+          isMobile={isMobile}
+          carouselRefs={carouselRefs}
+          onShowDetails={handleShowDetails}
+          relatedButtons={TV_PROVIDERS.map((p) => ({
+            name: p.name,
+            id: p.id,
+          }))}
+          onButtonClick={(id, name) => setSelectedProvider({ id, name })}
+          moreLink={`/discover/more/provider/${selectedProvider.id}/tv`}
+          moreContent
+        />
+
+        {/* Genre TV Shows */}
+        <MediaCarousel
+          medias={filteredGenreTVShows}
+          category={`${selectedGenre.name || ""}`}
+          isTVShow
+          isMobile={isMobile}
+          carouselRefs={carouselRefs}
+          onShowDetails={handleShowDetails}
+          relatedButtons={tvGenres.map((g) => ({
+            name: g.name,
+            id: g.id.toString(),
+          }))}
+          onButtonClick={(id, name) => setSelectedGenre({ id, name })}
+          moreLink={`/discover/more/genre/${selectedGenre.id}/tv`}
+          moreContent
+        />
       </>
     );
   };
 
   return (
-    <div className="pt-6">
-      {/* Random Movie Button */}
-      <RandomMovieButton
-        countdown={countdown}
-        onClick={handleRandomMovieClick}
-        randomMovieTitle={randomMovie ? randomMovie.title : null}
+    <div className="relative min-h-screen">
+      <DiscoverNavigation
+        selectedCategory={selectedCategory}
+        onCategoryChange={handleCategoryChange}
       />
-
-      {/* Category Tabs */}
-      <div className="mt-8 pb-2 w-full max-w-screen-xl mx-auto">
-        <div className="relative flex justify-center mb-4">
-          <div className="flex space-x-4">
-            {["movies", "tvshows", "editorpicks"].map((category) => (
-              <button
-                key={category}
-                type="button"
-                className={`text-xl md:text-2xl font-bold p-2 bg-transparent text-center rounded-full cursor-pointer flex items-center transition-transform duration-200 ${
-                  selectedCategory === category
-                    ? "transform scale-105 text-type-link"
-                    : "text-type-secondary"
-                }`}
-                onClick={() => handleCategoryChange(category)}
-              >
-                {t(`discover.tabs.${category}`)}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Only show provider and genre buttons for movies and tvshows categories */}
-        {selectedCategory !== "editorpicks" && (
-          <>
-            <div className="flex justify-center overflow-x-auto">
-              <CategoryButtons
-                categories={
-                  selectedCategory === "movies" ? MOVIE_PROVIDERS : TV_PROVIDERS
-                }
-                onCategoryClick={handleProviderClick}
-                categoryType="providers"
-                isMobile={isMobile}
-                showAlwaysScroll={false}
-              />
-            </div>
-            <div className="flex overflow-x-auto">
-              <CategoryButtons
-                categories={
-                  selectedCategory === "movies"
-                    ? [...categories, ...genres]
-                    : [...tvCategories, ...tvGenres]
-                }
-                onCategoryClick={handleCategoryClick}
-                categoryType="movies"
-                isMobile={isMobile}
-                showAlwaysScroll
-              />
-            </div>
-          </>
-        )}
-      </div>
-
       {/* Content Section with Lazy Loading Tabs */}
       <div className="w-full md:w-[90%] max-w-[2400px] mx-auto">
         {/* Movies Tab */}

@@ -16,6 +16,7 @@ import { AboutPage } from "@/pages/About";
 import { AdminPage } from "@/pages/admin/AdminPage";
 import VideoTesterView from "@/pages/developer/VideoTesterView";
 import { Discover } from "@/pages/discover/Discover";
+import { MoreContent } from "@/pages/discover/MoreContent";
 import { DmcaPage } from "@/pages/Dmca";
 import MaintenancePage from "@/pages/errors/MaintenancePage";
 import { NotFoundPage } from "@/pages/errors/NotFoundPage";
@@ -166,8 +167,16 @@ function App() {
           {/* Support page */}
           <Route path="/support" element={<SupportPage />} />
           <Route path="/jip" element={<JipPage />} />
-          {/* Discover page */}
+          {/* Discover pages */}
           <Route path="/discover" element={<Discover />} />
+          <Route
+            path="/discover/more/:type/:id/:mediaType"
+            element={<MoreContent />}
+          />
+          <Route
+            path="/discover/more/:category/:genreId?"
+            element={<MoreContent />}
+          />
           {/* Settings page */}
           <Route
             path="/settings"

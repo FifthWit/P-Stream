@@ -9,6 +9,8 @@ import { useModal } from "@/components/overlays/Modal";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useRandomTranslation } from "@/hooks/useRandomTranslation";
 import { useSearchQuery } from "@/hooks/useSearchQuery";
+import { FeaturedCarousel } from "@/pages/discover/components/FeaturedCarousel";
+import type { FeaturedMedia } from "@/pages/discover/components/FeaturedCarousel";
 import DiscoverContent from "@/pages/discover/discoverContent";
 import { HomeLayout } from "@/pages/layouts/HomeLayout";
 import { BookmarksPart } from "@/pages/parts/home/BookmarksPart";
@@ -16,10 +18,12 @@ import { HeroPart } from "@/pages/parts/home/HeroPart";
 import { WatchingPart } from "@/pages/parts/home/WatchingPart";
 import { SearchListPart } from "@/pages/parts/search/SearchListPart";
 import { SearchLoadingPart } from "@/pages/parts/search/SearchLoadingPart";
+import { conf } from "@/setup/config";
 import { usePreferencesStore } from "@/stores/preferences";
 import { MediaItem } from "@/utils/mediaTypes";
 
 import { Button } from "./About";
+import { AdsPart } from "./parts/home/AdsPart";
 
 function useSearch(search: string) {
   const [searching, setSearching] = useState<boolean>(false);
@@ -29,6 +33,9 @@ function useSearch(search: string) {
   useEffect(() => {
     setSearching(search !== "");
     setLoading(search !== "");
+    if (search !== "") {
+      window.scrollTo(0, 0);
+    }
   }, [search]);
   useEffect(() => {
     setLoading(false);
@@ -54,17 +61,16 @@ export function HomePage() {
   const [showBookmarks, setShowBookmarks] = useState(false);
   const [showWatching, setShowWatching] = useState(false);
   const [detailsData, setDetailsData] = useState<any>();
-  // const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const detailsModal = useModal("details");
+  const enableDiscover = usePreferencesStore((state) => state.enableDiscover);
+  const enableFeatured = usePreferencesStore((state) => state.enableFeatured);
 
   const handleClick = (path: To) => {
     window.scrollTo(0, 0);
     navigate(path);
   };
 
-  const enableDiscover = usePreferencesStore((state) => state.enableDiscover);
-
-  const handleShowDetails = async (media: MediaItem) => {
+  const handleShowDetails = async (media: MediaItem | FeaturedMedia) => {
     setDetailsData({
       id: Number(media.id),
       type: media.type === "movie" ? "movie" : "show",
@@ -89,7 +95,7 @@ export function HomePage() {
           <span className="font-bold select-none">READ</span>
         </IconPill>
       </a> */}
-      <div className="mb-16 sm:mb-24">
+      <div className="mb-2">
         <Helmet>
           <style type="text/css">{`
             html, body {
@@ -190,8 +196,27 @@ export function HomePage() {
           </div>
         </FancyModal>
         */}
-
-        <HeroPart searchParams={searchParams} setIsSticky={setShowBg} />
+        {enableFeatured ? (
+          <FeaturedCarousel
+            forcedCategory="editorpicks"
+            onShowDetails={handleShowDetails}
+            searching={s.searching}
+            shorter
+          >
+            <HeroPart
+              searchParams={searchParams}
+              setIsSticky={setShowBg}
+              isInFeatured
+            />
+          </FeaturedCarousel>
+        ) : (
+          <HeroPart
+            searchParams={searchParams}
+            setIsSticky={setShowBg}
+            showTitle
+          />
+        )}
+        {conf().SHOW_AD ? <AdsPart /> : null}
       </div>
       <WideContainer>
         {s.loading ? (
@@ -214,24 +239,35 @@ export function HomePage() {
           </div>
         )}
         {!(showBookmarks || showWatching) && !enableDiscover ? (
-          <div className="flex flex-col translate-y-[-30px] items-center justify-center">
+          <div className="flex flex-col translate-y-[-30px] items-center justify-center pt-20">
             <p className="text-[18.5px] pb-3">{emptyText}</p>
           </div>
         ) : null}
+        {enableDiscover &&
+          (enableFeatured ? (
+            <div className="pb-4" />
+          ) : showBookmarks || showWatching ? (
+            <div className="pb-10" />
+          ) : (
+            <div className="pb-20" />
+          ))}
+        {/* there... perfect. */}
       </WideContainer>
-      {enableDiscover ? (
-        <div className="pt-12 w-full max-w-[100dvw] justify-center items-center">
+      {enableDiscover && !search ? (
+        <div className="w-full max-w-[100dvw] justify-center items-center">
           <DiscoverContent />
         </div>
       ) : (
         <div className="flex flex-col justify-center items-center h-40 space-y-4">
           <div className="flex flex-col items-center justify-center">
-            <Button
-              className="px-py p-[0.35em] mt-3 rounded-xl text-type-dimmed box-content text-[18px] bg-largeCard-background justify-center items-center"
-              onClick={() => handleClick("/discover")}
-            >
-              {t("home.search.discover")}
-            </Button>
+            {!search && (
+              <Button
+                className="px-py p-[0.35em] mt-3 rounded-xl text-type-dimmed box-content text-[18px] bg-largeCard-background justify-center items-center"
+                onClick={() => handleClick("/discover")}
+              >
+                {t("home.search.discover")}
+              </Button>
+            )}
           </div>
         </div>
       )}

@@ -54,11 +54,13 @@ export function useSettingsState(
   enableThumbnails: boolean,
   enableAutoplay: boolean,
   enableDiscover: boolean,
+  enableFeatured: boolean,
   enableDetailsModal: boolean,
   sourceOrder: string[],
   enableSourceOrder: boolean,
   proxyTmdb: boolean,
   enableSkipCredits: boolean,
+  enableImageLogos: boolean,
 ) {
   const [proxyUrlsState, setProxyUrls, resetProxyUrls, proxyUrlsChanged] =
     useDerived(proxyUrls);
@@ -117,11 +119,23 @@ export function useSettingsState(
     enableDiscoverChanged,
   ] = useDerived(enableDiscover);
   const [
+    enableFeaturedState,
+    setEnableFeaturedState,
+    resetEnableFeatured,
+    enableFeaturedChanged,
+  ] = useDerived(enableFeatured);
+  const [
     enableDetailsModalState,
     setEnableDetailsModalState,
     resetEnableDetailsModal,
     enableDetailsModalChanged,
   ] = useDerived(enableDetailsModal);
+  const [
+    enableImageLogosState,
+    setEnableImageLogosState,
+    resetEnableImageLogos,
+    enableImageLogosChanged,
+  ] = useDerived(enableImageLogos);
   const [
     sourceOrderState,
     setSourceOrderState,
@@ -151,7 +165,9 @@ export function useSettingsState(
     resetEnableAutoplay();
     resetEnableSkipCredits();
     resetEnableDiscover();
+    resetEnableFeatured();
     resetEnableDetailsModal();
+    resetEnableImageLogos();
     resetSourceOrder();
     resetEnableSourceOrder();
     resetProxyTmdb();
@@ -170,7 +186,9 @@ export function useSettingsState(
     enableAutoplayChanged ||
     enableSkipCreditsChanged ||
     enableDiscoverChanged ||
+    enableFeaturedChanged ||
     enableDetailsModalChanged ||
+    enableImageLogosChanged ||
     sourceOrderChanged ||
     enableSourceOrderChanged ||
     proxyTmdbChanged;
@@ -238,10 +256,20 @@ export function useSettingsState(
       set: setEnableDiscoverState,
       changed: enableDiscoverChanged,
     },
+    enableFeatured: {
+      state: enableFeaturedState,
+      set: setEnableFeaturedState,
+      changed: enableFeaturedChanged,
+    },
     enableDetailsModal: {
       state: enableDetailsModalState,
       set: setEnableDetailsModalState,
       changed: enableDetailsModalChanged,
+    },
+    enableImageLogos: {
+      state: enableImageLogosState,
+      set: setEnableImageLogosState,
+      changed: enableImageLogosChanged,
     },
     sourceOrder: {
       state: sourceOrderState,
