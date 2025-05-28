@@ -24,8 +24,17 @@ import { LazyTabContent } from "./components/LazyTabContent";
 import { MediaCarousel } from "./components/MediaCarousel";
 import { ScrollToTopButton } from "./components/ScrollToTopButton";
 
+const shuffleArray = <T,>(array: T[]): T[] => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
 // Editor Picks lists
-export const EDITOR_PICKS_MOVIES = [
+export const EDITOR_PICKS_MOVIES = shuffleArray([
   { id: 9342, type: "movie" }, // The Mask of Zorro
   { id: 293, type: "movie" }, // A River Runs Through It
   { id: 370172, type: "movie" }, // No Time To Die
@@ -57,9 +66,9 @@ export const EDITOR_PICKS_MOVIES = [
   { id: 18971, type: "movie" }, // Rosencrantz and Guildenstern Are Dead
   { id: 26388, type: "movie" }, // Buried
   { id: 152601, type: "movie" }, // Her
-];
+]);
 
-export const EDITOR_PICKS_TV_SHOWS = [
+export const EDITOR_PICKS_TV_SHOWS = shuffleArray([
   { id: 456, type: "show" }, // The Simpsons
   { id: 73021, type: "show" }, // Disenchantment
   { id: 1434, type: "show" }, // Family Guy
@@ -76,7 +85,7 @@ export const EDITOR_PICKS_TV_SHOWS = [
   { id: 93405, type: "show" }, // Squid Game
   { id: 87108, type: "show" }, // Chernobyl
   { id: 105248, type: "show" }, // Cyberpunk: Edgerunners
-];
+]);
 
 interface DiscoverContentProps {
   selectedCategory?: string;

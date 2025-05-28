@@ -232,7 +232,7 @@ export function Discover() {
       {/* Main background */}
       <div className="fixed inset-0 bg-background-main" />
 
-      <div className="!mt-[-170px]">
+      <div className="!mt-[-170px] !mb-[-50px]">
         {/* Featured Carousel */}
         {featuredMedia.length > 0 && (
           <FeaturedCarousel
