@@ -17,6 +17,8 @@ import { useLanguageStore } from "@/stores/language";
 import { getTmdbLanguageCode } from "@/utils/language";
 import { MediaItem } from "@/utils/mediaTypes";
 
+import { EDITOR_PICKS_MOVIES, EDITOR_PICKS_TV_SHOWS } from "./discoverContent";
+
 interface MoreContentProps {
   onShowDetails?: (media: MediaItem) => void;
 }
@@ -89,6 +91,26 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
       try {
         const isTVShow = category?.includes("tv");
         let endpoint = "";
+
+        // Handle editor picks separately
+        if (category?.includes("editor-picks")) {
+          const editorPicks = isTVShow
+            ? EDITOR_PICKS_TV_SHOWS
+            : EDITOR_PICKS_MOVIES;
+
+          // Fetch details for all editor picks
+          const promises = editorPicks.map((item) =>
+            get<any>(`/${isTVShow ? "tv" : "movie"}/${item.id}`, {
+              api_key: conf().TMDB_READ_API_KEY,
+              language: formattedLanguage,
+            }),
+          );
+
+          const results = await Promise.all(promises);
+          setMedias(results);
+          setLoading(false);
+          return;
+        }
 
         // Determine the correct endpoint based on the category
         if (category?.includes("now-playing")) {
