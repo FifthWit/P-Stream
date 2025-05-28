@@ -288,6 +288,7 @@ export function DiscoverContent({
             isMobile={isMobile}
             carouselRefs={carouselRefs}
             onShowDetails={handleShowDetails}
+            moreContent
           />
         )}
 
@@ -333,6 +334,7 @@ export function DiscoverContent({
             isMobile={isMobile}
             carouselRefs={carouselRefs}
             onShowDetails={handleShowDetails}
+            moreContent
           />
         )}
 

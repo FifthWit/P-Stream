@@ -18,6 +18,7 @@ interface MediaCarouselProps {
   }>;
   onShowDetails?: (media: MediaItem) => void;
   genreId?: number;
+  moreContent?: boolean;
 }
 
 function MediaCardSkeleton() {
@@ -39,6 +40,7 @@ export function MediaCarousel({
   carouselRefs,
   onShowDetails,
   genreId,
+  moreContent,
 }: MediaCarouselProps) {
   const { t } = useTranslation();
   const categorySlug = `${category.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${isTVShow ? "tv" : "movie"}`;
@@ -113,13 +115,15 @@ export function MediaCarousel({
         <h2 className="text-2xl cursor-default font-bold text-white md:text-2xl pl-5 text-balance">
           {displayCategory}
         </h2>
-        <Link
-          to={`/discover/more/${categorySlug}${genreId ? `/${genreId}` : ""}`}
-          className="flex items-center justify-center mx-4"
-        >
-          <span className="mr-2">{t("discover.carousel.more")}</span>
-          <Icon className="text-xl" icon={Icons.ARROW_RIGHT} />
-        </Link>
+        {!moreContent && (
+          <Link
+            to={`/discover/more/${categorySlug}${genreId ? `/${genreId}` : ""}`}
+            className="flex items-center justify-center mx-4"
+          >
+            <span className="mr-2">{t("discover.carousel.more")}</span>
+            <Icon className="text-xl" icon={Icons.ARROW_RIGHT} />
+          </Link>
+        )}
       </div>
       <div className="relative overflow-hidden carousel-container">
         <div
