@@ -919,6 +919,8 @@
     "page": {
       "title": "Discover Movies & TV",
       "subtitle": "Explore the latest hits and timeless classics.",
+      "loadMore": "Load more",
+      "loading": "Loading...",
       "back": "Go back"
     },
     "scrollToTop": "Back to top"

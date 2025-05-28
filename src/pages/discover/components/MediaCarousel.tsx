@@ -115,7 +115,7 @@ export function MediaCarousel({
         </h2>
         <Link
           to={`/discover/more/${categorySlug}${genreId ? `/${genreId}` : ""}`}
-          className="flex items-center justify-center"
+          className="flex items-center justify-center mx-4"
         >
           <span className="mr-2">{t("discover.carousel.more")}</span>
           <Icon className="text-xl" icon={Icons.ARROW_RIGHT} />

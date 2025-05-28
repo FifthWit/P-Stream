@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { get } from "@/backend/metadata/tmdb";
+import { Button } from "@/components/buttons/Button";
 import { Icon, Icons } from "@/components/Icon";
 import { WideContainer } from "@/components/layout/WideContainer";
 import { MediaCard } from "@/components/media/MediaCard";
@@ -25,6 +26,9 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
   const { category, genreId } = useParams();
   const [medias, setMedias] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [detailsData, setDetailsData] = useState<any>();
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -86,9 +90,8 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
       : t("discover.carousel.title.movies", { category: capitalizedCategory });
   }
 
-  useEffect(() => {
-    const fetchMoreContent = async () => {
-      setLoading(true);
+  const fetchContent = useCallback(
+    async (page: number, append: boolean = false) => {
       try {
         const isTVShow = category?.includes("tv");
         let endpoint = "";
@@ -109,7 +112,7 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
 
           const results = await Promise.all(promises);
           setMedias(results);
-          setLoading(false);
+          setHasMore(false);
           return;
         }
 
@@ -125,13 +128,14 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
         }
 
         const allResults: any[] = [];
-        const pagesToFetch = 10; // Fetch 10 pages to get ~200 items (20 per page)
+        const pagesToFetch = 2; // Fetch 2 pages at a time
 
-        for (let page = 1; page <= pagesToFetch; page += 1) {
+        for (let i = 0; i < pagesToFetch; i += 1) {
+          const currentPageNum = page + i;
           const params: any = {
             api_key: conf().TMDB_READ_API_KEY,
             language: formattedLanguage,
-            page,
+            page: currentPageNum,
           };
 
           if (genreId) {
@@ -140,18 +144,43 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
 
           const data = await get<any>(endpoint, params);
           allResults.push(...data.results);
+
+          // Check if we've reached the end
+          if (currentPageNum >= data.total_pages) {
+            setHasMore(false);
+            break;
+          }
         }
 
-        setMedias(allResults);
+        if (append) {
+          setMedias((prev) => [...prev, ...allResults]);
+        } else {
+          setMedias(allResults);
+        }
       } catch (error) {
-        console.error("Error fetching more content:", error);
-      } finally {
-        setLoading(false);
+        console.error("Error fetching content:", error);
       }
+    },
+    [category, genreId, formattedLanguage],
+  );
+
+  useEffect(() => {
+    const loadInitialContent = async () => {
+      setLoading(true);
+      await fetchContent(1);
+      setLoading(false);
     };
 
-    fetchMoreContent();
-  }, [category, genreId, formattedLanguage]);
+    loadInitialContent();
+  }, [category, genreId, formattedLanguage, fetchContent]);
+
+  const handleLoadMore = async () => {
+    setLoadingMore(true);
+    const nextPage = currentPage + 2;
+    await fetchContent(nextPage, true);
+    setCurrentPage(nextPage);
+    setLoadingMore(false);
+  };
 
   const getDisplayTitle = () => {
     if (!category) return "";
@@ -226,6 +255,19 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
             </div>
           ))}
         </div>
+        {hasMore && (
+          <div className="flex justify-center mt-8">
+            <Button
+              theme="purple"
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+            >
+              {loadingMore
+                ? t("discover.page.loading")
+                : t("discover.page.loadMore")}
+            </Button>
+          </div>
+        )}
       </WideContainer>
       {detailsData && <DetailsModal id="discover-details" data={detailsData} />}
     </SubPageLayout>

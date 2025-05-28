@@ -27,6 +27,8 @@ export function FeaturedCarousel({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [logoUrl, setLogoUrl] = useState<string | undefined>();
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const autoPlayInterval = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
 
@@ -36,6 +38,32 @@ export function FeaturedCarousel({
 
   const handleNextSlide = () => {
     setCurrentIndex((prev) => (prev + 1) % media.length);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+
+    const distance = touchStart - touchEnd;
+    const minSwipeDistance = 50;
+
+    if (Math.abs(distance) > minSwipeDistance) {
+      if (distance > 0) {
+        handleNextSlide();
+      } else {
+        handlePrevSlide();
+      }
+    }
+
+    setTouchStart(null);
+    setTouchEnd(null);
   };
 
   // Fetch logo when current media changes
@@ -73,7 +101,12 @@ export function FeaturedCarousel({
   const mediaTitle = currentMedia.title || currentMedia.name;
 
   return (
-    <div className="relative h-[80vh] w-full overflow-hidden">
+    <div
+      className="relative h-[80vh] w-full overflow-hidden"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       <div className="relative w-full h-full">
         {media.map((item, index) => (
           <div
