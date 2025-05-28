@@ -53,7 +53,6 @@ export function FeaturedCarousel({
     fetchLogo();
   }, [currentIndex, media]);
 
-  // Auto-play functionality
   useEffect(() => {
     if (isAutoPlaying && media.length > 0) {
       autoPlayInterval.current = setInterval(() => {
@@ -149,7 +148,11 @@ export function FeaturedCarousel({
             <p className="text-lg text-white/80 mb-6 line-clamp-2">
               {currentMedia.overview}
             </p>
-            <div className="flex gap-4">
+            <div
+              className="flex gap-4"
+              onMouseEnter={() => setIsAutoPlaying(false)}
+              onMouseLeave={() => setIsAutoPlaying(true)}
+            >
               <Button
                 onClick={() =>
                   navigate(

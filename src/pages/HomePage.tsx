@@ -301,7 +301,6 @@ export function HomePage() {
           />
           <DiscoverNavigation
             selectedCategory={selectedCategory}
-            selectedProvider={selectedProvider}
             genres={genres}
             tvGenres={tvGenres}
             onCategoryChange={handleCategoryChange}

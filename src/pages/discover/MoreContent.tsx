@@ -1,4 +1,3 @@
-import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
@@ -7,10 +6,9 @@ import { get } from "@/backend/metadata/tmdb";
 import { Icon, Icons } from "@/components/Icon";
 import { WideContainer } from "@/components/layout/WideContainer";
 import { MediaCard } from "@/components/media/MediaCard";
-import { MediaGrid } from "@/components/media/MediaGrid";
 import { DetailsModal } from "@/components/overlays/DetailsModal";
 import { useModal } from "@/components/overlays/Modal";
-import { Heading1, Heading2 } from "@/components/utils/Text";
+import { Heading1 } from "@/components/utils/Text";
 import { SubPageLayout } from "@/pages/layouts/SubPageLayout";
 import { conf } from "@/setup/config";
 import { useLanguageStore } from "@/stores/language";
@@ -33,13 +31,16 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
   const detailsModal = useModal("discover-details");
   const userLanguage = useLanguageStore.getState().language;
   const formattedLanguage = getTmdbLanguageCode(userLanguage);
-  const [gridRef] = useAutoAnimate<HTMLDivElement>();
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
   const handleShowDetails = async (media: MediaItem) => {
+    if (onShowDetails) {
+      onShowDetails(media);
+      return;
+    }
     setDetailsData({
       id: Number(media.id),
       type: media.type === "movie" ? "movie" : "show",

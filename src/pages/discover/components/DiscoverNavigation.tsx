@@ -29,10 +29,6 @@ const TV_PROVIDERS = [
 
 interface DiscoverNavigationProps {
   selectedCategory: string;
-  selectedProvider: {
-    name: string;
-    id: string;
-  };
   genres: any[];
   tvGenres: any[];
   onCategoryChange: (category: string) => void;
@@ -42,7 +38,6 @@ interface DiscoverNavigationProps {
 
 export function DiscoverNavigation({
   selectedCategory,
-  selectedProvider,
   genres,
   tvGenres,
   onCategoryChange,

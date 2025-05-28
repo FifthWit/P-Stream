@@ -1,6 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
 
 import { get } from "@/backend/metadata/tmdb";
 import { DetailsModal } from "@/components/overlays/DetailsModal";
@@ -103,7 +101,6 @@ export function DiscoverContent({
   genreMovies,
   genreTVShows,
 }: DiscoverContentProps) {
-  // State management
   const [genres, setGenres] = useState<Genre[]>([]);
   const [tvGenres, setTVGenres] = useState<Genre[]>([]);
   const [providerMovies, setProviderMovies] = useState<Movie[]>([]);
@@ -113,13 +110,9 @@ export function DiscoverContent({
   const [detailsData, setDetailsData] = useState<any>();
   const detailsModal = useModal("discover-details");
 
-  // Refs
   const carouselRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
-  // Hooks
-  const navigate = useNavigate();
   const { isMobile } = useIsMobile();
-  const { t } = useTranslation();
 
   const userLanguage = useLanguageStore.getState().language;
   const formattedLanguage = getTmdbLanguageCode(userLanguage);
@@ -249,13 +242,6 @@ export function DiscoverContent({
 
     fetchEditorPicksTVShows();
   }, [isEditorPicksTab, formattedLanguage]);
-
-  // Combine editor picks movies and TV shows for the featured carousel
-  const combinedEditorPicks = useMemo(() => {
-    if (!isEditorPicksTab) return [];
-    const combined = [...editorPicksMovies, ...editorPicksTVShows];
-    return combined.sort(() => 0.5 - Math.random());
-  }, [isEditorPicksTab, editorPicksMovies, editorPicksTVShows]);
 
   const handleShowDetails = async (media: MediaItem | FeaturedMedia) => {
     setDetailsData({

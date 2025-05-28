@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { Button } from "@/components/buttons/Button";
-import { Icon, Icons } from "@/components/Icon";
 import { Movie } from "@/pages/discover/common";
 
 interface RandomMovieButtonProps {

@@ -1,61 +1,23 @@
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { useTranslation } from "react-i18next";
 
 import { get } from "@/backend/metadata/tmdb";
 import { DetailsModal } from "@/components/overlays/DetailsModal";
 import { useModal } from "@/components/overlays/Modal";
-import { useIsMobile } from "@/hooks/useIsMobile";
-import {
-  Genre,
-  Movie,
-  categories,
-  tvCategories,
-} from "@/pages/discover/common";
+import { Genre } from "@/pages/discover/common";
 import { conf } from "@/setup/config";
 import { useLanguageStore } from "@/stores/language";
 import { getTmdbLanguageCode } from "@/utils/language";
 
 import { SubPageLayout } from "../layouts/SubPageLayout";
-import { CategoryButtons } from "./components/CategoryButtons";
 import { DiscoverNavigation } from "./components/DiscoverNavigation";
 import { FeaturedCarousel } from "./components/FeaturedCarousel";
 import type { FeaturedMedia } from "./components/FeaturedCarousel";
-import { RandomMovieButton } from "./components/RandomMovieButton";
 import DiscoverContent, {
   EDITOR_PICKS_MOVIES,
   EDITOR_PICKS_TV_SHOWS,
 } from "./discoverContent";
-import { useTMDBData } from "./hooks/useTMDBData";
 import { PageTitle } from "../parts/util/PageTitle";
-
-const MOVIE_PROVIDERS = [
-  { name: "Netflix", id: "8" },
-  { name: "Apple TV+", id: "2" },
-  { name: "Amazon Prime Video", id: "10" },
-  { name: "Hulu", id: "15" },
-  { name: "Max", id: "1899" },
-  { name: "Paramount Plus", id: "531" },
-  { name: "Disney Plus", id: "337" },
-  { name: "Shudder", id: "99" },
-];
-
-const TV_PROVIDERS = [
-  { name: "Netflix", id: "8" },
-  { name: "Apple TV+", id: "350" },
-  { name: "Amazon Prime Video", id: "10" },
-  { name: "Paramount Plus", id: "531" },
-  { name: "Hulu", id: "15" },
-  { name: "Max", id: "1899" },
-  { name: "Disney Plus", id: "337" },
-  { name: "fubuTV", id: "257" },
-];
-
-interface FeaturedMovie extends Movie {
-  backdrop_path: string;
-  overview: string;
-  type: "movie";
-}
 
 interface DiscoverContentProps {
   selectedCategory: string;
@@ -88,9 +50,6 @@ export function Discover() {
     }
   }, [detailsModal.isShown]);
 
-  const { genreMedia: genreMovies } = useTMDBData(genres, categories, "movie");
-  const { isMobile } = useIsMobile();
-  const { t } = useTranslation();
   const userLanguage = useLanguageStore.getState().language;
   const formattedLanguage = getTmdbLanguageCode(userLanguage);
 
@@ -258,7 +217,6 @@ export function Discover() {
       <div className="relative z-30">
         <DiscoverNavigation
           selectedCategory={selectedCategory}
-          selectedProvider={selectedProvider}
           genres={genres}
           tvGenres={tvGenres}
           onCategoryChange={handleCategoryChange}
