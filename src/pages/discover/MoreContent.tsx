@@ -7,6 +7,7 @@ import { Button } from "@/components/buttons/Button";
 import { Icon, Icons } from "@/components/Icon";
 import { WideContainer } from "@/components/layout/WideContainer";
 import { MediaCard } from "@/components/media/MediaCard";
+import { MediaGrid } from "@/components/media/MediaGrid";
 import { DetailsModal } from "@/components/overlays/DetailsModal";
 import { useModal } from "@/components/overlays/Modal";
 import { Heading1 } from "@/components/utils/Text";
@@ -195,14 +196,14 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
         <WideContainer>
           <div className="animate-pulse">
             <div className="h-8 bg-gray-700 rounded w-1/4 mb-8" />
-            <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 3xl:grid-cols-8 4xl:grid-cols-10">
+            <MediaGrid>
               {Array.from({ length: 20 }).map(() => (
                 <div
                   key={crypto.randomUUID()}
                   className="aspect-[2/3] bg-gray-700 rounded-lg"
                 />
               ))}
-            </div>
+            </MediaGrid>
           </div>
         </WideContainer>
       </SubPageLayout>
