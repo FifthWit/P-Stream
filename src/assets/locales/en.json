@@ -945,7 +945,8 @@
     },
     "status": {
       "success": "success",
-      "failure": "Failed to fetch a 'VIP' stream. Token is invalid or API is down!"
+      "api_down": "Cannot reach FED API!",
+      "invalid_token": "Failed to fetch a 'VIP' stream. Your token is invalid!"
     }
   },
   "watchParty": {

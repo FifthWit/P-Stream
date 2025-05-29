@@ -235,6 +235,8 @@ function FebboxTokenEdit({ febboxToken, setFebboxToken }: FebboxTokenProps) {
     error: "error",
     success: "success",
     unset: "noresult",
+    api_down: "error",
+    invalid_token: "error",
   };
 
   useEffect(() => {
@@ -337,6 +339,16 @@ function FebboxTokenEdit({ febboxToken, setFebboxToken }: FebboxTokenProps) {
             {status === "error" && (
               <p className="text-type-danger mt-4">
                 {t("fedapi.status.failure")}
+              </p>
+            )}
+            {status === "api_down" && (
+              <p className="text-type-danger mt-4">
+                {t("fedapi.status.api_down")}
+              </p>
+            )}
+            {status === "invalid_token" && (
+              <p className="text-type-danger mt-4">
+                {t("fedapi.status.invalid_token")}
               </p>
             )}
           </>

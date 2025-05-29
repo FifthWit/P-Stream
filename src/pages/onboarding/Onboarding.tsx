@@ -65,6 +65,8 @@ export function FEDAPISetup() {
     error: "error",
     success: "success",
     unset: "noresult",
+    api_down: "error",
+    invalid_token: "error",
   };
 
   useEffect(() => {

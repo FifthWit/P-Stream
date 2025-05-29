@@ -61,7 +61,12 @@ const sleep = (ms: number): Promise<void> => {
   });
 };
 
-export type Status = "success" | "unset" | "error";
+export type Status =
+  | "success"
+  | "unset"
+  | "error"
+  | "api_down"
+  | "invalid_token";
 
 type SetupData = {
   extension: Status;
@@ -93,7 +98,7 @@ export async function testFebboxToken(
   }
 
   let attempts = 0;
-  const maxAttempts = 3;
+  const maxAttempts = 2;
 
   while (attempts < maxAttempts) {
     console.log(
@@ -108,10 +113,13 @@ export async function testFebboxToken(
 
       if (!response.ok) {
         console.error("Febbox API test failed with status:", response.status);
+        if (response.status === 503 || response.status === 502) {
+          return "api_down";
+        }
         attempts += 1;
         if (attempts === maxAttempts) {
           console.log("Max attempts reached, returning error");
-          return "error";
+          return "invalid_token";
         }
         console.log("Retrying after failed response...");
         await sleep(3000);
@@ -124,7 +132,7 @@ export async function testFebboxToken(
         attempts += 1;
         if (attempts === maxAttempts) {
           console.log("Max attempts reached, returning error");
-          return "error";
+          return "invalid_token";
         }
         console.log("Retrying after invalid response format...");
         await sleep(3000);
@@ -147,7 +155,7 @@ export async function testFebboxToken(
       attempts += 1;
       if (attempts === maxAttempts) {
         console.log("Max attempts reached, returning error");
-        return "error";
+        return "invalid_token";
       }
       console.log("Retrying after no VIP link found...");
       await sleep(3000);
@@ -156,7 +164,7 @@ export async function testFebboxToken(
       attempts += 1;
       if (attempts === maxAttempts) {
         console.log("Max attempts reached, returning error");
-        return "error";
+        return "api_down";
       }
       console.log("Retrying after error...");
       await sleep(3000);
@@ -164,7 +172,7 @@ export async function testFebboxToken(
   }
 
   console.log("All attempts exhausted, returning error");
-  return "error";
+  return "api_down";
 }
 
 function useIsSetup() {
@@ -228,6 +236,8 @@ function SetupCheckList(props: {
     error: "error",
     success: "success",
     unset: "noresult",
+    api_down: "error",
+    invalid_token: "error",
   };
 
   return (
@@ -293,6 +303,16 @@ export function SetupPart() {
       title: "settings.connections.setup.unsetStatus.title",
       desc: "settings.connections.setup.unsetStatus.description",
       button: "settings.connections.setup.doSetup",
+    },
+    api_down: {
+      title: "settings.connections.setup.errorStatus.title",
+      desc: "settings.connections.setup.errorStatus.description",
+      button: "settings.connections.setup.redoSetup",
+    },
+    invalid_token: {
+      title: "settings.connections.setup.errorStatus.title",
+      desc: "settings.connections.setup.errorStatus.description",
+      button: "settings.connections.setup.redoSetup",
     },
   };
 
