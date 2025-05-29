@@ -102,7 +102,7 @@ export function FeaturedCarousel({
 
   return (
     <div
-      className="relative h-[80vh] w-full overflow-hidden"
+      className="relative h-[70vh] md:h-[100vh] w-full overflow-hidden"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -178,7 +178,7 @@ export function FeaturedCarousel({
                 {mediaTitle}
               </h1>
             )}
-            <p className="text-lg text-white/80 mb-6 line-clamp-2">
+            <p className="text-lg text-white mb-6 line-clamp-2">
               {currentMedia.overview}
             </p>
             <div
