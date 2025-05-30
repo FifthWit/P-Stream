@@ -174,7 +174,7 @@ export function FeaturedCarousel({
       {/* Navigation Dots */}
       <div
         className={classNames(
-          "absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2",
+          "absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-2",
           searchClasses,
         )}
       >
@@ -244,7 +244,11 @@ export function FeaturedCarousel({
           </div>
         </div>
       </div>
-      <div className="absolute inset-0 flex z-20">{children}</div>
+      {children && (
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="pointer-events-auto">{children}</div>
+        </div>
+      )}
     </div>
   );
 }
