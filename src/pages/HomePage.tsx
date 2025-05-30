@@ -300,6 +300,7 @@ export function HomePage() {
             media={featuredMedia}
             onShowDetails={handleShowDetails}
             searching={s.searching}
+            shorter
           >
             <HeroPart searchParams={searchParams} setIsSticky={setShowBg} />
           </FeaturedCarousel>

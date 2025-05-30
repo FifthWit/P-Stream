@@ -23,6 +23,7 @@ interface FeaturedCarouselProps {
   onShowDetails: (media: FeaturedMedia) => void;
   children?: ReactNode;
   searching?: boolean;
+  shorter?: boolean;
 }
 
 export function FeaturedCarousel({
@@ -30,6 +31,7 @@ export function FeaturedCarousel({
   onShowDetails,
   children,
   searching,
+  shorter,
 }: FeaturedCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
@@ -118,7 +120,8 @@ export function FeaturedCarousel({
     <div
       className={classNames(
         "relative w-full overflow-hidden transition-[height] duration-300 ease-in-out",
-        searching ? "h-24" : "h-[70vh] md:h-[100vh]",
+        searching ? "h-24" : "",
+        shorter ? "h-[70vh] md:h-[75vh]" : "h-[70vh] md:h-[100vh]",
       )}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -197,7 +200,7 @@ export function FeaturedCarousel({
           searchClasses,
         )}
       >
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-8 md:px-4">
           <div className="max-w-3xl">
             {logoUrl && enableImageLogos ? (
               <img
