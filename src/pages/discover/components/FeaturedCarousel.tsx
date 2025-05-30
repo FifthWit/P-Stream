@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import classNames from "classnames";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { getMediaLogo } from "@/backend/metadata/tmdb";
@@ -9,6 +10,7 @@ import { Movie, TVShow } from "@/pages/discover/common";
 import { usePreferencesStore } from "@/stores/preferences";
 
 export interface FeaturedMedia extends Partial<Movie & TVShow> {
+  children: ReactNode;
   backdrop_path: string;
   overview: string;
   title?: string;
@@ -19,11 +21,15 @@ export interface FeaturedMedia extends Partial<Movie & TVShow> {
 interface FeaturedCarouselProps {
   media: FeaturedMedia[];
   onShowDetails: (media: FeaturedMedia) => void;
+  children?: ReactNode;
+  searching?: boolean;
 }
 
 export function FeaturedCarousel({
   media,
   onShowDetails,
+  children,
+  searching,
 }: FeaturedCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
@@ -104,14 +110,21 @@ export function FeaturedCarousel({
   const currentMedia = media[currentIndex];
   const mediaTitle = currentMedia.title || currentMedia.name;
 
+  let searchClasses = "";
+  if (searching) searchClasses = "opacity-0 transition-opacity duration-300";
+  else searchClasses = "opacity-100 transition-opacity duration-300";
+
   return (
     <div
-      className="relative h-[70vh] md:h-[100vh] w-full overflow-hidden"
+      className={classNames(
+        "relative w-full overflow-hidden transition-[height] duration-300 ease-in-out",
+        searching ? "h-24" : "h-[70vh] md:h-[100vh]",
+      )}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="relative w-full h-full">
+      <div className={classNames("relative w-full h-full", searchClasses)}>
         {media.map((item, index) => (
           <div
             key={item.id}
@@ -135,7 +148,10 @@ export function FeaturedCarousel({
       <button
         type="button"
         onClick={handlePrevSlide}
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/30 hover:bg-black/50 transition-colors"
+        className={classNames(
+          "absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/30 hover:bg-black/50 transition-colors",
+          searchClasses,
+        )}
         aria-label="Previous slide"
       >
         <Icon icon={Icons.CHEVRON_LEFT} className="text-white w-8 h-8" />
@@ -143,14 +159,22 @@ export function FeaturedCarousel({
       <button
         type="button"
         onClick={handleNextSlide}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/30 hover:bg-black/50 transition-colors"
+        className={classNames(
+          "absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/30 hover:bg-black/50 transition-colors",
+          searchClasses,
+        )}
         aria-label="Next slide"
       >
         <Icon icon={Icons.CHEVRON_RIGHT} className="text-white w-8 h-8" />
       </button>
 
       {/* Navigation Dots */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+      <div
+        className={classNames(
+          "absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2",
+          searchClasses,
+        )}
+      >
         {media.map((item, index) => (
           <button
             key={`dot-${item.id}`}
@@ -167,7 +191,12 @@ export function FeaturedCarousel({
       </div>
 
       {/* Content Overlay */}
-      <div className="absolute inset-0 flex items-end pb-20 z-10">
+      <div
+        className={classNames(
+          "absolute inset-0 flex items-end pb-20 z-10",
+          searchClasses,
+        )}
+      >
         <div className="container mx-auto px-4">
           <div className="max-w-3xl">
             {logoUrl && enableImageLogos ? (
@@ -212,6 +241,7 @@ export function FeaturedCarousel({
           </div>
         </div>
       </div>
+      <div className="absolute inset-0 flex z-20">{children}</div>
     </div>
   );
 }

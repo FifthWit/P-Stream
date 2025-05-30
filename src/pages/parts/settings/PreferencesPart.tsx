@@ -127,7 +127,7 @@ export function PreferencesPart(props: {
 
             {/* Skip End Credits Preference */}
             {props.enableAutoplay && allowAutoplay && (
-              <div className="pt-4">
+              <div className="pt-4 pl-4 border-l-8 border-dropdown-background">
                 <p className="text-white font-bold mb-3">
                   {t("settings.preferences.skipCredits")}
                 </p>

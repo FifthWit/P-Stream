@@ -205,6 +205,9 @@ export function AppearancePart(props: {
   enableDiscover: boolean;
   setEnableDiscover: (v: boolean) => void;
 
+  enableFeatured: boolean;
+  setEnableFeatured: (v: boolean) => void;
+
   enableDetailsModal: boolean;
   setEnableDetailsModal: (v: boolean) => void;
 
@@ -266,6 +269,7 @@ export function AppearancePart(props: {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* First Column - Preferences */}
         <div className="space-y-8">
+          {/* Discover */}
           <div>
             <p className="text-white font-bold mb-3">
               {t("settings.appearance.options.discover")}
@@ -274,7 +278,13 @@ export function AppearancePart(props: {
               {t("settings.appearance.options.discoverDescription")}
             </p>
             <div
-              onClick={() => props.setEnableDiscover(!props.enableDiscover)}
+              onClick={() => {
+                const newDiscoverValue = !props.enableDiscover;
+                props.setEnableDiscover(newDiscoverValue);
+                if (!newDiscoverValue) {
+                  props.setEnableFeatured(false);
+                }
+              }}
               className="bg-dropdown-background hover:bg-dropdown-hoverBackground select-none my-4 cursor-pointer space-x-3 flex items-center max-w-[25rem] py-3 px-4 rounded-lg"
             >
               <Toggle enabled={props.enableDiscover} />
@@ -283,6 +293,27 @@ export function AppearancePart(props: {
               </p>
             </div>
           </div>
+          {/* Featured Carousel */}
+          {props.enableDiscover && (
+            <div className="pt-4 pl-4 border-l-8 border-dropdown-background">
+              <p className="text-white font-bold mb-3">
+                {t("settings.appearance.options.featured")}
+              </p>
+              <p className="max-w-[25rem] font-medium">
+                {t("settings.appearance.options.featuredDescription")}
+              </p>
+              <div
+                onClick={() => props.setEnableFeatured(!props.enableFeatured)}
+                className="bg-dropdown-background hover:bg-dropdown-hoverBackground select-none my-4 cursor-pointer space-x-3 flex items-center max-w-[25rem] py-3 px-4 rounded-lg"
+              >
+                <Toggle enabled={props.enableFeatured} />
+                <p className="flex-1 text-white font-bold">
+                  {t("settings.appearance.options.featuredLabel")}
+                </p>
+              </div>
+            </div>
+          )}
+          {/* Detials Modal */}
           <div>
             <p className="text-white font-bold mb-3">
               {t("settings.appearance.options.modal")}
@@ -305,6 +336,7 @@ export function AppearancePart(props: {
               </p>
             </div>
           </div>
+          {/* Image Logos */}
           <div>
             <p className="text-white font-bold mb-3">
               {t("settings.appearance.options.logos")}

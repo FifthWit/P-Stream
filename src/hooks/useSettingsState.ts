@@ -54,6 +54,7 @@ export function useSettingsState(
   enableThumbnails: boolean,
   enableAutoplay: boolean,
   enableDiscover: boolean,
+  enableFeatured: boolean,
   enableDetailsModal: boolean,
   sourceOrder: string[],
   enableSourceOrder: boolean,
@@ -118,6 +119,12 @@ export function useSettingsState(
     enableDiscoverChanged,
   ] = useDerived(enableDiscover);
   const [
+    enableFeaturedState,
+    setEnableFeaturedState,
+    resetEnableFeatured,
+    enableFeaturedChanged,
+  ] = useDerived(enableFeatured);
+  const [
     enableDetailsModalState,
     setEnableDetailsModalState,
     resetEnableDetailsModal,
@@ -158,6 +165,7 @@ export function useSettingsState(
     resetEnableAutoplay();
     resetEnableSkipCredits();
     resetEnableDiscover();
+    resetEnableFeatured();
     resetEnableDetailsModal();
     resetEnableImageLogos();
     resetSourceOrder();
@@ -178,6 +186,7 @@ export function useSettingsState(
     enableAutoplayChanged ||
     enableSkipCreditsChanged ||
     enableDiscoverChanged ||
+    enableFeaturedChanged ||
     enableDetailsModalChanged ||
     enableImageLogosChanged ||
     sourceOrderChanged ||
@@ -246,6 +255,11 @@ export function useSettingsState(
       state: enableDiscoverState,
       set: setEnableDiscoverState,
       changed: enableDiscoverChanged,
+    },
+    enableFeatured: {
+      state: enableFeaturedState,
+      set: setEnableFeaturedState,
+      changed: enableFeaturedChanged,
     },
     enableDetailsModal: {
       state: enableDetailsModalState,

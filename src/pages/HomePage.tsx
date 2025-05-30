@@ -12,6 +12,8 @@ import { useRandomTranslation } from "@/hooks/useRandomTranslation";
 import { useSearchQuery } from "@/hooks/useSearchQuery";
 import { Movie, categories, tvCategories } from "@/pages/discover/common";
 import { DiscoverNavigation } from "@/pages/discover/components/DiscoverNavigation";
+import { FeaturedCarousel } from "@/pages/discover/components/FeaturedCarousel";
+import type { FeaturedMedia } from "@/pages/discover/components/FeaturedCarousel";
 import DiscoverContent from "@/pages/discover/discoverContent";
 import { useTMDBData } from "@/pages/discover/hooks/useTMDBData";
 import { HomeLayout } from "@/pages/layouts/HomeLayout";
@@ -28,6 +30,7 @@ import { MediaItem } from "@/utils/mediaTypes";
 
 import { Button } from "./About";
 import { RandomMovieButton } from "./discover/components/RandomMovieButton";
+import { AdsPart } from "./parts/home/AdsPart";
 
 function useSearch(search: string) {
   const [searching, setSearching] = useState<boolean>(false);
@@ -66,6 +69,8 @@ export function HomePage() {
   const detailsModal = useModal("details");
   const [genres, setGenres] = useState<any[]>([]);
   const [tvGenres, setTVGenres] = useState<any[]>([]);
+  const enableFeatured = usePreferencesStore((state) => state.enableFeatured);
+  const [featuredMedia, setFeaturedMedia] = useState<FeaturedMedia[]>([]);
   const userLanguage = useLanguageStore.getState().language;
   const formattedLanguage = getTmdbLanguageCode(userLanguage);
   const [selectedCategory, setSelectedCategory] = useState("movies");
@@ -79,6 +84,33 @@ export function HomePage() {
     tvCategories,
     "tv",
   );
+
+  // Fetch featured media
+  useEffect(() => {
+    const fetchFeaturedMedia = async () => {
+      try {
+        const data = await get<any>("/movie/popular", {
+          api_key: conf().TMDB_READ_API_KEY,
+          language: formattedLanguage,
+        });
+        setFeaturedMedia(
+          data.results.slice(0, 5).map((movie: any) => ({
+            id: movie.id,
+            title: movie.title,
+            backdrop_path: movie.backdrop_path,
+            overview: movie.overview,
+            poster_path: movie.poster_path,
+            release_date: movie.release_date,
+            type: "movie" as const,
+          })),
+        );
+      } catch (error) {
+        console.error("Error fetching featured media:", error);
+      }
+    };
+
+    fetchFeaturedMedia();
+  }, [formattedLanguage]);
 
   // Fetch genres
   useEffect(() => {
@@ -111,7 +143,7 @@ export function HomePage() {
 
   const enableDiscover = usePreferencesStore((state) => state.enableDiscover);
 
-  const handleShowDetails = async (media: MediaItem) => {
+  const handleShowDetails = async (media: MediaItem | FeaturedMedia) => {
     setDetailsData({
       id: Number(media.id),
       type: media.type === "movie" ? "movie" : "show",
@@ -263,8 +295,24 @@ export function HomePage() {
           </div>
         </FancyModal>
         */}
-
-        <HeroPart searchParams={searchParams} setIsSticky={setShowBg} />
+        {enableFeatured && featuredMedia.length > 0 ? (
+          <FeaturedCarousel
+            media={featuredMedia}
+            onShowDetails={handleShowDetails}
+            searching={s.searching}
+          >
+            <HeroPart searchParams={searchParams} setIsSticky={setShowBg} />
+          </FeaturedCarousel>
+        ) : (
+          <HeroPart
+            searchParams={searchParams}
+            setIsSticky={setShowBg}
+            showTitle
+          />
+        )}
+        {/* Optional ad */}
+        {conf().SHOW_AD ? <AdsPart /> : null}
+        {/* End of ad */}
       </div>
       <WideContainer>
         {s.loading ? (
@@ -292,7 +340,7 @@ export function HomePage() {
           </div>
         ) : null}
       </WideContainer>
-      {enableDiscover ? (
+      {enableDiscover && !search ? (
         <div className="pt-12 w-full max-w-[100dvw] justify-center items-center">
           <RandomMovieButton
             allMovies={Object.values(genreMovies)
@@ -317,12 +365,14 @@ export function HomePage() {
       ) : (
         <div className="flex flex-col justify-center items-center h-40 space-y-4">
           <div className="flex flex-col items-center justify-center">
-            <Button
-              className="px-py p-[0.35em] mt-3 rounded-xl text-type-dimmed box-content text-[18px] bg-largeCard-background justify-center items-center"
-              onClick={() => handleClick("/discover")}
-            >
-              {t("home.search.discover")}
-            </Button>
+            {!search && (
+              <Button
+                className="px-py p-[0.35em] mt-3 rounded-xl text-type-dimmed box-content text-[18px] bg-largeCard-background justify-center items-center"
+                onClick={() => handleClick("/discover")}
+              >
+                {t("home.search.discover")}
+              </Button>
+            )}
           </div>
         </div>
       )}

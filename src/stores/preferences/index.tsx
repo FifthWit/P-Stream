@@ -7,6 +7,7 @@ export interface PreferencesStore {
   enableAutoplay: boolean;
   enableSkipCredits: boolean;
   enableDiscover: boolean;
+  enableFeatured: boolean;
   enableDetailsModal: boolean;
   enableImageLogos: boolean;
   sourceOrder: string[];
@@ -17,6 +18,7 @@ export interface PreferencesStore {
   setEnableAutoplay(v: boolean): void;
   setEnableSkipCredits(v: boolean): void;
   setEnableDiscover(v: boolean): void;
+  setEnableFeatured(v: boolean): void;
   setEnableDetailsModal(v: boolean): void;
   setEnableImageLogos(v: boolean): void;
   setSourceOrder(v: string[]): void;
@@ -31,6 +33,7 @@ export const usePreferencesStore = create(
       enableAutoplay: true,
       enableSkipCredits: true,
       enableDiscover: true,
+      enableFeatured: true, // enabled for testing
       enableDetailsModal: false,
       enableImageLogos: true,
       sourceOrder: [],
@@ -54,6 +57,11 @@ export const usePreferencesStore = create(
       setEnableDiscover(v) {
         set((s) => {
           s.enableDiscover = v;
+        });
+      },
+      setEnableFeatured(v) {
+        set((s) => {
+          s.enableFeatured = v;
         });
       },
       setEnableDetailsModal(v) {

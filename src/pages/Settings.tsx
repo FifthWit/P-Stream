@@ -151,6 +151,9 @@ export function SettingsPage() {
   const enableDiscover = usePreferencesStore((s) => s.enableDiscover);
   const setEnableDiscover = usePreferencesStore((s) => s.setEnableDiscover);
 
+  const enableFeatured = usePreferencesStore((s) => s.enableFeatured);
+  const setEnableFeatured = usePreferencesStore((s) => s.setEnableFeatured);
+
   const enableDetailsModal = usePreferencesStore((s) => s.enableDetailsModal);
   const setEnableDetailsModal = usePreferencesStore(
     (s) => s.setEnableDetailsModal,
@@ -204,6 +207,7 @@ export function SettingsPage() {
     enableThumbnails,
     enableAutoplay,
     enableDiscover,
+    enableFeatured,
     enableDetailsModal,
     sourceOrder,
     enableSourceOrder,
@@ -283,6 +287,7 @@ export function SettingsPage() {
     setEnableAutoplay(state.enableAutoplay.state);
     setEnableSkipCredits(state.enableSkipCredits.state);
     setEnableDiscover(state.enableDiscover.state);
+    setEnableFeatured(state.enableFeatured.state);
     setEnableDetailsModal(state.enableDetailsModal.state);
     setEnableImageLogos(state.enableImageLogos.state);
     setSourceOrder(state.sourceOrder.state);
@@ -318,6 +323,7 @@ export function SettingsPage() {
     setEnableAutoplay,
     setEnableSkipCredits,
     setEnableDiscover,
+    setEnableFeatured,
     setEnableDetailsModal,
     setEnableImageLogos,
     setSourceOrder,
@@ -388,6 +394,8 @@ export function SettingsPage() {
             setTheme={setThemeWithPreview}
             enableDiscover={state.enableDiscover.state}
             setEnableDiscover={state.enableDiscover.set}
+            enableFeatured={state.enableFeatured.state}
+            setEnableFeatured={state.enableFeatured.set}
             enableDetailsModal={state.enableDetailsModal.state}
             setEnableDetailsModal={state.enableDetailsModal.set}
             enableImageLogos={state.enableImageLogos.state}
