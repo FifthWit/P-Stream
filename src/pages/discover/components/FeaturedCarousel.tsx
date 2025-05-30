@@ -231,12 +231,15 @@ export function FeaturedCarousel({
                     `/media/tmdb-${currentMedia.type}-${currentMedia.id}-${mediaTitle?.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
                   )
                 }
-                theme="glass"
+                theme="secondary"
               >
                 <Icon icon={Icons.PLAY} className="text-white" />
                 <span className="text-white text-sm">Play Now</span>
               </Button>
-              <Button onClick={() => onShowDetails(currentMedia)} theme="glass">
+              <Button
+                onClick={() => onShowDetails(currentMedia)}
+                theme="secondary"
+              >
                 <Icon
                   icon={Icons.CIRCLE_QUESTION}
                   className="text-white scale-100"
