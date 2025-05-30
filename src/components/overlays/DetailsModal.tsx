@@ -533,14 +533,14 @@ function DetailsContent({
         )}
       </div>
       {/* Content */}
-      <div className="px-6 pb-6 mt-[-70px] flex-grow">
+      <div className="px-6 pb-6 flex-grow relative -mt-32">
         {/* Title and Genres Row */}
-        <div className="pb-2">
+        <div className="pb-4 relative z-10">
           {data.logoUrl ? (
             <img
               src={data.logoUrl}
               alt={data.title}
-              className="max-w-[12rem] md:max-w-[20rem] max-h-[22dvh] object-contain drop-shadow-lg bg-transparent"
+              className="max-w-[12rem] md:max-w-[20rem] max-h-[14vh] object-contain drop-shadow-lg bg-transparent"
               style={{ background: "none" }}
             />
           ) : (
@@ -549,7 +549,7 @@ function DetailsContent({
             </h3>
           )}
         </div>
-        <div className="flex flex-col sm:flex-row justify-between items-start mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start mb-6 relative z-10">
           <div className="flex items-center gap-4">
             {!minimal && (
               <Button
