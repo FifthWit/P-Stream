@@ -120,8 +120,11 @@ export function FeaturedCarousel({
     <div
       className={classNames(
         "relative w-full overflow-hidden transition-[height] duration-300 ease-in-out",
-        searching ? "h-24" : "",
-        shorter ? "h-[70vh] md:h-[75vh]" : "h-[70vh] md:h-[100vh]",
+        searching
+          ? "h-24"
+          : shorter
+            ? "h-[70vh] md:h-[75vh]"
+            : "h-[70vh] md:h-[100vh]",
       )}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
