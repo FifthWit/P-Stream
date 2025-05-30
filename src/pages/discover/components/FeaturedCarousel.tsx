@@ -170,7 +170,7 @@ export function FeaturedCarousel({
               <img
                 src={logoUrl}
                 alt={mediaTitle}
-                className="max-w-[14rem] md:max-w-[22rem] max-h-[20dvh] object-contain drop-shadow-lg bg-transparent mb-4"
+                className="max-w-[14rem] md:max-w-[22rem] max-h-[20vh] object-contain drop-shadow-lg bg-transparent mb-4"
                 style={{ background: "none" }}
               />
             ) : (
@@ -192,18 +192,16 @@ export function FeaturedCarousel({
                     `/media/tmdb-${currentMedia.type}-${currentMedia.id}-${mediaTitle?.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
                   )
                 }
-                theme="secondary"
-                className="gap-2 h-12 rounded-lg px-6 py-2 transition-transform hover:scale-105 duration-100 text-md text-white flex items-center justify-center bg-buttons-purple bg-opacity-45 hover:bg-buttons-purpleHover hover:bg-opacity-25 backdrop-blur-md border-2 border-gray-400 border-opacity-20"
+                theme="glass"
               >
                 <Icon icon={Icons.PLAY} className="text-white" />
                 <span className="text-white text-sm">Play Now</span>
               </Button>
-              <Button
-                onClick={() => onShowDetails(currentMedia)}
-                theme="secondary"
-                className="gap-2 h-12 rounded-lg px-6 py-2 transition-transform hover:scale-105 duration-100 text-md text-white flex items-center justify-center bg-buttons-purple bg-opacity-45 hover:bg-buttons-purpleHover hover:bg-opacity-25 backdrop-blur-md border-2 border-gray-400 border-opacity-20"
-              >
-                <Icon icon={Icons.CIRCLE_QUESTION} className="text-white" />
+              <Button onClick={() => onShowDetails(currentMedia)} theme="glass">
+                <Icon
+                  icon={Icons.CIRCLE_QUESTION}
+                  className="text-white scale-100"
+                />
                 <span className="text-white text-sm">More Info</span>
               </Button>
             </div>

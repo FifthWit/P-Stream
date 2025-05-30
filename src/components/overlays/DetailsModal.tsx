@@ -571,13 +571,7 @@ function DetailsContent({
                     }
                   }
                 }}
-                theme="secondary"
-                className={classNames(
-                  "gap-2 h-12 rounded-lg px-4 py-2 my-1 transition-transform hover:scale-105 duration-100",
-                  "text-md text-white flex items-center justify-center",
-                  "bg-buttons-purple bg-opacity-45 hover:bg-buttons-purpleHover hover:bg-opacity-25 backdrop-blur-md",
-                  "border-2 border-gray-400 border-opacity-20",
-                )}
+                theme="glass"
               >
                 <Icon icon={Icons.PLAY} className="text-white" />
                 <span className="text-white text-sm pr-1">

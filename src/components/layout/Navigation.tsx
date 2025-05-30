@@ -99,14 +99,24 @@ export function Navigation(props: NavigationProps) {
                 rel="noreferrer"
                 className="text-xl text-white tabbable rounded-full"
               >
-                <IconPatch icon={Icons.DISCORD} clickable downsized />
+                <IconPatch
+                  icon={Icons.DISCORD}
+                  clickable
+                  downsized
+                  navigation
+                />
               </a>
               <a
                 onClick={() => handleClick("/discover")}
                 rel="noreferrer"
                 className="text-xl text-white tabbable rounded-full"
               >
-                <IconPatch icon={Icons.RISING_STAR} clickable downsized />
+                <IconPatch
+                  icon={Icons.RISING_STAR}
+                  clickable
+                  downsized
+                  navigation
+                />
               </a>
             </div>
             <div className="relative pointer-events-auto">

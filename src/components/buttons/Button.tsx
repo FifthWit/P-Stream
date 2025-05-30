@@ -11,7 +11,7 @@ interface Props {
     event: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement, MouseEvent>,
   ) => void;
   children?: ReactNode;
-  theme?: "white" | "purple" | "secondary" | "danger";
+  theme?: "white" | "purple" | "secondary" | "danger" | "glass";
   padding?: string;
   className?: string;
   href?: string;
@@ -51,6 +51,9 @@ export function Button(props: Props) {
       "bg-buttons-cancel hover:bg-buttons-cancelHover transition-colors duration-100 text-white";
   if (props.theme === "danger")
     colorClasses = "bg-buttons-danger hover:bg-buttons-dangerHover text-white";
+  if (props.theme === "glass")
+    colorClasses =
+      "gap-2 text-white hover:scale-105 bg-buttons-purple hover:bg-buttons-purpleHover bg-opacity-45 hover:bg-opacity-60 !backdrop-blur-md border-2 border-gray-400 border-opacity-20";
 
   let classes = classNames(
     "tabbable cursor-pointer inline-flex items-center justify-center rounded-lg font-medium transition-[transform,background-color] duration-100 active:scale-105 md:px-8",
