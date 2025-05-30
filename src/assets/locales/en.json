@@ -775,7 +775,10 @@
         "discoverLabel": "Discover section",
         "modal": "Details modal",
         "modalDescription": "Show the details modal when you click on a media card instead of going to the watch page. Proxy or Extension required for trailer. Disabled by default.",
-        "modalLabel": "Details modal"
+        "modalLabel": "Details modal",
+        "logos": "Image logos",
+        "logosDescription": "Show image logos instead of text titles in the details modal and featured section. Enabled by default.",
+        "logosLabel": "Image logos"
       }
     },
     "connections": {

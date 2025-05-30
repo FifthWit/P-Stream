@@ -156,6 +156,9 @@ export function SettingsPage() {
     (s) => s.setEnableDetailsModal,
   );
 
+  const enableImageLogos = usePreferencesStore((s) => s.enableImageLogos);
+  const setEnableImageLogos = usePreferencesStore((s) => s.setEnableImageLogos);
+
   const enableSourceOrder = usePreferencesStore((s) => s.enableSourceOrder);
   const setEnableSourceOrder = usePreferencesStore(
     (s) => s.setEnableSourceOrder,
@@ -206,6 +209,7 @@ export function SettingsPage() {
     enableSourceOrder,
     proxyTmdb,
     enableSkipCredits,
+    enableImageLogos,
   );
 
   const availableSources = useMemo(() => {
@@ -280,6 +284,7 @@ export function SettingsPage() {
     setEnableSkipCredits(state.enableSkipCredits.state);
     setEnableDiscover(state.enableDiscover.state);
     setEnableDetailsModal(state.enableDetailsModal.state);
+    setEnableImageLogos(state.enableImageLogos.state);
     setSourceOrder(state.sourceOrder.state);
     setAppLanguage(state.appLanguage.state);
     setTheme(state.theme.state);
@@ -314,6 +319,7 @@ export function SettingsPage() {
     setEnableSkipCredits,
     setEnableDiscover,
     setEnableDetailsModal,
+    setEnableImageLogos,
     setSourceOrder,
     setAppLanguage,
     setTheme,
@@ -384,6 +390,8 @@ export function SettingsPage() {
             setEnableDiscover={state.enableDiscover.set}
             enableDetailsModal={state.enableDetailsModal.state}
             setEnableDetailsModal={state.enableDetailsModal.set}
+            enableImageLogos={state.enableImageLogos.state}
+            setEnableImageLogos={state.enableImageLogos.set}
           />
         </div>
         <div id="settings-captions" className="mt-28">

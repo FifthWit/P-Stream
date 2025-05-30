@@ -207,6 +207,9 @@ export function AppearancePart(props: {
 
   enableDetailsModal: boolean;
   setEnableDetailsModal: (v: boolean) => void;
+
+  enableImageLogos: boolean;
+  setEnableImageLogos: (v: boolean) => void;
 }) {
   const { t } = useTranslation();
 
@@ -299,6 +302,26 @@ export function AppearancePart(props: {
               <Toggle enabled={props.enableDetailsModal} />
               <p className="flex-1 text-white font-bold">
                 {t("settings.appearance.options.modalLabel")}
+              </p>
+            </div>
+          </div>
+          <div>
+            <p className="text-white font-bold mb-3">
+              {t("settings.appearance.options.logos")}
+            </p>
+            <p className="max-w-[25rem] font-medium">
+              {t("settings.appearance.options.logosDescription")}
+            </p>
+            <div
+              onClick={() => props.setEnableImageLogos(!props.enableImageLogos)}
+              className={classNames(
+                "bg-dropdown-background hover:bg-dropdown-hoverBackground select-none my-4 cursor-pointer space-x-3 flex items-center max-w-[25rem] py-3 px-4 rounded-lg",
+                "cursor-pointer opacity-100 pointer-events-auto",
+              )}
+            >
+              <Toggle enabled={props.enableImageLogos} />
+              <p className="flex-1 text-white font-bold">
+                {t("settings.appearance.options.logosLabel")}
               </p>
             </div>
           </div>

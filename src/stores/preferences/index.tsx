@@ -8,6 +8,7 @@ export interface PreferencesStore {
   enableSkipCredits: boolean;
   enableDiscover: boolean;
   enableDetailsModal: boolean;
+  enableImageLogos: boolean;
   sourceOrder: string[];
   enableSourceOrder: boolean;
   proxyTmdb: boolean;
@@ -17,6 +18,7 @@ export interface PreferencesStore {
   setEnableSkipCredits(v: boolean): void;
   setEnableDiscover(v: boolean): void;
   setEnableDetailsModal(v: boolean): void;
+  setEnableImageLogos(v: boolean): void;
   setSourceOrder(v: string[]): void;
   setEnableSourceOrder(v: boolean): void;
   setProxyTmdb(v: boolean): void;
@@ -30,6 +32,7 @@ export const usePreferencesStore = create(
       enableSkipCredits: true,
       enableDiscover: true,
       enableDetailsModal: false,
+      enableImageLogos: true,
       sourceOrder: [],
       enableSourceOrder: false,
       proxyTmdb: false,
@@ -56,6 +59,11 @@ export const usePreferencesStore = create(
       setEnableDetailsModal(v) {
         set((s) => {
           s.enableDetailsModal = v;
+        });
+      },
+      setEnableImageLogos(v) {
+        set((s) => {
+          s.enableImageLogos = v;
         });
       },
       setSourceOrder(v) {

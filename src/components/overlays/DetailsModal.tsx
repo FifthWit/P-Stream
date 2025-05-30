@@ -20,6 +20,7 @@ import { Icon, Icons } from "@/components/Icon";
 import { hasAired } from "@/components/player/utils/aired";
 import { useBookmarkStore } from "@/stores/bookmarks";
 import { useLanguageStore } from "@/stores/language";
+import { usePreferencesStore } from "@/stores/preferences";
 import { useProgressStore } from "@/stores/progress";
 import { shouldShowProgress } from "@/stores/progress/utils";
 import { scrapeIMDb } from "@/utils/imdbScraper";
@@ -151,6 +152,9 @@ function DetailsContent({
   const removeBookmark = useBookmarkStore((s) => s.removeBookmark);
   const bookmarks = useBookmarkStore((s) => s.bookmarks);
   const isBookmarked = !!bookmarks[data.id?.toString() ?? ""];
+  const enableImageLogos = usePreferencesStore(
+    (state) => state.enableImageLogos,
+  );
 
   const showProgress = useMemo(() => {
     if (!data.id) return null;
@@ -533,10 +537,15 @@ function DetailsContent({
         )}
       </div>
       {/* Content */}
-      <div className="px-6 pb-6 flex-grow relative -mt-32">
+      <div
+        className={classNames(
+          "px-6 pb-6 flex-grow relative",
+          enableImageLogos ? "-mt-32" : "",
+        )}
+      >
         {/* Title and Genres Row */}
         <div className="pb-4 relative z-10">
-          {data.logoUrl ? (
+          {data.logoUrl && enableImageLogos ? (
             <img
               src={data.logoUrl}
               alt={data.title}
@@ -544,7 +553,7 @@ function DetailsContent({
               style={{ background: "none" }}
             />
           ) : (
-            <h3 className="text-2xl font-bold text-white z-[999]">
+            <h3 className="text-3xl font-bold text-white z-[999]">
               {data.title}
             </h3>
           )}

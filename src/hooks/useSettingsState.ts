@@ -59,6 +59,7 @@ export function useSettingsState(
   enableSourceOrder: boolean,
   proxyTmdb: boolean,
   enableSkipCredits: boolean,
+  enableImageLogos: boolean,
 ) {
   const [proxyUrlsState, setProxyUrls, resetProxyUrls, proxyUrlsChanged] =
     useDerived(proxyUrls);
@@ -123,6 +124,12 @@ export function useSettingsState(
     enableDetailsModalChanged,
   ] = useDerived(enableDetailsModal);
   const [
+    enableImageLogosState,
+    setEnableImageLogosState,
+    resetEnableImageLogos,
+    enableImageLogosChanged,
+  ] = useDerived(enableImageLogos);
+  const [
     sourceOrderState,
     setSourceOrderState,
     resetSourceOrder,
@@ -152,6 +159,7 @@ export function useSettingsState(
     resetEnableSkipCredits();
     resetEnableDiscover();
     resetEnableDetailsModal();
+    resetEnableImageLogos();
     resetSourceOrder();
     resetEnableSourceOrder();
     resetProxyTmdb();
@@ -171,6 +179,7 @@ export function useSettingsState(
     enableSkipCreditsChanged ||
     enableDiscoverChanged ||
     enableDetailsModalChanged ||
+    enableImageLogosChanged ||
     sourceOrderChanged ||
     enableSourceOrderChanged ||
     proxyTmdbChanged;
@@ -242,6 +251,11 @@ export function useSettingsState(
       state: enableDetailsModalState,
       set: setEnableDetailsModalState,
       changed: enableDetailsModalChanged,
+    },
+    enableImageLogos: {
+      state: enableImageLogosState,
+      set: setEnableImageLogosState,
+      changed: enableImageLogosChanged,
     },
     sourceOrder: {
       state: sourceOrderState,

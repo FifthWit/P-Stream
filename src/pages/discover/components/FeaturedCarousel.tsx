@@ -6,6 +6,7 @@ import { TMDBContentTypes } from "@/backend/metadata/types/tmdb";
 import { Button } from "@/components/buttons/Button";
 import { Icon, Icons } from "@/components/Icon";
 import { Movie, TVShow } from "@/pages/discover/common";
+import { usePreferencesStore } from "@/stores/preferences";
 
 export interface FeaturedMedia extends Partial<Movie & TVShow> {
   backdrop_path: string;
@@ -31,6 +32,9 @@ export function FeaturedCarousel({
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const autoPlayInterval = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
+  const enableImageLogos = usePreferencesStore(
+    (state) => state.enableImageLogos,
+  );
 
   const handlePrevSlide = () => {
     setCurrentIndex((prev) => (prev - 1 + media.length) % media.length);
@@ -166,11 +170,11 @@ export function FeaturedCarousel({
       <div className="absolute inset-0 flex items-end pb-20 z-10">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl">
-            {logoUrl ? (
+            {logoUrl && enableImageLogos ? (
               <img
                 src={logoUrl}
                 alt={mediaTitle}
-                className="max-w-[14rem] md:max-w-[22rem] max-h-[20vh] object-contain drop-shadow-lg bg-transparent mb-4"
+                className="max-w-[14rem] md:max-w-[22rem] max-h-[20vh] object-contain drop-shadow-lg bg-transparent mb-6"
                 style={{ background: "none" }}
               />
             ) : (
