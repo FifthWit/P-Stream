@@ -34,7 +34,7 @@ export function AdsPart(): JSX.Element | null {
   if (isAdDismissed) return null;
 
   return (
-    <div className="-mb-10 md:-mb-20 w-fit max-w-[32rem] mx-auto relative group pb-4">
+    <div className="w-fit max-w-[32rem] mx-auto relative group pb-4">
       {(() => {
         const adContentUrl = conf().AD_CONTENT_URL;
 

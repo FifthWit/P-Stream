@@ -196,7 +196,7 @@ export function Discover() {
 
       <PageTitle subpage k="global.pages.discover" />
 
-      <div className="!mt-[-170px] !mb-[-20px]">
+      <div className="!mt-[-170px]">
         {/* Featured Carousel */}
         {featuredMedia.length > 0 && (
           <FeaturedCarousel

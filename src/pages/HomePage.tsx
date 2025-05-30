@@ -194,7 +194,7 @@ export function HomePage() {
           <span className="font-bold select-none">READ</span>
         </IconPill>
       </a> */}
-      <div className="mb-16 sm:mb-24">
+      <div className="mb-2">
         <Helmet>
           <style type="text/css">{`
             html, body {
