@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { get } from "@/backend/metadata/tmdb";
 import { DetailsModal } from "@/components/overlays/DetailsModal";
@@ -14,6 +15,7 @@ import {
 import { conf } from "@/setup/config";
 import { useDiscoverStore } from "@/stores/discover";
 import { useLanguageStore } from "@/stores/language";
+import { ProgressMediaItem, useProgressStore } from "@/stores/progress";
 import { getTmdbLanguageCode } from "@/utils/language";
 import { MediaItem } from "@/utils/mediaTypes";
 
@@ -130,6 +132,16 @@ export function DiscoverContent() {
   );
   const [detailsData, setDetailsData] = useState<any>();
   const detailsModal = useModal("discover-details");
+  const [movieRecommendations, setMovieRecommendations] = useState<any[]>([]);
+  const [tvRecommendations, setTVRecommendations] = useState<any[]>([]);
+  const [movieRecommendationTitle, setMovieRecommendationTitle] = useState("");
+  const [tvRecommendationTitle, setTVRecommendationTitle] = useState("");
+  const [movieRecommendationSourceId, setMovieRecommendationSourceId] =
+    useState<string>("");
+  const [tvRecommendationSourceId, setTVRecommendationSourceId] =
+    useState<string>("");
+  const progressStore = useProgressStore();
+  const { t } = useTranslation();
 
   const carouselRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
@@ -324,6 +336,79 @@ export function DiscoverContent() {
     fetchEditorPicksTVShows();
   }, [isEditorPicksTab, formattedLanguage]);
 
+  // Update recommendations effect to use stored titles
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      if (!progressStore.items || Object.keys(progressStore.items).length === 0)
+        return;
+
+      try {
+        // Get a random movie and TV show from progress
+        const progressItems = Object.entries(progressStore.items) as [
+          string,
+          ProgressMediaItem,
+        ][];
+        const movies = progressItems.filter(
+          ([_, item]) => item.type === "movie",
+        );
+        const tvShows = progressItems.filter(
+          ([_, item]) => item.type === "show",
+        );
+
+        // Fetch movie recommendations if we have movies
+        if (movies.length > 0) {
+          const randomMovieIndex = Math.floor(Math.random() * movies.length);
+          const [movieId, movieItem] = movies[randomMovieIndex];
+
+          const movieResults = await get<any>(
+            `/movie/${movieId}/recommendations`,
+            {
+              api_key: conf().TMDB_READ_API_KEY,
+              language: formattedLanguage,
+            },
+          );
+
+          if (movieResults.results?.length > 0) {
+            setMovieRecommendations(movieResults.results);
+            setMovieRecommendationTitle(
+              t("discover.carousel.title.recommended", {
+                title: movieItem.title || "",
+              }),
+            );
+            // Store the source movie ID for the more link
+            setMovieRecommendationSourceId(movieId);
+          }
+        }
+
+        // Fetch TV show recommendations if we have TV shows
+        if (tvShows.length > 0) {
+          const randomTVIndex = Math.floor(Math.random() * tvShows.length);
+          const [tvId, tvItem] = tvShows[randomTVIndex];
+
+          const tvResults = await get<any>(`/tv/${tvId}/recommendations`, {
+            api_key: conf().TMDB_READ_API_KEY,
+            language: formattedLanguage,
+          });
+
+          if (tvResults.results?.length > 0) {
+            setTVRecommendations(tvResults.results);
+            setTVRecommendationTitle(
+              t("discover.carousel.title.recommended", {
+                title: tvItem.title || "",
+              }),
+            );
+            // Store the source TV show ID for the more link
+            setTVRecommendationSourceId(tvId);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching recommendations:", error);
+      }
+    };
+
+    fetchRecommendations();
+  }, [progressStore.items, formattedLanguage, t]);
+
   const handleShowDetails = async (media: MediaItem | FeaturedMedia) => {
     setDetailsData({
       id: Number(media.id),
@@ -362,6 +447,20 @@ export function DiscoverContent() {
   const renderMoviesContent = () => {
     return (
       <>
+        {/* Movie Recommendations */}
+        {movieRecommendations.length > 0 && (
+          <MediaCarousel
+            medias={movieRecommendations}
+            category={movieRecommendationTitle}
+            isTVShow={false}
+            isMobile={isMobile}
+            carouselRefs={carouselRefs}
+            onShowDetails={handleShowDetails}
+            moreLink={`/discover/more/recommendations/${movieRecommendationSourceId}/movie`}
+            moreContent
+          />
+        )}
+
         {/* In Cinemas */}
         <LazyMediaCarousel
           category={categories[0]}
@@ -433,6 +532,20 @@ export function DiscoverContent() {
   const renderTVShowsContent = () => {
     return (
       <>
+        {/* TV Show Recommendations */}
+        {tvRecommendations.length > 0 && (
+          <MediaCarousel
+            medias={tvRecommendations}
+            category={tvRecommendationTitle}
+            isTVShow
+            isMobile={isMobile}
+            carouselRefs={carouselRefs}
+            onShowDetails={handleShowDetails}
+            moreLink={`/discover/more/recommendations/${tvRecommendationSourceId}/tv`}
+            moreContent
+          />
+        )}
+
         {/* On Air */}
         <LazyMediaCarousel
           category={tvCategories[0]}

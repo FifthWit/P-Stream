@@ -245,7 +245,7 @@ export function HomePage() {
         ) : null}
         {enableDiscover &&
           (enableFeatured ? (
-            <div className="pb-0" />
+            <div className="pb-4" />
           ) : showBookmarks || showWatching ? (
             <div className="pb-10" />
           ) : (

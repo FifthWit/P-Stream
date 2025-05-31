@@ -150,6 +150,12 @@ export function MediaCarousel({
       });
     }
 
+    if (categoryName.includes("Because You Watched")) {
+      return t("discover.carousel.title.recommended", {
+        title: categoryName.split("Because You Watched:")[1],
+      });
+    }
+
     return isTVShowCondition
       ? t("discover.carousel.title.tvshows", { category: categoryName })
       : t("discover.carousel.title.movies", { category: categoryName });

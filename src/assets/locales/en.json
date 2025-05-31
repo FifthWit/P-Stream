@@ -902,7 +902,8 @@
         "editorPicksMovies": "Editor Picks Movies",
         "editorPicksShows": "Editor Picks Shows",
         "moviesOn": "Movies on {{provider}}",
-        "tvshowsOn": "Shows on {{provider}}"
+        "tvshowsOn": "Shows on {{provider}}",
+        "recommended": "Because You Watched: {{title}}"
       },
       "more": "View more"
     },

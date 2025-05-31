@@ -15,6 +15,7 @@ import { SubPageLayout } from "@/pages/layouts/SubPageLayout";
 import { conf } from "@/setup/config";
 import { useDiscoverStore } from "@/stores/discover";
 import { useLanguageStore } from "@/stores/language";
+import { useProgressStore } from "@/stores/progress";
 import { getTmdbLanguageCode } from "@/utils/language";
 import { MediaItem } from "@/utils/mediaTypes";
 
@@ -51,6 +52,8 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
   const { lastView } = useDiscoverStore();
   const userLanguage = useLanguageStore.getState().language;
   const formattedLanguage = getTmdbLanguageCode(userLanguage);
+  const [sourceTitle, setSourceTitle] = useState("");
+  const progressStore = useProgressStore();
 
   const handleBack = () => {
     if (lastView) {
@@ -145,6 +148,33 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
         const isTVShow = mediaType === "tv";
         let endpoint = "";
 
+        // Handle recommendations separately
+        if (contentType === "recommendations") {
+          // Get title from progress store instead of fetching details
+          const progressItem = progressStore.items[id || ""];
+          if (progressItem) {
+            setSourceTitle(progressItem.title || "");
+          }
+
+          // Get recommendations with proper page number
+          const results = await get<any>(
+            `/${isTVShow ? "tv" : "movie"}/${id}/recommendations`,
+            {
+              api_key: conf().TMDB_READ_API_KEY,
+              language: formattedLanguage,
+              page: append ? page : 1, // Use page 1 for initial load, requested page for append
+            },
+          );
+
+          if (append) {
+            setMedias((prev) => [...prev, ...results.results]);
+          } else {
+            setMedias(results.results);
+          }
+          setHasMore(page < results.total_pages);
+          return;
+        }
+
         // Handle editor picks separately
         if (category?.includes("editor-picks")) {
           const editorPicks = isTVShow
@@ -215,7 +245,14 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
         console.error("Error fetching content:", error);
       }
     },
-    [contentType, id, mediaType, category, formattedLanguage],
+    [
+      contentType,
+      id,
+      mediaType,
+      category,
+      formattedLanguage,
+      progressStore.items,
+    ],
   );
 
   useEffect(() => {
@@ -238,6 +275,12 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
 
   const getDisplayTitle = () => {
     const isTVShow = mediaType === "tv";
+
+    if (contentType === "recommendations") {
+      return t("discover.carousel.title.recommended", {
+        title: sourceTitle,
+      });
+    }
 
     if (category === "editor-picks-tv" || category === "editor-picks-movie") {
       return category === "editor-picks-tv"
