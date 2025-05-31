@@ -55,7 +55,7 @@ export const SearchBarInput = forwardRef<HTMLInputElement, SearchBarProps>(
                 props.isInFeatured
                   ? props.isSticky
                     ? ""
-                    : "text-gray-400"
+                    : "text-white/50"
                   : "text-search-icon",
               )}
               onClick={(e) => {
@@ -84,7 +84,7 @@ export const SearchBarInput = forwardRef<HTMLInputElement, SearchBarProps>(
                 props.isInFeatured
                   ? props.isSticky
                     ? "placeholder-search-placeholder"
-                    : "text-gray-400"
+                    : "text-white/50"
                   : "placeholder-search-placeholder",
               )}
               placeholder={props.placeholder}
