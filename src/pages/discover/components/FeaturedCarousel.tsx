@@ -275,10 +275,10 @@ export function FeaturedCarousel({
         searching
           ? "h-24"
           : shorter
-            ? windowHeight > 560
-              ? "h-[75vh] md:h-[85vh]"
+            ? windowHeight > 600
+              ? "h-[40rem] md:h-[85vh]"
               : "h-[100vh]"
-            : "h-[80vh] md:h-[100vh]",
+            : "h-[40rem] md:h-[100vh]",
       )}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -376,7 +376,7 @@ export function FeaturedCarousel({
                 {mediaTitle}
               </h1>
             )}
-            <p className="text-lg text-white mb-6 line-clamp-2">
+            <p className="text-lg text-white mb-6 line-clamp-3 md:line-clamp-4">
               {currentMedia.overview}
             </p>
             <div

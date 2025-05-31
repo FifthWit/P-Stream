@@ -281,7 +281,7 @@ export function HomePage() {
         ) : null}
       </WideContainer>
       {enableDiscover && !search ? (
-        <div className="pt-12 w-full max-w-[100dvw] justify-center items-center">
+        <div className="w-full max-w-[100dvw] justify-center items-center">
           <RandomMovieButton
             allMovies={Object.values(genreMovies)
               .flat()
