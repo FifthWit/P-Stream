@@ -11,6 +11,8 @@ export interface SearchBarProps {
   onChange: (value: string, force: boolean) => void;
   onUnFocus: (newSearch?: string) => void;
   value: string;
+  isSticky?: boolean;
+  isInFeatured?: boolean;
 }
 
 export const SearchBarInput = forwardRef<HTMLInputElement, SearchBarProps>(
@@ -27,10 +29,12 @@ export const SearchBarInput = forwardRef<HTMLInputElement, SearchBarProps>(
       <div ref={containerRef}>
         <Flare.Base
           className={c({
-            "hover:flare-enabled group flex flex-col rounded-[28px] transition-colors sm:flex-row sm:items-center relative":
+            "hover:flare-enabled group flex flex-col rounded-[28px] transition-colors sm:flex-row sm:items-center relative backdrop-blur-lg":
               true,
-            "bg-search-background": !focused,
-            "bg-search-focused": focused,
+            "bg-search-background/50":
+              props.isInFeatured && !focused && !props.isSticky,
+            "bg-search-background":
+              !props.isInFeatured || focused || props.isSticky,
           })}
         >
           <Flare.Light
@@ -45,7 +49,15 @@ export const SearchBarInput = forwardRef<HTMLInputElement, SearchBarProps>(
           />
           <Flare.Child className="flex flex-1 flex-col">
             <div
-              className="absolute bottom-0 left-5 top-0 flex max-h-14 items-center text-search-icon cursor-pointer z-10"
+              className={c(
+                "absolute bottom-0 left-5 top-0 flex max-h-14 items-center text-search-icon cursor-pointer z-10",
+                "transition-colors duration-300",
+                props.isInFeatured
+                  ? props.isSticky
+                    ? ""
+                    : "text-gray-400"
+                  : "text-search-icon",
+              )}
               onClick={(e) => {
                 e.preventDefault();
                 setShowTooltip(!showTooltip);
@@ -66,7 +78,15 @@ export const SearchBarInput = forwardRef<HTMLInputElement, SearchBarProps>(
               onFocus={() => setFocused(true)}
               onChange={(val) => setSearch(val)}
               value={props.value}
-              className="w-full flex-1 bg-transparent px-4 py-4 pl-12 text-search-text placeholder-search-placeholder focus:outline-none sm:py-4 sm:pr-2"
+              className={c(
+                "w-full flex-1 bg-transparent px-4 py-4 pl-12 !text-search-text focus:outline-none sm:py-4 sm:pr-2 transition-colors duration-300",
+                "transition-colors duration-300",
+                props.isInFeatured
+                  ? props.isSticky
+                    ? "placeholder-search-placeholder"
+                    : "text-gray-400"
+                  : "placeholder-search-placeholder",
+              )}
               placeholder={props.placeholder}
             />
 

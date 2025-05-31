@@ -16,6 +16,7 @@ export interface HeroPartProps {
   setIsSticky: (val: boolean) => void;
   searchParams: ReturnType<typeof useSearchQuery>;
   showTitle?: boolean;
+  isInFeatured?: boolean;
 }
 
 function getTimeOfDay(date: Date): "night" | "morning" | "day" | "420" | "69" {
@@ -34,10 +35,11 @@ export function HeroPart({
   setIsSticky,
   searchParams,
   showTitle,
+  isInFeatured,
 }: HeroPartProps) {
   const { t: randomT } = useRandomTranslation();
   const [search, setSearch, setSearchUnFocus] = searchParams;
-  const [, setShowBg] = useState(false);
+  const [showBg, setShowBg] = useState(false);
   const bannerSize = useBannerSize();
   const stickStateChanged = useCallback(
     (isFixed: boolean) => {
@@ -107,6 +109,8 @@ export function HeroPart({
               value={search}
               onUnFocus={setSearchUnFocus}
               placeholder={placeholder ?? ""}
+              isSticky={showBg}
+              isInFeatured={isInFeatured}
             />
           </Sticky>
         </div>

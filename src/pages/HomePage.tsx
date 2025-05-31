@@ -302,7 +302,11 @@ export function HomePage() {
             searching={s.searching}
             shorter
           >
-            <HeroPart searchParams={searchParams} setIsSticky={setShowBg} />
+            <HeroPart
+              searchParams={searchParams}
+              setIsSticky={setShowBg}
+              isInFeatured
+            />
           </FeaturedCarousel>
         ) : (
           <HeroPart
