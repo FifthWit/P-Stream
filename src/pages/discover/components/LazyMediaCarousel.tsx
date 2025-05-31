@@ -30,6 +30,7 @@ interface LazyMediaCarouselProps {
   title?: string;
   relatedButtons?: Array<{ name: string; id: string }>;
   onButtonClick?: (id: string, name: string) => void;
+  moreContent?: boolean;
 }
 
 export function LazyMediaCarousel({
@@ -44,6 +45,7 @@ export function LazyMediaCarousel({
   title,
   relatedButtons,
   onButtonClick,
+  moreContent,
 }: LazyMediaCarouselProps) {
   const [medias, setMedias] = useState<Media[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,6 +124,7 @@ export function LazyMediaCarousel({
           genreId={genreId}
           relatedButtons={relatedButtons}
           onButtonClick={onButtonClick}
+          moreContent={moreContent}
           moreLink={
             categoryData
               ? `/discover/more/category/${categoryData.urlPath}/${categoryData.mediaType}`

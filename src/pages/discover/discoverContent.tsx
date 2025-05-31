@@ -343,6 +343,7 @@ export function DiscoverContent() {
           isMobile={isMobile}
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
+          moreContent
         />
         <LazyMediaCarousel
           preloadedMedia={filteredGenreTVShows}
@@ -351,6 +352,7 @@ export function DiscoverContent() {
           isMobile={isMobile}
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
+          moreContent
         />
       </>
     );
@@ -367,6 +369,7 @@ export function DiscoverContent() {
           isMobile={isMobile}
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
+          moreContent
         />
 
         {/* Top Rated */}
@@ -376,6 +379,7 @@ export function DiscoverContent() {
           isMobile={isMobile}
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
+          moreContent
         />
 
         {/* Popular */}
@@ -385,6 +389,7 @@ export function DiscoverContent() {
           isMobile={isMobile}
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
+          moreContent
         />
 
         {/* Provider Movies */}
@@ -401,6 +406,7 @@ export function DiscoverContent() {
           }))}
           onButtonClick={(id, name) => setSelectedProvider({ id, name })}
           moreLink={`/discover/more/provider/${selectedProvider.id}/movie`}
+          moreContent
         />
 
         {/* Genre Movies */}
@@ -417,6 +423,7 @@ export function DiscoverContent() {
           }))}
           onButtonClick={(id, name) => setSelectedGenre({ id, name })}
           moreLink={`/discover/more/genre/${selectedGenre.id}/movie`}
+          moreContent
         />
       </>
     );
@@ -433,6 +440,7 @@ export function DiscoverContent() {
           isMobile={isMobile}
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
+          moreContent
         />
 
         {/* Top Rated */}
@@ -442,6 +450,7 @@ export function DiscoverContent() {
           isMobile={isMobile}
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
+          moreContent
         />
 
         {/* Popular */}
@@ -451,6 +460,7 @@ export function DiscoverContent() {
           isMobile={isMobile}
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
+          moreContent
         />
 
         {/* Provider TV Shows */}
@@ -467,6 +477,7 @@ export function DiscoverContent() {
           }))}
           onButtonClick={(id, name) => setSelectedProvider({ id, name })}
           moreLink={`/discover/more/provider/${selectedProvider.id}/tv`}
+          moreContent
         />
 
         {/* Genre TV Shows */}
@@ -483,6 +494,7 @@ export function DiscoverContent() {
           }))}
           onButtonClick={(id, name) => setSelectedGenre({ id, name })}
           moreLink={`/discover/more/genre/${selectedGenre.id}/tv`}
+          moreContent
         />
       </>
     );

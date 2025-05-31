@@ -6,6 +6,7 @@ import { useWindowSize } from "react-use";
 import { Dropdown, OptionItem } from "@/components/form/Dropdown";
 import { Icon, Icons } from "@/components/Icon";
 import { MediaCard } from "@/components/media/MediaCard";
+import { Flare } from "@/components/utils/Flare";
 import { Media } from "@/pages/discover/common";
 import { MediaItem } from "@/utils/mediaTypes";
 
@@ -34,6 +35,36 @@ function MediaCardSkeleton() {
         <div className="w-full aspect-[2/3] bg-mediaCard-hoverBackground rounded-lg" />
         <div className="mt-2 h-4 bg-mediaCard-hoverBackground rounded w-3/4" />
       </div>
+    </div>
+  );
+}
+
+function MoreCard({ link }: { link: string }) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="relative mt-4 group cursor-pointer user-select-none rounded-xl p-2 bg-transparent transition-colors duration-300 w-[10rem] md:w-[11.5rem] h-auto">
+      <Link to={link} className="block">
+        <Flare.Base className="group -m-[0.705em] h-[20rem] hover:scale-95 transition-all rounded-xl bg-background-main duration-300 hover:bg-mediaCard-hoverBackground tabbable">
+          <Flare.Light
+            flareSize={300}
+            cssColorVar="--colors-mediaCard-hoverAccent"
+            backgroundClass="bg-mediaCard-hoverBackground duration-100"
+            className="rounded-xl bg-background-main group-hover:opacity-100"
+          />
+          <Flare.Child className="pointer-events-auto h-[20rem] relative mb-2 p-[0.4em] transition-transform duration-300">
+            <div className="flex absolute inset-0 flex-col items-center justify-center">
+              <Icon
+                icon={Icons.ARROW_RIGHT}
+                className="text-4xl mb-2 transition-transform duration-300"
+              />
+              <span className="text-sm text-center px-2">
+                {t("discover.carousel.more")}
+              </span>
+            </div>
+          </Flare.Child>
+        </Flare.Base>
+      </Link>
     </div>
   );
 }
@@ -173,7 +204,7 @@ export function MediaCarousel({
           <h2 className="text-2xl cursor-default font-bold text-white md:text-2xl pl-5 text-balance">
             {displayCategory}
           </h2>
-          {!moreContent && (
+          {moreContent && (
             <Link
               to={
                 moreLink ||
@@ -288,6 +319,15 @@ export function MediaCarousel({
                   key={`skeleton-${categorySlug}-${Math.random().toString(36).substring(7)}`}
                 />
               ))}
+
+          {moreContent && (
+            <MoreCard
+              link={
+                moreLink ||
+                `/discover/more/${categorySlug}${genreId ? `/${genreId}` : ""}`
+              }
+            />
+          )}
 
           <div className="md:w-12" />
         </div>
