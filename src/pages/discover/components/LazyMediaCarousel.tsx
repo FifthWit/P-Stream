@@ -48,7 +48,7 @@ export function LazyMediaCarousel({
   moreContent,
 }: LazyMediaCarouselProps) {
   const [medias, setMedias] = useState<Media[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!preloadedMedia);
 
   const categoryData = (mediaType === "movie" ? categories : tvCategories).find(
     (c: Category) => c.name === (category?.name || genre?.name || title || ""),
@@ -71,15 +71,18 @@ export function LazyMediaCarousel({
   useEffect(() => {
     if (preloadedMedia) {
       setMedias(preloadedMedia);
+      setLoading(false);
     } else if (media.length > 0) {
       setMedias(media);
+      setLoading(false);
     }
   }, [media, preloadedMedia]);
 
+  // Only fetch category content if we don't have preloaded media
   useEffect(() => {
-    const fetchContent = async () => {
-      if (!categoryData) return;
+    if (preloadedMedia || !categoryData) return;
 
+    const fetchContent = async () => {
       try {
         const data = await get<any>(categoryData.endpoint, {
           api_key: process.env.TMDB_READ_API_KEY,
@@ -94,7 +97,7 @@ export function LazyMediaCarousel({
     };
 
     fetchContent();
-  }, [categoryData]);
+  }, [categoryData, preloadedMedia]);
 
   const categoryName = category?.name || genre?.name || title || "";
   const categorySlug = `${categoryName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${mediaType}`;
