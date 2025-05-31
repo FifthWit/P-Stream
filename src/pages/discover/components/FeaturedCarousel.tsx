@@ -1,6 +1,7 @@
 import classNames from "classnames";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useWindowSize } from "react-use";
 
 import { get, getMediaLogo } from "@/backend/metadata/tmdb";
 import { TMDBContentTypes } from "@/backend/metadata/types/tmdb";
@@ -113,6 +114,7 @@ export function FeaturedCarousel({
   );
   const userLanguage = useLanguageStore.getState().language;
   const formattedLanguage = getTmdbLanguageCode(userLanguage);
+  const { width: windowWidth, height: windowHeight } = useWindowSize();
 
   // Fetch featured media
   useEffect(() => {
@@ -270,7 +272,13 @@ export function FeaturedCarousel({
     <div
       className={classNames(
         "relative w-full transition-[height] duration-300 ease-in-out",
-        searching ? "h-24" : shorter ? "h-[75vh]" : "h-[75vh] md:h-[100vh]",
+        searching
+          ? "h-24"
+          : shorter
+            ? windowHeight > 560
+              ? "h-[80vh]"
+              : "h-[100vh]"
+            : "h-[80vh] md:h-[100vh]",
       )}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -404,7 +412,12 @@ export function FeaturedCarousel({
         </div>
       </div>
       {children && (
-        <div className="absolute inset-0 pointer-events-none pt-14 md:pt-0">
+        <div
+          className={classNames(
+            "absolute inset-0 pointer-events-none",
+            windowWidth > 1280 ? "pt-0" : "pt-14",
+          )}
+        >
           <div className="pointer-events-auto z-50">{children}</div>
         </div>
       )}
