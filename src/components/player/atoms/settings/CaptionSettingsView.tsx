@@ -339,44 +339,42 @@ export function CaptionSettingsView({
               <Menu.FieldTitle>
                 {t("settings.subtitles.textStyle.title") || "Font Style"}
               </Menu.FieldTitle>
-              <div className="w-64">
-                <Dropdown
-                  options={[
-                    {
-                      id: "default",
-                      name: t("settings.subtitles.textStyle.default"),
-                    },
-                    {
-                      id: "raised",
-                      name: t("settings.subtitles.textStyle.raised"),
-                    },
-                    {
-                      id: "depressed",
-                      name: t("settings.subtitles.textStyle.depressed"),
-                    },
-                    {
-                      id: "uniform",
-                      name: t("settings.subtitles.textStyle.uniform"),
-                    },
-                    {
-                      id: "dropShadow",
-                      name: t("settings.subtitles.textStyle.dropShadow"),
-                    },
-                  ]}
-                  selectedItem={{
-                    id: styling.fontStyle,
-                    name:
-                      t(`settings.subtitles.textStyle.${styling.fontStyle}`) ||
-                      styling.fontStyle,
-                  }}
-                  setSelectedItem={(item) =>
-                    handleStylingChange({
-                      ...styling,
-                      fontStyle: item.id,
-                    })
-                  }
-                />
-              </div>
+              <Dropdown
+                options={[
+                  {
+                    id: "default",
+                    name: t("settings.subtitles.textStyle.default"),
+                  },
+                  {
+                    id: "raised",
+                    name: t("settings.subtitles.textStyle.raised"),
+                  },
+                  {
+                    id: "depressed",
+                    name: t("settings.subtitles.textStyle.depressed"),
+                  },
+                  {
+                    id: "uniform",
+                    name: t("settings.subtitles.textStyle.uniform"),
+                  },
+                  {
+                    id: "dropShadow",
+                    name: t("settings.subtitles.textStyle.dropShadow"),
+                  },
+                ]}
+                selectedItem={{
+                  id: styling.fontStyle,
+                  name:
+                    t(`settings.subtitles.textStyle.${styling.fontStyle}`) ||
+                    styling.fontStyle,
+                }}
+                setSelectedItem={(item) =>
+                  handleStylingChange({
+                    ...styling,
+                    fontStyle: item.id,
+                  })
+                }
+              />
             </div>
             <div className="flex justify-between items-center">
               <Menu.FieldTitle>

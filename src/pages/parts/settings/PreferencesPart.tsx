@@ -73,6 +73,7 @@ export function PreferencesPart(props: {
               {t("settings.preferences.languageDescription")}
             </p>
             <Dropdown
+              className="w-full"
               options={options}
               selectedItem={selected || options[0]}
               setSelectedItem={(opt) => props.setLanguage(opt.id)}
