@@ -134,22 +134,37 @@ export function MediaCarousel({
 
   const SKELETON_COUNT = 10;
 
-  const visibleButtons = relatedButtons
-    ? windowWidth > 850
-      ? relatedButtons.slice(0, 5)
-      : relatedButtons.slice(0, 0)
-    : [];
+  const { visibleButtons, dropdownButtons } = React.useMemo(() => {
+    if (!relatedButtons) return { visibleButtons: [], dropdownButtons: [] };
 
-  const dropdownButtons = relatedButtons
-    ? windowWidth > 850
-      ? relatedButtons.slice(5)
-      : relatedButtons.slice(0)
-    : [];
+    const visible =
+      windowWidth > 850
+        ? relatedButtons.slice(0, 5)
+        : relatedButtons.slice(0, 0);
+
+    const dropdown =
+      windowWidth > 850 ? relatedButtons.slice(5) : relatedButtons.slice(0);
+
+    return { visibleButtons: visible, dropdownButtons: dropdown };
+  }, [relatedButtons, windowWidth]);
+
+  const activeButton = relatedButtons?.find(
+    (btn) => btn.name === category.split(" on ")[1] || btn.name === category,
+  );
 
   const dropdownOptions: OptionItem[] = dropdownButtons.map((button) => ({
     id: button.id,
     name: button.name,
   }));
+
+  React.useEffect(() => {
+    if (
+      activeButton &&
+      !visibleButtons.find((btn) => btn.id === activeButton.id)
+    ) {
+      setSelectedGenre({ id: activeButton.id, name: activeButton.name });
+    }
+  }, [activeButton, visibleButtons]);
 
   return (
     <>
@@ -174,7 +189,18 @@ export function MediaCarousel({
             {dropdownButtons && dropdownButtons.length > 0 && (
               <div className="relative my-0">
                 <Dropdown
-                  selectedItem={selectedGenre || { id: "", name: "..." }}
+                  selectedItem={
+                    selectedGenre || {
+                      id: "",
+                      name:
+                        activeButton &&
+                        !visibleButtons.find(
+                          (btn) => btn.id === activeButton.id,
+                        )
+                          ? activeButton.name
+                          : "...",
+                    }
+                  }
                   setSelectedItem={(item) => {
                     setSelectedGenre(item);
                     onButtonClick?.(item.id, item.name);
@@ -185,7 +211,14 @@ export function MediaCarousel({
                       type="button"
                       className="px-3 py-1 text-sm bg-mediaCard-hoverBackground rounded-full hover:bg-mediaCard-background transition-colors flex items-center gap-1"
                     >
-                      <span>...</span>
+                      <span>
+                        {activeButton &&
+                        !visibleButtons.find(
+                          (btn) => btn.id === activeButton.id,
+                        )
+                          ? activeButton.name
+                          : "..."}
+                      </span>
                       <Icon
                         icon={Icons.UP_DOWN_ARROW}
                         className="text-xs text-dropdown-secondary"
