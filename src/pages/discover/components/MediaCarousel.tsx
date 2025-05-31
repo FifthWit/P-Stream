@@ -169,10 +169,22 @@ export function MediaCarousel({
   return (
     <>
       <div className="flex items-center justify-between ml-2 md:ml-8 mt-2">
-        <div className="flex gap-4 items-center">
+        <div className="flex flex-col">
           <h2 className="text-2xl cursor-default font-bold text-white md:text-2xl pl-5 text-balance">
             {displayCategory}
           </h2>
+          {!moreContent && (
+            <Link
+              to={
+                moreLink ||
+                `/discover/more/${categorySlug}${genreId ? `/${genreId}` : ""}`
+              }
+              className="flex px-5 items-center hover:text-type-link transition-colors"
+            >
+              <span className="text-sm">{t("discover.carousel.more")}</span>
+              <Icon className="text-sm ml-1" icon={Icons.ARROW_RIGHT} />
+            </Link>
+          )}
         </div>
         {relatedButtons && relatedButtons.length > 0 && (
           <div className="flex items-center space-x-2 mr-6">
@@ -231,10 +243,10 @@ export function MediaCarousel({
           </div>
         )}
       </div>
-      <div className="relative overflow-hidden carousel-container">
+      <div className="relative overflow-hidden carousel-container md:pb-4">
         <div
           id={`carousel-${categorySlug}`}
-          className="grid grid-flow-col auto-cols-max gap-4 pt-0 pb-4 overflow-x-scroll scrollbar rounded-xl overflow-y-hidden md:pl-8 md:pr-8"
+          className="grid grid-flow-col auto-cols-max gap-4 pt-0 overflow-x-scroll scrollbar rounded-xl overflow-y-hidden md:pl-8 md:pr-8"
           ref={(el) => {
             carouselRefs.current[categorySlug] = el;
           }}
@@ -287,20 +299,6 @@ export function MediaCarousel({
           />
         )}
       </div>
-      {!moreContent && (
-        <div className="flex justify-center">
-          <Link
-            to={
-              moreLink ||
-              `/discover/more/${categorySlug}${genreId ? `/${genreId}` : ""}`
-            }
-            className="flex items-center justify-center px-6 py-2 rounded-full bg-mediaCard-hoverBackground hover:bg-mediaCard-background transition-colors"
-          >
-            <span className="mr-2">{t("discover.carousel.more")}</span>
-            <Icon className="text-xl" icon={Icons.ARROW_RIGHT} />
-          </Link>
-        </div>
-      )}
     </>
   );
 }
