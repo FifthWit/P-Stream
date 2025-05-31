@@ -1,6 +1,9 @@
+import React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import { useWindowSize } from "react-use";
 
+import { Dropdown, OptionItem } from "@/components/form/Dropdown";
 import { Icon, Icons } from "@/components/Icon";
 import { MediaCard } from "@/components/media/MediaCard";
 import { Media } from "@/pages/discover/common";
@@ -19,6 +22,8 @@ interface MediaCarouselProps {
   onShowDetails?: (media: MediaItem) => void;
   genreId?: number;
   moreContent?: boolean;
+  relatedButtons?: Array<{ name: string; id: string }>;
+  onButtonClick?: (id: string, name: string) => void;
 }
 
 function MediaCardSkeleton() {
@@ -41,8 +46,14 @@ export function MediaCarousel({
   onShowDetails,
   genreId,
   moreContent,
+  relatedButtons,
+  onButtonClick,
 }: MediaCarouselProps) {
   const { t } = useTranslation();
+  const { width: windowWidth } = useWindowSize();
+  const [selectedGenre, setSelectedGenre] = React.useState<OptionItem | null>(
+    null,
+  );
   const categorySlug = `${category.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${isTVShow ? "tv" : "movie"}`;
   const browser = !!window.chrome;
   let isScrolling = false;
@@ -109,20 +120,68 @@ export function MediaCarousel({
 
   const SKELETON_COUNT = 10;
 
+  const visibleButtons = relatedButtons
+    ? windowWidth > 850
+      ? relatedButtons.slice(0, 5)
+      : relatedButtons.slice(0, 0)
+    : [];
+
+  const dropdownButtons = relatedButtons
+    ? windowWidth > 850
+      ? relatedButtons.slice(5)
+      : relatedButtons.slice(0)
+    : [];
+
+  const dropdownOptions: OptionItem[] = dropdownButtons.map((button) => ({
+    id: button.id,
+    name: button.name,
+  }));
+
   return (
     <>
       <div className="flex items-center justify-between ml-2 md:ml-8 mt-2">
-        <h2 className="text-2xl cursor-default font-bold text-white md:text-2xl pl-5 text-balance">
-          {displayCategory}
-        </h2>
-        {!moreContent && (
-          <Link
-            to={`/discover/more/${categorySlug}${genreId ? `/${genreId}` : ""}`}
-            className="flex items-center justify-center mx-4"
-          >
-            <span className="mr-2">{t("discover.carousel.more")}</span>
-            <Icon className="text-xl" icon={Icons.ARROW_RIGHT} />
-          </Link>
+        <div className="flex gap-4 items-center">
+          <h2 className="text-2xl cursor-default font-bold text-white md:text-2xl pl-5 text-balance">
+            {displayCategory}
+          </h2>
+        </div>
+        {relatedButtons && relatedButtons.length > 0 && (
+          <div className="flex items-center space-x-2 mr-6">
+            {visibleButtons?.map((button) => (
+              <button
+                type="button"
+                key={button.id}
+                onClick={() => onButtonClick?.(button.id, button.name)}
+                className="px-3 py-1 text-sm bg-mediaCard-hoverBackground rounded-full hover:bg-mediaCard-background transition-colors"
+              >
+                {button.name}
+              </button>
+            ))}
+            {dropdownButtons && dropdownButtons.length > 0 && (
+              <div className="relative my-0">
+                <Dropdown
+                  selectedItem={selectedGenre || { id: "", name: "..." }}
+                  setSelectedItem={(item) => {
+                    setSelectedGenre(item);
+                    onButtonClick?.(item.id, item.name);
+                  }}
+                  options={dropdownOptions}
+                  customButton={
+                    <button
+                      type="button"
+                      className="px-3 py-1 text-sm bg-mediaCard-hoverBackground rounded-full hover:bg-mediaCard-background transition-colors flex items-center gap-1"
+                    >
+                      <span>...</span>
+                      <Icon
+                        icon={Icons.UP_DOWN_ARROW}
+                        className="text-xs text-dropdown-secondary"
+                      />
+                    </button>
+                  }
+                />
+              </div>
+            )}
+          </div>
         )}
       </div>
       <div className="relative overflow-hidden carousel-container">
@@ -181,6 +240,17 @@ export function MediaCarousel({
           />
         )}
       </div>
+      {!moreContent && (
+        <div className="flex justify-center">
+          <Link
+            to={`/discover/more/${categorySlug}${genreId ? `/${genreId}` : ""}`}
+            className="flex items-center justify-center px-6 py-2 rounded-full bg-mediaCard-hoverBackground hover:bg-mediaCard-background transition-colors"
+          >
+            <span className="mr-2">{t("discover.carousel.more")}</span>
+            <Icon className="text-xl" icon={Icons.ARROW_RIGHT} />
+          </Link>
+        </div>
+      )}
     </>
   );
 }

@@ -22,6 +22,8 @@ interface LazyMediaCarouselProps {
   preloadedMedia?: Movie[] | TVShow[];
   genreId?: number;
   title?: string;
+  relatedButtons?: Array<{ name: string; id: string }>;
+  onButtonClick?: (id: string, name: string) => void;
 }
 
 export function LazyMediaCarousel({
@@ -34,6 +36,8 @@ export function LazyMediaCarousel({
   preloadedMedia,
   genreId,
   title,
+  relatedButtons,
+  onButtonClick,
 }: LazyMediaCarouselProps) {
   const [medias, setMedias] = useState<Media[]>([]);
 
@@ -90,6 +94,8 @@ export function LazyMediaCarousel({
           carouselRefs={carouselRefs}
           onShowDetails={onShowDetails}
           genreId={genreId}
+          relatedButtons={relatedButtons}
+          onButtonClick={onButtonClick}
         />
       ) : (
         <div className="relative overflow-hidden carousel-container">

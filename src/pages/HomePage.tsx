@@ -287,10 +287,7 @@ export function HomePage() {
               .flat()
               .filter((media): media is Movie => "title" in media)}
           />
-          <DiscoverContent
-            genreMovies={genreMovies}
-            genreTVShows={genreTVShows}
-          />
+          <DiscoverContent />
         </div>
       ) : (
         <div className="flex flex-col justify-center items-center h-40 space-y-4">

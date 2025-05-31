@@ -24,6 +24,29 @@ import { MediaCarousel } from "./components/MediaCarousel";
 import { ScrollToTopButton } from "./components/ScrollToTopButton";
 import { useSelectedCategory } from "./hooks/useSelectedCategory";
 
+// Provider constants moved from DiscoverNavigation
+export const MOVIE_PROVIDERS = [
+  { name: "Netflix", id: "8" },
+  { name: "Apple TV+", id: "2" },
+  { name: "Amazon Prime Video", id: "10" },
+  { name: "Hulu", id: "15" },
+  { name: "Max", id: "1899" },
+  { name: "Paramount Plus", id: "531" },
+  { name: "Disney Plus", id: "337" },
+  { name: "Shudder", id: "99" },
+];
+
+export const TV_PROVIDERS = [
+  { name: "Netflix", id: "8" },
+  { name: "Apple TV+", id: "350" },
+  { name: "Amazon Prime Video", id: "10" },
+  { name: "Paramount Plus", id: "531" },
+  { name: "Hulu", id: "15" },
+  { name: "Max", id: "1899" },
+  { name: "Disney Plus", id: "337" },
+  { name: "fubuTV", id: "257" },
+];
+
 const shuffleArray = <T,>(array: T[]): T[] => {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i -= 1) {
@@ -327,6 +350,11 @@ export function DiscoverContent({
             isMobile={isMobile}
             carouselRefs={carouselRefs}
             onShowDetails={handleShowDetails}
+            relatedButtons={genres.map((g) => ({
+              name: g.name,
+              id: g.id.toString(),
+            }))}
+            onButtonClick={handleCategoryClick}
           />
         ))}
 
@@ -341,6 +369,11 @@ export function DiscoverContent({
             onShowDetails={handleShowDetails}
             preloadedMedia={genreMovies?.[genre.id]}
             genreId={genre.id}
+            relatedButtons={MOVIE_PROVIDERS.map((p) => ({
+              name: p.name,
+              id: p.id,
+            }))}
+            onButtonClick={handleProviderClick}
           />
         ))}
       </>
@@ -373,6 +406,10 @@ export function DiscoverContent({
             isMobile={isMobile}
             carouselRefs={carouselRefs}
             onShowDetails={handleShowDetails}
+            relatedButtons={tvGenres
+              .slice(0, 3)
+              .map((g) => ({ name: g.name, id: g.id.toString() }))}
+            onButtonClick={handleCategoryClick}
           />
         ))}
 
@@ -387,6 +424,11 @@ export function DiscoverContent({
             onShowDetails={handleShowDetails}
             preloadedMedia={genreTVShows?.[genre.id]}
             genreId={genre.id}
+            relatedButtons={TV_PROVIDERS.slice(0, 3).map((p) => ({
+              name: p.name,
+              id: p.id,
+            }))}
+            onButtonClick={handleProviderClick}
           />
         ))}
       </>
@@ -397,11 +439,7 @@ export function DiscoverContent({
     <div className="relative min-h-screen">
       <DiscoverNavigation
         selectedCategory={selectedCategory}
-        genres={genres}
-        tvGenres={tvGenres}
         onCategoryChange={handleCategoryChange}
-        onProviderClick={handleProviderClick}
-        onCategoryClick={handleCategoryClick}
       />
       {/* Content Section with Lazy Loading Tabs */}
       <div className="w-full md:w-[90%] max-w-[2400px] mx-auto">
