@@ -147,9 +147,9 @@ export function FeaturedCarousel({
               backgroundSize: "cover",
               backgroundPosition: "center",
               maskImage:
-                "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 100px)",
+                "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 500px)",
               WebkitMaskImage:
-                "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 100px)",
+                "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 500px)",
             }}
           />
         ))}
@@ -182,7 +182,7 @@ export function FeaturedCarousel({
       {/* Navigation Dots */}
       <div
         className={classNames(
-          "absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-2",
+          "absolute bottom-8 left-1/2 -translate-x-1/2 z-[19] flex gap-2",
           searchClasses,
         )}
       >
