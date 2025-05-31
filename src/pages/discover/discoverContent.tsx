@@ -110,26 +110,24 @@ export const EDITOR_PICKS_TV_SHOWS = shuffleArray([
   { id: 105248, type: "show" }, // Cyberpunk: Edgerunners
 ]);
 
-interface DiscoverContentProps {
-  genreMovies?: { [id: number]: Movie[] | TVShow[] };
-  genreTVShows?: { [id: number]: Movie[] | TVShow[] };
-}
-
-export function DiscoverContent({
-  genreMovies,
-  genreTVShows,
-}: DiscoverContentProps) {
+export function DiscoverContent() {
   const { selectedCategory, setSelectedCategory } = useSelectedCategory();
   const [selectedProvider, setSelectedProvider] = useState({
+    name: "",
+    id: "",
+  });
+  const [selectedGenre, setSelectedGenre] = useState({
     name: "",
     id: "",
   });
   const [genres, setGenres] = useState<Genre[]>([]);
   const [tvGenres, setTVGenres] = useState<Genre[]>([]);
   const [providerMovies, setProviderMovies] = useState<Movie[]>([]);
-  const [providerTVShows, setProviderTVShows] = useState<any[]>([]);
-  const [editorPicksMovies, setEditorPicksMovies] = useState<Movie[]>([]);
-  const [editorPicksTVShows, setEditorPicksTVShows] = useState<any[]>([]);
+  const [providerTVShows, setProviderTVShows] = useState<TVShow[]>([]);
+  const [filteredGenreMovies, setFilteredGenreMovies] = useState<Movie[]>([]);
+  const [filteredGenreTVShows, setFilteredGenreTVShows] = useState<TVShow[]>(
+    [],
+  );
   const [detailsData, setDetailsData] = useState<any>();
   const detailsModal = useModal("discover-details");
 
@@ -149,27 +147,36 @@ export function DiscoverContent({
     setSelectedCategory(category as "movies" | "tvshows" | "editorpicks");
   };
 
-  const handleProviderClick = (id: string, name: string) => {
-    setSelectedProvider({ name, id });
-  };
-
-  const handleCategoryClick = (id: string, name: string) => {
-    const categorySlugBase = name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-    const movieElement = document.getElementById(
-      `carousel-${categorySlugBase}-movie`,
-    );
-    const tvElement = document.getElementById(
-      `carousel-${categorySlugBase}-tv`,
-    );
-
-    const element = selectedCategory === "tvshows" ? tvElement : movieElement;
-    if (element) {
-      element.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
+  // Set initial provider when component mounts or category changes
+  useEffect(() => {
+    const providers =
+      selectedCategory === "movies" ? MOVIE_PROVIDERS : TV_PROVIDERS;
+    if (providers.length > 0 && !selectedProvider.id) {
+      setSelectedProvider({
+        name: providers[0].name,
+        id: providers[0].id,
       });
     }
-  };
+  }, [selectedCategory, selectedProvider.id]);
+
+  // Set initial genre when component mounts or category changes
+  useEffect(() => {
+    const genreList = selectedCategory === "movies" ? genres : tvGenres;
+    if (genreList.length > 0) {
+      // Always reset genre when switching categories to ensure we use the correct genre IDs
+      if (selectedCategory === "movies") {
+        setSelectedGenre({
+          name: genres[0].name,
+          id: genres[0].id.toString(),
+        });
+      } else if (selectedCategory === "tvshows") {
+        setSelectedGenre({
+          name: tvGenres[0].name,
+          id: tvGenres[0].id.toString(),
+        });
+      }
+    }
+  }, [selectedCategory, genres, tvGenres]);
 
   // Fetch provider content when selectedProvider changes
   useEffect(() => {
@@ -197,6 +204,31 @@ export function DiscoverContent({
 
     fetchProviderContent();
   }, [selectedProvider, selectedCategory, formattedLanguage]);
+
+  // Fetch genre content when selectedGenre changes
+  useEffect(() => {
+    const fetchGenreContent = async () => {
+      if (!selectedGenre.id) return;
+      try {
+        const endpoint =
+          selectedCategory === "movies" ? "/discover/movie" : "/discover/tv";
+        const setData =
+          selectedCategory === "movies"
+            ? setFilteredGenreMovies
+            : setFilteredGenreTVShows;
+        const data = await get<any>(endpoint, {
+          api_key: conf().TMDB_READ_API_KEY,
+          with_genres: selectedGenre.id,
+          language: formattedLanguage,
+        });
+        setData(data.results);
+      } catch (error) {
+        console.error("Error fetching genre movies/shows:", error);
+      }
+    };
+
+    fetchGenreContent();
+  }, [selectedGenre, selectedCategory, formattedLanguage]);
 
   // Fetch TV show genres
   useEffect(() => {
@@ -255,7 +287,7 @@ export function DiscoverContent({
           ...movie,
           type: "movie" as const,
         }));
-        setEditorPicksMovies(moviesWithType);
+        setFilteredGenreMovies(moviesWithType);
       } catch (error) {
         console.error("Error fetching editor picks movies:", error);
       }
@@ -283,7 +315,7 @@ export function DiscoverContent({
           ...show,
           type: "show" as const,
         }));
-        setEditorPicksTVShows(showsWithType);
+        setFilteredGenreTVShows(showsWithType);
       } catch (error) {
         console.error("Error fetching editor picks TV shows:", error);
       }
@@ -305,7 +337,7 @@ export function DiscoverContent({
     return (
       <>
         <LazyMediaCarousel
-          preloadedMedia={editorPicksMovies}
+          preloadedMedia={filteredGenreMovies}
           title="Editor Picks"
           mediaType="movie"
           isMobile={isMobile}
@@ -313,7 +345,7 @@ export function DiscoverContent({
           onShowDetails={handleShowDetails}
         />
         <LazyMediaCarousel
-          preloadedMedia={editorPicksTVShows}
+          preloadedMedia={filteredGenreTVShows}
           title="Editor Picks"
           mediaType="tv"
           isMobile={isMobile}
@@ -328,54 +360,62 @@ export function DiscoverContent({
   const renderMoviesContent = () => {
     return (
       <>
+        {/* In Cinemas */}
+        <LazyMediaCarousel
+          category={categories[0]}
+          mediaType="movie"
+          isMobile={isMobile}
+          carouselRefs={carouselRefs}
+          onShowDetails={handleShowDetails}
+        />
+
+        {/* Top Rated */}
+        <LazyMediaCarousel
+          category={categories[1]}
+          mediaType="movie"
+          isMobile={isMobile}
+          carouselRefs={carouselRefs}
+          onShowDetails={handleShowDetails}
+        />
+
+        {/* Popular */}
+        <LazyMediaCarousel
+          category={categories[2]}
+          mediaType="movie"
+          isMobile={isMobile}
+          carouselRefs={carouselRefs}
+          onShowDetails={handleShowDetails}
+        />
+
         {/* Provider Movies */}
-        {providerMovies.length > 0 && (
-          <MediaCarousel
-            medias={providerMovies}
-            category={selectedProvider.name}
-            isTVShow={false}
-            isMobile={isMobile}
-            carouselRefs={carouselRefs}
-            onShowDetails={handleShowDetails}
-            moreContent
-          />
-        )}
+        <MediaCarousel
+          medias={providerMovies}
+          category={`Movies on ${selectedProvider.name || ""}`}
+          isTVShow={false}
+          isMobile={isMobile}
+          carouselRefs={carouselRefs}
+          onShowDetails={handleShowDetails}
+          relatedButtons={MOVIE_PROVIDERS.map((p) => ({
+            name: p.name,
+            id: p.id,
+          }))}
+          onButtonClick={(id, name) => setSelectedProvider({ id, name })}
+        />
 
-        {/* Categories */}
-        {categories.map((category) => (
-          <LazyMediaCarousel
-            key={category.name}
-            category={category}
-            mediaType="movie"
-            isMobile={isMobile}
-            carouselRefs={carouselRefs}
-            onShowDetails={handleShowDetails}
-            relatedButtons={genres.map((g) => ({
-              name: g.name,
-              id: g.id.toString(),
-            }))}
-            onButtonClick={handleCategoryClick}
-          />
-        ))}
-
-        {/* Genres */}
-        {genres.map((genre) => (
-          <LazyMediaCarousel
-            key={genre.id}
-            genre={genre}
-            mediaType="movie"
-            isMobile={isMobile}
-            carouselRefs={carouselRefs}
-            onShowDetails={handleShowDetails}
-            preloadedMedia={genreMovies?.[genre.id]}
-            genreId={genre.id}
-            relatedButtons={MOVIE_PROVIDERS.map((p) => ({
-              name: p.name,
-              id: p.id,
-            }))}
-            onButtonClick={handleProviderClick}
-          />
-        ))}
+        {/* Genre Movies */}
+        <MediaCarousel
+          medias={filteredGenreMovies}
+          category={`${selectedGenre.name || ""}`}
+          isTVShow={false}
+          isMobile={isMobile}
+          carouselRefs={carouselRefs}
+          onShowDetails={handleShowDetails}
+          relatedButtons={genres.map((g) => ({
+            name: g.name,
+            id: g.id.toString(),
+          }))}
+          onButtonClick={(id, name) => setSelectedGenre({ id, name })}
+        />
       </>
     );
   };
@@ -384,53 +424,62 @@ export function DiscoverContent({
   const renderTVShowsContent = () => {
     return (
       <>
+        {/* On Air */}
+        <LazyMediaCarousel
+          category={tvCategories[0]}
+          mediaType="tv"
+          isMobile={isMobile}
+          carouselRefs={carouselRefs}
+          onShowDetails={handleShowDetails}
+        />
+
+        {/* Top Rated */}
+        <LazyMediaCarousel
+          category={tvCategories[1]}
+          mediaType="tv"
+          isMobile={isMobile}
+          carouselRefs={carouselRefs}
+          onShowDetails={handleShowDetails}
+        />
+
+        {/* Popular */}
+        <LazyMediaCarousel
+          category={tvCategories[2]}
+          mediaType="tv"
+          isMobile={isMobile}
+          carouselRefs={carouselRefs}
+          onShowDetails={handleShowDetails}
+        />
+
         {/* Provider TV Shows */}
-        {providerTVShows.length > 0 && (
-          <MediaCarousel
-            medias={providerTVShows}
-            category={selectedProvider.name}
-            isTVShow
-            isMobile={isMobile}
-            carouselRefs={carouselRefs}
-            onShowDetails={handleShowDetails}
-            moreContent
-          />
-        )}
+        <MediaCarousel
+          medias={providerTVShows}
+          category={`Shows on ${selectedProvider.name || "Select Provider"}`}
+          isTVShow
+          isMobile={isMobile}
+          carouselRefs={carouselRefs}
+          onShowDetails={handleShowDetails}
+          relatedButtons={TV_PROVIDERS.map((p) => ({
+            name: p.name,
+            id: p.id,
+          }))}
+          onButtonClick={(id, name) => setSelectedProvider({ id, name })}
+        />
 
-        {/* Categories */}
-        {tvCategories.map((category) => (
-          <LazyMediaCarousel
-            key={category.name}
-            category={category}
-            mediaType="tv"
-            isMobile={isMobile}
-            carouselRefs={carouselRefs}
-            onShowDetails={handleShowDetails}
-            relatedButtons={tvGenres
-              .slice(0, 3)
-              .map((g) => ({ name: g.name, id: g.id.toString() }))}
-            onButtonClick={handleCategoryClick}
-          />
-        ))}
-
-        {/* Genres */}
-        {tvGenres.map((genre) => (
-          <LazyMediaCarousel
-            key={genre.id}
-            genre={genre}
-            mediaType="tv"
-            isMobile={isMobile}
-            carouselRefs={carouselRefs}
-            onShowDetails={handleShowDetails}
-            preloadedMedia={genreTVShows?.[genre.id]}
-            genreId={genre.id}
-            relatedButtons={TV_PROVIDERS.slice(0, 3).map((p) => ({
-              name: p.name,
-              id: p.id,
-            }))}
-            onButtonClick={handleProviderClick}
-          />
-        ))}
+        {/* Genre TV Shows */}
+        <MediaCarousel
+          medias={filteredGenreTVShows}
+          category={`${selectedGenre.name || ""}`}
+          isTVShow
+          isMobile={isMobile}
+          carouselRefs={carouselRefs}
+          onShowDetails={handleShowDetails}
+          relatedButtons={tvGenres.map((g) => ({
+            name: g.name,
+            id: g.id.toString(),
+          }))}
+          onButtonClick={(id, name) => setSelectedGenre({ id, name })}
+        />
       </>
     );
   };

@@ -103,6 +103,18 @@ export function MediaCarousel({
         : t("discover.carousel.title.editorPicksMovies");
     }
 
+    if (categoryName.includes("Movies on")) {
+      return t("discover.carousel.title.moviesOn", {
+        provider: categoryName.split(" ")[2],
+      });
+    }
+
+    if (categoryName.includes("Shows on")) {
+      return t("discover.carousel.title.tvshowsOn", {
+        provider: categoryName.split(" ")[2],
+      });
+    }
+
     return isTVShowCondition
       ? t("discover.carousel.title.tvshows", { category: categoryName })
       : t("discover.carousel.title.movies", { category: categoryName });
@@ -152,7 +164,7 @@ export function MediaCarousel({
                 type="button"
                 key={button.id}
                 onClick={() => onButtonClick?.(button.id, button.name)}
-                className="px-3 py-1 text-sm bg-mediaCard-hoverBackground rounded-full hover:bg-mediaCard-background transition-colors"
+                className="px-3 py-1 text-sm bg-mediaCard-hoverBackground rounded-full hover:bg-mediaCard-background transition-colors whitespace-nowrap flex-shrink-0"
               >
                 {button.name}
               </button>

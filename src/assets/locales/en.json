@@ -900,7 +900,9 @@
         "inCinemas": "In Cinemas",
         "popularOn": "Popular {{type}} on {{provider}}",
         "editorPicksMovies": "Editor Picks Movies",
-        "editorPicksShows": "Editor Picks Shows"
+        "editorPicksShows": "Editor Picks Shows",
+        "moviesOn": "Movies on {{provider}}",
+        "tvshowsOn": "Shows on {{provider}}"
       },
       "more": "View more"
     },
