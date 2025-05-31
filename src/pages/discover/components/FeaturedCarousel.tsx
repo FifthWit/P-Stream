@@ -9,12 +9,12 @@ import { Button } from "@/components/buttons/Button";
 import { Icon, Icons } from "@/components/Icon";
 import { Movie, TVShow } from "@/pages/discover/common";
 import { conf } from "@/setup/config";
+import { useDiscoverStore } from "@/stores/discover";
 import { useLanguageStore } from "@/stores/language";
 import { usePreferencesStore } from "@/stores/preferences";
 import { getTmdbLanguageCode } from "@/utils/language";
 
 import { EDITOR_PICKS_MOVIES, EDITOR_PICKS_TV_SHOWS } from "../discoverContent";
-import { useSelectedCategory } from "../hooks/useSelectedCategory";
 
 export interface FeaturedMedia extends Partial<Movie & TVShow> {
   children?: ReactNode;
@@ -98,7 +98,7 @@ export function FeaturedCarousel({
   shorter,
   forcedCategory,
 }: FeaturedCarouselProps) {
-  const { selectedCategory } = useSelectedCategory();
+  const { selectedCategory } = useDiscoverStore();
   const effectiveCategory = forcedCategory || selectedCategory;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);

@@ -12,6 +12,7 @@ import {
   tvCategories,
 } from "@/pages/discover/common";
 import { conf } from "@/setup/config";
+import { useDiscoverStore } from "@/stores/discover";
 import { useLanguageStore } from "@/stores/language";
 import { getTmdbLanguageCode } from "@/utils/language";
 import { MediaItem } from "@/utils/mediaTypes";
@@ -22,7 +23,6 @@ import { LazyMediaCarousel } from "./components/LazyMediaCarousel";
 import { LazyTabContent } from "./components/LazyTabContent";
 import { MediaCarousel } from "./components/MediaCarousel";
 import { ScrollToTopButton } from "./components/ScrollToTopButton";
-import { useSelectedCategory } from "./hooks/useSelectedCategory";
 
 // Provider constants moved from DiscoverNavigation
 export const MOVIE_PROVIDERS = [
@@ -111,7 +111,7 @@ export const EDITOR_PICKS_TV_SHOWS = shuffleArray([
 ]);
 
 export function DiscoverContent() {
-  const { selectedCategory, setSelectedCategory } = useSelectedCategory();
+  const { selectedCategory, setSelectedCategory } = useDiscoverStore();
   const [selectedProvider, setSelectedProvider] = useState({
     name: "",
     id: "",

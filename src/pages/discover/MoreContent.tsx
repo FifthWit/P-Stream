@@ -13,6 +13,7 @@ import { useModal } from "@/components/overlays/Modal";
 import { Heading1 } from "@/components/utils/Text";
 import { SubPageLayout } from "@/pages/layouts/SubPageLayout";
 import { conf } from "@/setup/config";
+import { useDiscoverStore } from "@/stores/discover";
 import { useLanguageStore } from "@/stores/language";
 import { getTmdbLanguageCode } from "@/utils/language";
 import { MediaItem } from "@/utils/mediaTypes";
@@ -47,8 +48,18 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const detailsModal = useModal("discover-details");
+  const { lastView } = useDiscoverStore();
   const userLanguage = useLanguageStore.getState().language;
   const formattedLanguage = getTmdbLanguageCode(userLanguage);
+
+  const handleBack = () => {
+    if (lastView) {
+      navigate(lastView.url);
+      window.scrollTo(0, lastView.scrollPosition);
+    } else {
+      navigate(-1);
+    }
+  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -290,7 +301,7 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
         <div className="flex items-center gap-4 mb-8">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={handleBack}
             className="flex items-center text-white hover:text-gray-300 transition-colors"
           >
             <Icon className="text-xl" icon={Icons.ARROW_LEFT} />

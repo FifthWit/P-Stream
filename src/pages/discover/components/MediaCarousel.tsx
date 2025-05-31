@@ -8,6 +8,7 @@ import { Icon, Icons } from "@/components/Icon";
 import { MediaCard } from "@/components/media/MediaCard";
 import { Flare } from "@/components/utils/Flare";
 import { Media } from "@/pages/discover/common";
+import { useDiscoverStore } from "@/stores/discover";
 import { MediaItem } from "@/utils/mediaTypes";
 
 import { CarouselNavButtons } from "./CarouselNavButtons";
@@ -84,6 +85,7 @@ export function MediaCarousel({
 }: MediaCarouselProps) {
   const { t } = useTranslation();
   const { width: windowWidth } = useWindowSize();
+  const { setLastView } = useDiscoverStore();
   const [selectedGenre, setSelectedGenre] = React.useState<OptionItem | null>(
     null,
   );
@@ -197,6 +199,13 @@ export function MediaCarousel({
     }
   }, [activeButton, visibleButtons]);
 
+  const handleMoreClick = () => {
+    setLastView({
+      url: window.location.pathname,
+      scrollPosition: window.scrollY,
+    });
+  };
+
   return (
     <>
       <div className="flex items-center justify-between ml-2 md:ml-8 mt-2">
@@ -210,6 +219,7 @@ export function MediaCarousel({
                 moreLink ||
                 `/discover/more/${categorySlug}${genreId ? `/${genreId}` : ""}`
               }
+              onClick={handleMoreClick}
               className="flex px-5 items-center hover:text-type-link transition-colors"
             >
               <span className="text-sm">{t("discover.carousel.more")}</span>
