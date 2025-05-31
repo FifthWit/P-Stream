@@ -119,7 +119,7 @@ export function FeaturedCarousel({
   return (
     <div
       className={classNames(
-        "relative w-full overflow-hidden transition-[height] duration-300 ease-in-out",
+        "relative w-full transition-[height] duration-300 ease-in-out",
         searching
           ? "h-24"
           : shorter
@@ -130,7 +130,12 @@ export function FeaturedCarousel({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <div className={classNames("relative w-full h-full", searchClasses)}>
+      <div
+        className={classNames(
+          "relative w-full h-full overflow-hidden",
+          searchClasses,
+        )}
+      >
         {media.map((item, index) => (
           <div
             key={item.id}
