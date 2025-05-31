@@ -279,6 +279,9 @@ export function HomePage() {
             <p className="text-[18.5px] pb-3">{emptyText}</p>
           </div>
         ) : null}
+        {(showBookmarks || showWatching) && enableDiscover && (
+          <div className="pb-10" />
+        )}
       </WideContainer>
       {enableDiscover && !search ? (
         <div className="w-full max-w-[100dvw] justify-center items-center">

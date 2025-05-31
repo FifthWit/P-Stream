@@ -12,8 +12,8 @@ export function DiscoverNavigation({
   const { t } = useTranslation();
 
   return (
-    <div className="mt-8 pb-2 w-full max-w-screen-xl mx-auto">
-      <div className="relative flex justify-center mb-4">
+    <div className="pb-4 w-full max-w-screen-xl mx-auto">
+      <div className="relative flex justify-center">
         <div className="flex space-x-4">
           {["movies", "tvshows", "editorpicks"].map((category) => (
             <button
