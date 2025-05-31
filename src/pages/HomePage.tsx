@@ -73,7 +73,6 @@ export function HomePage() {
   const [genres, setGenres] = useState<any[]>([]);
   const [tvGenres, setTVGenres] = useState<any[]>([]);
   const enableFeatured = usePreferencesStore((state) => state.enableFeatured);
-  const [featuredMedia, setFeaturedMedia] = useState<FeaturedMedia[]>([]);
   const userLanguage = useLanguageStore.getState().language;
   const formattedLanguage = getTmdbLanguageCode(userLanguage);
   const [selectedCategory, setSelectedCategory] = useState("movies");
@@ -87,33 +86,6 @@ export function HomePage() {
     tvCategories,
     "tv",
   );
-
-  // Fetch featured media
-  useEffect(() => {
-    const fetchFeaturedMedia = async () => {
-      try {
-        const data = await get<any>("/movie/popular", {
-          api_key: conf().TMDB_READ_API_KEY,
-          language: formattedLanguage,
-        });
-        setFeaturedMedia(
-          data.results.slice(0, 5).map((movie: any) => ({
-            id: movie.id,
-            title: movie.title,
-            backdrop_path: movie.backdrop_path,
-            overview: movie.overview,
-            poster_path: movie.poster_path,
-            release_date: movie.release_date,
-            type: "movie" as const,
-          })),
-        );
-      } catch (error) {
-        console.error("Error fetching featured media:", error);
-      }
-    };
-
-    fetchFeaturedMedia();
-  }, [formattedLanguage]);
 
   // Fetch genres
   useEffect(() => {
@@ -298,9 +270,9 @@ export function HomePage() {
           </div>
         </FancyModal>
         */}
-        {enableFeatured && featuredMedia.length > 0 ? (
+        {enableFeatured ? (
           <FeaturedCarousel
-            media={featuredMedia}
+            category="movies"
             onShowDetails={handleShowDetails}
             searching={s.searching}
             shorter

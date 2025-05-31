@@ -13,10 +13,7 @@ import { SubPageLayout } from "../layouts/SubPageLayout";
 import { DiscoverNavigation } from "./components/DiscoverNavigation";
 import { FeaturedCarousel } from "./components/FeaturedCarousel";
 import type { FeaturedMedia } from "./components/FeaturedCarousel";
-import DiscoverContent, {
-  EDITOR_PICKS_MOVIES,
-  EDITOR_PICKS_TV_SHOWS,
-} from "./discoverContent";
+import DiscoverContent from "./discoverContent";
 import { PageTitle } from "../parts/util/PageTitle";
 
 interface DiscoverContentProps {
@@ -32,8 +29,9 @@ function DiscoverContentWithProps(props: DiscoverContentProps) {
 }
 
 export function Discover() {
-  const [selectedCategory, setSelectedCategory] = useState("movies");
-  const [featuredMedia, setFeaturedMedia] = useState<FeaturedMedia[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<
+    "movies" | "tvshows" | "editorpicks"
+  >("movies");
   const [selectedProvider, setSelectedProvider] = useState({
     name: "",
     id: "",
@@ -77,79 +75,8 @@ export function Discover() {
     fetchGenres();
   }, [formattedLanguage]);
 
-  // Fetch featured media
-  useEffect(() => {
-    const fetchFeaturedMedia = async () => {
-      try {
-        if (selectedCategory === "movies") {
-          const data = await get<any>("/movie/popular", {
-            api_key: conf().TMDB_READ_API_KEY,
-            language: formattedLanguage,
-          });
-          setFeaturedMedia(
-            data.results.slice(0, 5).map((movie: any) => ({
-              ...movie,
-              type: "movie" as const,
-            })),
-          );
-        } else if (selectedCategory === "tvshows") {
-          const data = await get<any>("/tv/popular", {
-            api_key: conf().TMDB_READ_API_KEY,
-            language: formattedLanguage,
-          });
-          setFeaturedMedia(
-            data.results.slice(0, 5).map((show: any) => ({
-              ...show,
-              type: "show" as const,
-            })),
-          );
-        } else if (selectedCategory === "editorpicks") {
-          // Fetch editor picks movies
-          const moviePromises = EDITOR_PICKS_MOVIES.slice(0, 3).map((item) =>
-            get<any>(`/movie/${item.id}`, {
-              api_key: conf().TMDB_READ_API_KEY,
-              language: formattedLanguage,
-            }),
-          );
-
-          // Fetch editor picks TV shows
-          const showPromises = EDITOR_PICKS_TV_SHOWS.slice(0, 2).map((item) =>
-            get<any>(`/tv/${item.id}`, {
-              api_key: conf().TMDB_READ_API_KEY,
-              language: formattedLanguage,
-            }),
-          );
-
-          const [movieResults, showResults] = await Promise.all([
-            Promise.all(moviePromises),
-            Promise.all(showPromises),
-          ]);
-
-          const movies = movieResults.map((movie) => ({
-            ...movie,
-            type: "movie" as const,
-          }));
-          const shows = showResults.map((show) => ({
-            ...show,
-            type: "show" as const,
-          }));
-
-          // Combine and shuffle
-          const combined = [...movies, ...shows].sort(
-            () => 0.5 - Math.random(),
-          );
-          setFeaturedMedia(combined);
-        }
-      } catch (error) {
-        console.error("Error fetching featured media:", error);
-      }
-    };
-
-    fetchFeaturedMedia();
-  }, [formattedLanguage, selectedCategory]);
-
   const handleCategoryChange = (category: string) => {
-    setSelectedCategory(category);
+    setSelectedCategory(category as "movies" | "tvshows" | "editorpicks");
   };
 
   const handleProviderClick = async (id: string, name: string) => {
@@ -198,12 +125,10 @@ export function Discover() {
 
       <div className="!mt-[-170px]">
         {/* Featured Carousel */}
-        {featuredMedia.length > 0 && (
-          <FeaturedCarousel
-            media={featuredMedia}
-            onShowDetails={handleShowDetails}
-          />
-        )}
+        <FeaturedCarousel
+          category={selectedCategory}
+          onShowDetails={handleShowDetails}
+        />
       </div>
 
       {/* Random Movie Button */}

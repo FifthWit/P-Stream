@@ -2,15 +2,20 @@ import classNames from "classnames";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { getMediaLogo } from "@/backend/metadata/tmdb";
+import { get, getMediaLogo } from "@/backend/metadata/tmdb";
 import { TMDBContentTypes } from "@/backend/metadata/types/tmdb";
 import { Button } from "@/components/buttons/Button";
 import { Icon, Icons } from "@/components/Icon";
 import { Movie, TVShow } from "@/pages/discover/common";
+import { conf } from "@/setup/config";
+import { useLanguageStore } from "@/stores/language";
 import { usePreferencesStore } from "@/stores/preferences";
+import { getTmdbLanguageCode } from "@/utils/language";
+
+import { EDITOR_PICKS_MOVIES, EDITOR_PICKS_TV_SHOWS } from "../discoverContent";
 
 export interface FeaturedMedia extends Partial<Movie & TVShow> {
-  children: ReactNode;
+  children?: ReactNode;
   backdrop_path: string;
   overview: string;
   title?: string;
@@ -19,7 +24,7 @@ export interface FeaturedMedia extends Partial<Movie & TVShow> {
 }
 
 interface FeaturedCarouselProps {
-  media: FeaturedMedia[];
+  category?: "movies" | "tvshows" | "editorpicks";
   onShowDetails: (media: FeaturedMedia) => void;
   children?: ReactNode;
   searching?: boolean;
@@ -27,7 +32,7 @@ interface FeaturedCarouselProps {
 }
 
 export function FeaturedCarousel({
-  media,
+  category = "movies",
   onShowDetails,
   children,
   searching,
@@ -38,11 +43,85 @@ export function FeaturedCarousel({
   const [logoUrl, setLogoUrl] = useState<string | undefined>();
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [media, setMedia] = useState<FeaturedMedia[]>([]);
   const autoPlayInterval = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
   const enableImageLogos = usePreferencesStore(
     (state) => state.enableImageLogos,
   );
+  const userLanguage = useLanguageStore.getState().language;
+  const formattedLanguage = getTmdbLanguageCode(userLanguage);
+
+  // Fetch featured media
+  useEffect(() => {
+    const fetchFeaturedMedia = async () => {
+      try {
+        if (category === "movies") {
+          const data = await get<any>("/movie/popular", {
+            api_key: conf().TMDB_READ_API_KEY,
+            language: formattedLanguage,
+          });
+          setMedia(
+            data.results.slice(0, 5).map((movie: any) => ({
+              ...movie,
+              type: "movie" as const,
+            })),
+          );
+        } else if (category === "tvshows") {
+          const data = await get<any>("/tv/popular", {
+            api_key: conf().TMDB_READ_API_KEY,
+            language: formattedLanguage,
+          });
+          setMedia(
+            data.results.slice(0, 5).map((show: any) => ({
+              ...show,
+              type: "show" as const,
+            })),
+          );
+        } else if (category === "editorpicks") {
+          // Fetch editor picks movies
+          const moviePromises = EDITOR_PICKS_MOVIES.slice(0, 3).map((item) =>
+            get<any>(`/movie/${item.id}`, {
+              api_key: conf().TMDB_READ_API_KEY,
+              language: formattedLanguage,
+            }),
+          );
+
+          // Fetch editor picks TV shows
+          const showPromises = EDITOR_PICKS_TV_SHOWS.slice(0, 2).map((item) =>
+            get<any>(`/tv/${item.id}`, {
+              api_key: conf().TMDB_READ_API_KEY,
+              language: formattedLanguage,
+            }),
+          );
+
+          const [movieResults, showResults] = await Promise.all([
+            Promise.all(moviePromises),
+            Promise.all(showPromises),
+          ]);
+
+          const movies = movieResults.map((movie) => ({
+            ...movie,
+            type: "movie" as const,
+          }));
+          const shows = showResults.map((show) => ({
+            ...show,
+            type: "show" as const,
+          }));
+
+          // Combine and shuffle
+          const combined = [...movies, ...shows].sort(
+            () => 0.5 - Math.random(),
+          );
+          setMedia(combined);
+        }
+      } catch (error) {
+        console.error("Error fetching featured media:", error);
+      }
+    };
+
+    fetchFeaturedMedia();
+  }, [formattedLanguage, category]);
 
   const handlePrevSlide = () => {
     setCurrentIndex((prev) => (prev - 1 + media.length) % media.length);
