@@ -40,6 +40,9 @@ function useSearch(search: string) {
   useEffect(() => {
     setSearching(search !== "");
     setLoading(search !== "");
+    if (search !== "") {
+      window.scrollTo(0, 0);
+    }
   }, [search]);
   useEffect(() => {
     setLoading(false);
@@ -317,7 +320,6 @@ export function HomePage() {
         )}
         {/* Optional ad */}
         {conf().SHOW_AD ? <AdsPart /> : null}
-        {/* End of ad */}
       </div>
       <WideContainer>
         {s.loading ? (

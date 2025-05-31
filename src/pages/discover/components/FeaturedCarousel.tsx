@@ -255,7 +255,7 @@ export function FeaturedCarousel({
       </div>
       {children && (
         <div className="absolute inset-0 pointer-events-none">
-          <div className="pointer-events-auto">{children}</div>
+          <div className="pointer-events-auto z-50">{children}</div>
         </div>
       )}
     </div>
