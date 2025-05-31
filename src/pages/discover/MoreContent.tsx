@@ -237,8 +237,15 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
   };
 
   const getDisplayTitle = () => {
-    if (!contentType || !id) return "";
     const isTVShow = mediaType === "tv";
+
+    if (category === "editor-picks-tv" || category === "editor-picks-movie") {
+      return category === "editor-picks-tv"
+        ? t("discover.carousel.title.editorPicksShows")
+        : t("discover.carousel.title.editorPicksMovies");
+    }
+
+    if (!contentType || !id) return "";
 
     if (contentType === "provider") {
       const providers = isTVShow ? TV_PROVIDERS : MOVIE_PROVIDERS;
