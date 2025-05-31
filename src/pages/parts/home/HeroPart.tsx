@@ -40,14 +40,33 @@ export function HeroPart({
   const { t: randomT } = useRandomTranslation();
   const [search, setSearch, setSearchUnFocus] = searchParams;
   const [showBg, setShowBg] = useState(false);
+  const [isFixed, setIsFixed] = useState(false);
   const bannerSize = useBannerSize();
+
   const stickStateChanged = useCallback(
-    (isFixed: boolean) => {
-      setShowBg(isFixed);
-      setIsSticky(isFixed);
+    (fixed: boolean) => {
+      setIsFixed(fixed);
+      if (!isInFeatured) {
+        setShowBg(fixed);
+        setIsSticky(fixed);
+      }
     },
-    [setShowBg, setIsSticky],
+    [setIsSticky, isInFeatured],
   );
+
+  useEffect(() => {
+    if (!isInFeatured) return;
+
+    const handleScroll = () => {
+      const shouldShowBg = isFixed && window.scrollY > 400;
+      setShowBg(shouldShowBg);
+      setIsSticky(shouldShowBg);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [isFixed, isInFeatured, setIsSticky]);
+
   const { width: windowWidth, height: windowHeight } = useWindowSize();
 
   const { isTV } = useIsTV();
