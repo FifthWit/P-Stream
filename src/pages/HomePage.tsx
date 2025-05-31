@@ -73,7 +73,6 @@ export function HomePage() {
   const enableFeatured = usePreferencesStore((state) => state.enableFeatured);
   const userLanguage = useLanguageStore.getState().language;
   const formattedLanguage = getTmdbLanguageCode(userLanguage);
-  const [selectedCategory, setSelectedCategory] = useState("movies");
   const { genreMedia: genreMovies } = useTMDBData(genres, [], "movie");
   const { genreMedia: genreTVShows } = useTMDBData(tvGenres, [], "tv");
 

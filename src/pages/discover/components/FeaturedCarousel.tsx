@@ -32,6 +32,64 @@ interface FeaturedCarouselProps {
   forcedCategory?: "movies" | "tvshows" | "editorpicks";
 }
 
+function FeaturedCarouselSkeleton({ shorter }: { shorter?: boolean }) {
+  return (
+    <div
+      className={classNames(
+        "relative w-full transition-[height] duration-300 ease-in-out",
+        shorter ? "h-[75vh]" : "h-[75vh] md:h-[100vh]",
+      )}
+    >
+      <div className="relative w-full h-full overflow-hidden">
+        <div
+          className="absolute inset-0 bg-gray-800"
+          style={{
+            maskImage:
+              "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 500px)",
+            WebkitMaskImage:
+              "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 500px)",
+          }}
+        />
+      </div>
+
+      {/* Navigation Buttons Skeleton */}
+      <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/30">
+        <div className="w-8 h-8 bg-gray-600 rounded-full animate-pulse" />
+      </div>
+      <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/30">
+        <div className="w-8 h-8 bg-gray-600 rounded-full animate-pulse" />
+      </div>
+
+      {/* Navigation Dots Skeleton */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[19] flex gap-2">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div
+            key={i}
+            className="w-2.5 h-2.5 rounded-full bg-gray-600 animate-pulse"
+          />
+        ))}
+      </div>
+
+      {/* Content Overlay Skeleton */}
+      <div className="absolute inset-0 flex items-end pb-20 z-10">
+        <div className="container mx-auto px-8 md:px-4">
+          <div className="max-w-3xl">
+            <div className="h-12 w-48 bg-gray-600 rounded animate-pulse mb-6" />
+            <div className="space-y-2 mb-6">
+              <div className="h-4 bg-gray-600 rounded animate-pulse w-3/4" />
+              <div className="h-4 bg-gray-600 rounded animate-pulse w-1/2" />
+            </div>
+            <div className="flex gap-4 justify-center items-center sm:justify-start">
+              <div className="h-10 w-32 bg-gray-600 rounded animate-pulse" />
+              <div className="h-10 w-32 bg-gray-600 rounded animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function FeaturedCarousel({
   onShowDetails,
   children,
@@ -47,6 +105,7 @@ export function FeaturedCarousel({
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [media, setMedia] = useState<FeaturedMedia[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const autoPlayInterval = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
   const enableImageLogos = usePreferencesStore(
@@ -58,6 +117,7 @@ export function FeaturedCarousel({
   // Fetch featured media
   useEffect(() => {
     const fetchFeaturedMedia = async () => {
+      setIsLoading(true);
       try {
         if (effectiveCategory === "movies") {
           const data = await get<any>("/movie/popular", {
@@ -120,6 +180,8 @@ export function FeaturedCarousel({
         }
       } catch (error) {
         console.error("Error fetching featured media:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -189,7 +251,13 @@ export function FeaturedCarousel({
     };
   }, [isAutoPlaying, media.length]);
 
-  if (media.length === 0) return null;
+  if (isLoading) {
+    return <FeaturedCarouselSkeleton shorter={shorter} />;
+  }
+
+  if (media.length === 0) {
+    return <FeaturedCarouselSkeleton shorter={shorter} />;
+  }
 
   const currentMedia = media[currentIndex];
   const mediaTitle = currentMedia.title || currentMedia.name;
