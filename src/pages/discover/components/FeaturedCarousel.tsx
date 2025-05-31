@@ -299,7 +299,7 @@ export function FeaturedCarousel({
             style={{
               backgroundImage: `url(https://image.tmdb.org/t/p/original${item.backdrop_path})`,
               backgroundSize: "cover",
-              backgroundPosition: "center",
+              backgroundPosition: "center top",
               maskImage:
                 "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 700px)",
               WebkitMaskImage:
