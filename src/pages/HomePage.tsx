@@ -3,18 +3,15 @@ import { Helmet } from "react-helmet-async";
 import { useTranslation } from "react-i18next";
 import { To, useNavigate } from "react-router-dom";
 
-import { get } from "@/backend/metadata/tmdb";
 import { WideContainer } from "@/components/layout/WideContainer";
 import { DetailsModal } from "@/components/overlays/DetailsModal";
 import { useModal } from "@/components/overlays/Modal";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useRandomTranslation } from "@/hooks/useRandomTranslation";
 import { useSearchQuery } from "@/hooks/useSearchQuery";
-import { Movie } from "@/pages/discover/common";
 import { FeaturedCarousel } from "@/pages/discover/components/FeaturedCarousel";
 import type { FeaturedMedia } from "@/pages/discover/components/FeaturedCarousel";
 import DiscoverContent from "@/pages/discover/discoverContent";
-import { useTMDBData } from "@/pages/discover/hooks/useTMDBData";
 import { HomeLayout } from "@/pages/layouts/HomeLayout";
 import { BookmarksPart } from "@/pages/parts/home/BookmarksPart";
 import { HeroPart } from "@/pages/parts/home/HeroPart";
@@ -22,13 +19,10 @@ import { WatchingPart } from "@/pages/parts/home/WatchingPart";
 import { SearchListPart } from "@/pages/parts/search/SearchListPart";
 import { SearchLoadingPart } from "@/pages/parts/search/SearchLoadingPart";
 import { conf } from "@/setup/config";
-import { useLanguageStore } from "@/stores/language";
 import { usePreferencesStore } from "@/stores/preferences";
-import { getTmdbLanguageCode } from "@/utils/language";
 import { MediaItem } from "@/utils/mediaTypes";
 
 import { Button } from "./About";
-import { RandomMovieButton } from "./discover/components/RandomMovieButton";
 import { AdsPart } from "./parts/home/AdsPart";
 
 function useSearch(search: string) {
@@ -68,38 +62,8 @@ export function HomePage() {
   const [showWatching, setShowWatching] = useState(false);
   const [detailsData, setDetailsData] = useState<any>();
   const detailsModal = useModal("details");
-  const [genres, setGenres] = useState<any[]>([]);
-  const [tvGenres, setTVGenres] = useState<any[]>([]);
   const enableDiscover = usePreferencesStore((state) => state.enableDiscover);
   const enableFeatured = usePreferencesStore((state) => state.enableFeatured);
-  const userLanguage = useLanguageStore.getState().language;
-  const formattedLanguage = getTmdbLanguageCode(userLanguage);
-  const { genreMedia: genreMovies } = useTMDBData(genres, [], "movie");
-  const { genreMedia: genreTVShows } = useTMDBData(tvGenres, [], "tv");
-
-  // Fetch genres
-  useEffect(() => {
-    const fetchGenres = async () => {
-      try {
-        const [movieData, tvData] = await Promise.all([
-          get<any>("/genre/movie/list", {
-            api_key: conf().TMDB_READ_API_KEY,
-            language: formattedLanguage,
-          }),
-          get<any>("/genre/tv/list", {
-            api_key: conf().TMDB_READ_API_KEY,
-            language: formattedLanguage,
-          }),
-        ]);
-        setGenres(movieData.genres.slice(0, 12));
-        setTVGenres(tvData.genres.slice(0, 10));
-      } catch (error) {
-        console.error("Error fetching genres:", error);
-      }
-    };
-
-    fetchGenres();
-  }, [formattedLanguage]);
 
   const handleClick = (path: To) => {
     window.scrollTo(0, 0);
@@ -285,11 +249,6 @@ export function HomePage() {
       </WideContainer>
       {enableDiscover && !search ? (
         <div className="w-full max-w-[100dvw] justify-center items-center">
-          <RandomMovieButton
-            allMovies={Object.values(genreMovies)
-              .flat()
-              .filter((media): media is Movie => "title" in media)}
-          />
           <DiscoverContent />
         </div>
       ) : (

@@ -15,6 +15,7 @@ import { usePreferencesStore } from "@/stores/preferences";
 import { getTmdbLanguageCode } from "@/utils/language";
 
 import { EDITOR_PICKS_MOVIES, EDITOR_PICKS_TV_SHOWS } from "../discoverContent";
+import { RandomMovieButton } from "./RandomMovieButton";
 
 export interface FeaturedMedia extends Partial<Movie & TVShow> {
   children?: ReactNode;
@@ -391,7 +392,7 @@ export function FeaturedCarousel({
           searchClasses,
         )}
       >
-        <div className="container mx-auto px-8 md:px-4">
+        <div className="container mx-auto px-8 md:px-4 flex justify-between items-end w-full">
           <div className="max-w-3xl">
             {logoUrl && enableImageLogos ? (
               <img
@@ -437,6 +438,9 @@ export function FeaturedCarousel({
                 <span className="text-white">More Info</span>
               </Button>
             </div>
+          </div>
+          <div className="hidden md:block">
+            <RandomMovieButton />
           </div>
         </div>
       </div>
