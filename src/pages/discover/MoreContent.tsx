@@ -17,20 +17,33 @@ import { useLanguageStore } from "@/stores/language";
 import { getTmdbLanguageCode } from "@/utils/language";
 import { MediaItem } from "@/utils/mediaTypes";
 
-import { EDITOR_PICKS_MOVIES, EDITOR_PICKS_TV_SHOWS } from "./discoverContent";
+import { Genre, categories, tvCategories } from "./common";
+import {
+  EDITOR_PICKS_MOVIES,
+  EDITOR_PICKS_TV_SHOWS,
+  MOVIE_PROVIDERS,
+  TV_PROVIDERS,
+} from "./discoverContent";
 
 interface MoreContentProps {
   onShowDetails?: (media: MediaItem) => void;
 }
 
+interface Provider {
+  id: string;
+  name: string;
+}
+
 export function MoreContent({ onShowDetails }: MoreContentProps) {
-  const { category, genreId } = useParams();
+  const { category, type: contentType, id, mediaType } = useParams();
   const [medias, setMedias] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [detailsData, setDetailsData] = useState<any>();
+  const [genres, setGenres] = useState<Genre[]>([]);
+  const [tvGenres, setTVGenres] = useState<Genre[]>([]);
   const { t } = useTranslation();
   const navigate = useNavigate();
   const detailsModal = useModal("discover-details");
@@ -40,6 +53,30 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  // Fetch genres when component mounts
+  useEffect(() => {
+    const fetchGenres = async () => {
+      try {
+        const [movieData, tvData] = await Promise.all([
+          get<any>("/genre/movie/list", {
+            api_key: conf().TMDB_READ_API_KEY,
+            language: formattedLanguage,
+          }),
+          get<any>("/genre/tv/list", {
+            api_key: conf().TMDB_READ_API_KEY,
+            language: formattedLanguage,
+          }),
+        ]);
+        setGenres(movieData.genres);
+        setTVGenres(tvData.genres);
+      } catch (error) {
+        console.error("Error fetching genres:", error);
+      }
+    };
+
+    fetchGenres();
+  }, [formattedLanguage]);
 
   const handleShowDetails = async (media: MediaItem) => {
     if (onShowDetails) {
@@ -94,7 +131,7 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
   const fetchContent = useCallback(
     async (page: number, append: boolean = false) => {
       try {
-        const isTVShow = category?.includes("tv");
+        const isTVShow = mediaType === "tv";
         let endpoint = "";
 
         // Handle editor picks separately
@@ -117,13 +154,15 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
           return;
         }
 
-        // Determine the correct endpoint based on the category
-        if (category?.includes("now-playing")) {
-          endpoint = isTVShow ? "/tv/on_the_air" : "/movie/now_playing";
-        } else if (category?.includes("top-rated")) {
-          endpoint = isTVShow ? "/tv/top_rated" : "/movie/top_rated";
-        } else if (category?.includes("popular")) {
-          endpoint = isTVShow ? "/tv/popular" : "/movie/popular";
+        // Determine the correct endpoint based on the type
+        if (contentType === "category") {
+          const categoryList = isTVShow ? tvCategories : categories;
+          const categoryData = categoryList.find((c) => c.urlPath === id);
+          if (categoryData) {
+            endpoint = categoryData.endpoint;
+          } else {
+            endpoint = isTVShow ? "/discover/tv" : "/discover/movie";
+          }
         } else {
           endpoint = isTVShow ? "/discover/tv" : "/discover/movie";
         }
@@ -139,8 +178,11 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
             page: currentPageNum,
           };
 
-          if (genreId) {
-            params.with_genres = genreId;
+          if (contentType === "provider") {
+            params.with_watch_providers = id;
+            params.watch_region = "US";
+          } else if (contentType === "genre") {
+            params.with_genres = id;
           }
 
           const data = await get<any>(endpoint, params);
@@ -162,7 +204,7 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
         console.error("Error fetching content:", error);
       }
     },
-    [category, genreId, formattedLanguage],
+    [contentType, id, mediaType, category, formattedLanguage],
   );
 
   useEffect(() => {
@@ -173,7 +215,7 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
     };
 
     loadInitialContent();
-  }, [category, genreId, formattedLanguage, fetchContent]);
+  }, [contentType, id, mediaType, category, formattedLanguage, fetchContent]);
 
   const handleLoadMore = async () => {
     setLoadingMore(true);
@@ -184,9 +226,37 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
   };
 
   const getDisplayTitle = () => {
-    if (!category) return "";
-    const baseTitle = category.split("-").slice(0, -1).join(" ");
-    const isTVShow = category?.includes("tv");
+    if (!contentType || !id) return "";
+    const isTVShow = mediaType === "tv";
+
+    if (contentType === "provider") {
+      const providers = isTVShow ? TV_PROVIDERS : MOVIE_PROVIDERS;
+      const provider = providers.find((p: Provider) => p.id === id);
+      return isTVShow
+        ? `Shows on ${provider?.name || id}`
+        : `Movies on ${provider?.name || id}`;
+    }
+
+    if (contentType === "genre") {
+      const genreList = isTVShow ? tvGenres : genres;
+      const genre = genreList.find((g: Genre) => g.id.toString() === id);
+      return isTVShow
+        ? `${genre?.name || id} Shows`
+        : `${genre?.name || id} Movies`;
+    }
+
+    if (contentType === "category") {
+      const categoryList = isTVShow ? tvCategories : categories;
+      const categoryData = categoryList.find((c) => c.urlPath === id);
+      if (categoryData) {
+        return isTVShow
+          ? `${categoryData.name} Shows`
+          : `${categoryData.name} Movies`;
+      }
+    }
+
+    // Fallback for old URL structure
+    const baseTitle = category?.split("-").slice(0, -1).join(" ") || "";
     return getDisplayCategory(baseTitle, isTVShow);
   };
 
@@ -241,14 +311,15 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
                   id: media.id.toString(),
                   title: media.title || media.name || "",
                   poster: `https://image.tmdb.org/t/p/w342${media.poster_path}`,
-                  type: category?.includes("tv") ? "show" : "movie",
-                  year: category?.includes("tv")
-                    ? media.first_air_date
-                      ? parseInt(media.first_air_date.split("-")[0], 10)
-                      : undefined
-                    : media.release_date
-                      ? parseInt(media.release_date.split("-")[0], 10)
-                      : undefined,
+                  type: mediaType === "tv" ? "show" : "movie",
+                  year:
+                    mediaType === "tv"
+                      ? media.first_air_date
+                        ? parseInt(media.first_air_date.split("-")[0], 10)
+                        : undefined
+                      : media.release_date
+                        ? parseInt(media.release_date.split("-")[0], 10)
+                        : undefined,
                 }}
                 onShowDetails={handleShowDetails}
                 linkable={!category?.includes("upcoming")}

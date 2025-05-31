@@ -400,6 +400,7 @@ export function DiscoverContent() {
             id: p.id,
           }))}
           onButtonClick={(id, name) => setSelectedProvider({ id, name })}
+          moreLink={`/discover/more/provider/${selectedProvider.id}/movie`}
         />
 
         {/* Genre Movies */}
@@ -415,6 +416,7 @@ export function DiscoverContent() {
             id: g.id.toString(),
           }))}
           onButtonClick={(id, name) => setSelectedGenre({ id, name })}
+          moreLink={`/discover/more/genre/${selectedGenre.id}/movie`}
         />
       </>
     );
@@ -454,7 +456,7 @@ export function DiscoverContent() {
         {/* Provider TV Shows */}
         <MediaCarousel
           medias={providerTVShows}
-          category={`Shows on ${selectedProvider.name || "Select Provider"}`}
+          category={`Shows on ${selectedProvider.name || ""}`}
           isTVShow
           isMobile={isMobile}
           carouselRefs={carouselRefs}
@@ -464,6 +466,7 @@ export function DiscoverContent() {
             id: p.id,
           }))}
           onButtonClick={(id, name) => setSelectedProvider({ id, name })}
+          moreLink={`/discover/more/provider/${selectedProvider.id}/tv`}
         />
 
         {/* Genre TV Shows */}
@@ -479,6 +482,7 @@ export function DiscoverContent() {
             id: g.id.toString(),
           }))}
           onButtonClick={(id, name) => setSelectedGenre({ id, name })}
+          moreLink={`/discover/more/genre/${selectedGenre.id}/tv`}
         />
       </>
     );

@@ -1,17 +1,23 @@
 import { useEffect, useState } from "react";
 
+import { get } from "@/backend/metadata/tmdb";
 import { useIntersectionObserver } from "@/pages/discover/hooks/useIntersectionObserver";
 import { useLazyTMDBData } from "@/pages/discover/hooks/useTMDBData";
 import { MediaItem } from "@/utils/mediaTypes";
 
 import { MediaCarousel } from "./MediaCarousel";
-import { Genre, Media, Movie, TVShow } from "../common";
+import {
+  Category,
+  Genre,
+  Media,
+  Movie,
+  TVShow,
+  categories,
+  tvCategories,
+} from "../common";
 
 interface LazyMediaCarouselProps {
-  category?: {
-    name: string;
-    endpoint: string;
-  };
+  category?: Category;
   genre?: Genre;
   mediaType: "movie" | "tv";
   isMobile: boolean;
@@ -40,6 +46,11 @@ export function LazyMediaCarousel({
   onButtonClick,
 }: LazyMediaCarouselProps) {
   const [medias, setMedias] = useState<Media[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const categoryData = (mediaType === "movie" ? categories : tvCategories).find(
+    (c: Category) => c.name === (category?.name || genre?.name || title || ""),
+  );
 
   // Use intersection observer to detect when this component is visible
   const { targetRef, isIntersecting } = useIntersectionObserver(
@@ -47,7 +58,7 @@ export function LazyMediaCarousel({
   );
 
   // Use the lazy loading hook only if we don't have preloaded media
-  const { media, isLoading } = useLazyTMDBData(
+  const { media } = useLazyTMDBData(
     !preloadedMedia ? genre || null : null,
     !preloadedMedia ? category || null : null,
     mediaType,
@@ -63,21 +74,36 @@ export function LazyMediaCarousel({
     }
   }, [media, preloadedMedia]);
 
+  useEffect(() => {
+    const fetchContent = async () => {
+      if (!categoryData) return;
+
+      try {
+        const data = await get<any>(categoryData.endpoint, {
+          api_key: process.env.TMDB_READ_API_KEY,
+          language: "en-US",
+        });
+        setMedias(data.results);
+      } catch (error) {
+        console.error("Error fetching content:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContent();
+  }, [categoryData]);
+
   const categoryName = category?.name || genre?.name || title || "";
   const categorySlug = `${categoryName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${mediaType}`;
 
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="relative overflow-hidden carousel-container">
-        <div id={`carousel-${categorySlug}`}>
-          <h2 className="ml-2 md:ml-8 mt-2 text-2xl cursor-default font-bold text-white md:text-2xl mx-auto pl-5 text-balance">
-            {categoryName} {mediaType === "tv" ? "Shows" : "Movies"}
+      <div className="flex items-center justify-between ml-2 md:ml-8 mt-2">
+        <div className="flex gap-4 items-center">
+          <h2 className="text-2xl cursor-default font-bold text-white md:text-2xl pl-5 text-balance">
+            {categoryName}
           </h2>
-          <div className="flex whitespace-nowrap pt-0 pb-4 overflow-auto scrollbar rounded-xl overflow-y-hidden h-[300px] animate-pulse bg-background-secondary/20">
-            <div className="w-full text-center flex items-center justify-center">
-              {isLoading ? "Loading..." : ""}
-            </div>
-          </div>
         </div>
       </div>
     );
@@ -96,6 +122,11 @@ export function LazyMediaCarousel({
           genreId={genreId}
           relatedButtons={relatedButtons}
           onButtonClick={onButtonClick}
+          moreLink={
+            categoryData
+              ? `/discover/more/category/${categoryData.urlPath}/${categoryData.mediaType}`
+              : undefined
+          }
         />
       ) : (
         <div className="relative overflow-hidden carousel-container">

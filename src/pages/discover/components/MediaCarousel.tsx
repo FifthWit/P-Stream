@@ -22,6 +22,7 @@ interface MediaCarouselProps {
   onShowDetails?: (media: MediaItem) => void;
   genreId?: number;
   moreContent?: boolean;
+  moreLink?: string;
   relatedButtons?: Array<{ name: string; id: string }>;
   onButtonClick?: (id: string, name: string) => void;
 }
@@ -46,6 +47,7 @@ export function MediaCarousel({
   onShowDetails,
   genreId,
   moreContent,
+  moreLink,
   relatedButtons,
   onButtonClick,
 }: MediaCarouselProps) {
@@ -255,7 +257,10 @@ export function MediaCarousel({
       {!moreContent && (
         <div className="flex justify-center">
           <Link
-            to={`/discover/more/${categorySlug}${genreId ? `/${genreId}` : ""}`}
+            to={
+              moreLink ||
+              `/discover/more/${categorySlug}${genreId ? `/${genreId}` : ""}`
+            }
             className="flex items-center justify-center px-6 py-2 rounded-full bg-mediaCard-hoverBackground hover:bg-mediaCard-background transition-colors"
           >
             <span className="mr-2">{t("discover.carousel.more")}</span>
