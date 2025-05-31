@@ -10,8 +10,7 @@ import { useModal } from "@/components/overlays/Modal";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useRandomTranslation } from "@/hooks/useRandomTranslation";
 import { useSearchQuery } from "@/hooks/useSearchQuery";
-import { Movie, categories, tvCategories } from "@/pages/discover/common";
-import { DiscoverNavigation } from "@/pages/discover/components/DiscoverNavigation";
+import { Movie } from "@/pages/discover/common";
 import { FeaturedCarousel } from "@/pages/discover/components/FeaturedCarousel";
 import type { FeaturedMedia } from "@/pages/discover/components/FeaturedCarousel";
 import DiscoverContent from "@/pages/discover/discoverContent";
@@ -68,7 +67,6 @@ export function HomePage() {
   const [showBookmarks, setShowBookmarks] = useState(false);
   const [showWatching, setShowWatching] = useState(false);
   const [detailsData, setDetailsData] = useState<any>();
-  // const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const detailsModal = useModal("details");
   const [genres, setGenres] = useState<any[]>([]);
   const [tvGenres, setTVGenres] = useState<any[]>([]);
@@ -76,16 +74,8 @@ export function HomePage() {
   const userLanguage = useLanguageStore.getState().language;
   const formattedLanguage = getTmdbLanguageCode(userLanguage);
   const [selectedCategory, setSelectedCategory] = useState("movies");
-  const [selectedProvider, setSelectedProvider] = useState({
-    name: "",
-    id: "",
-  });
-  const { genreMedia: genreMovies } = useTMDBData(genres, categories, "movie");
-  const { genreMedia: genreTVShows } = useTMDBData(
-    tvGenres,
-    tvCategories,
-    "tv",
-  );
+  const { genreMedia: genreMovies } = useTMDBData(genres, [], "movie");
+  const { genreMedia: genreTVShows } = useTMDBData(tvGenres, [], "tv");
 
   // Fetch genres
   useEffect(() => {
@@ -124,32 +114,6 @@ export function HomePage() {
       type: media.type === "movie" ? "movie" : "show",
     });
     detailsModal.show();
-  };
-
-  const handleCategoryChange = (category: string) => {
-    setSelectedCategory(category);
-  };
-
-  const handleProviderClick = (id: string, name: string) => {
-    setSelectedProvider({ name, id });
-  };
-
-  const handleCategoryClick = (id: string, name: string) => {
-    const categorySlugBase = name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-    const movieElement = document.getElementById(
-      `carousel-${categorySlugBase}-movie`,
-    );
-    const tvElement = document.getElementById(
-      `carousel-${categorySlugBase}-tv`,
-    );
-
-    const element = movieElement || tvElement;
-    if (element) {
-      element.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-    }
   };
 
   // const { loggedIn } = useAuth(); // Adjust padding for popup show button based on logged in state
@@ -272,7 +236,7 @@ export function HomePage() {
         */}
         {enableFeatured ? (
           <FeaturedCarousel
-            category="movies"
+            forcedCategory="editorpicks"
             onShowDetails={handleShowDetails}
             searching={s.searching}
             shorter
@@ -290,7 +254,6 @@ export function HomePage() {
             showTitle
           />
         )}
-        {/* Optional ad */}
         {conf().SHOW_AD ? <AdsPart /> : null}
       </div>
       <WideContainer>
@@ -326,17 +289,7 @@ export function HomePage() {
               .flat()
               .filter((media): media is Movie => "title" in media)}
           />
-          <DiscoverNavigation
-            selectedCategory={selectedCategory}
-            genres={genres}
-            tvGenres={tvGenres}
-            onCategoryChange={handleCategoryChange}
-            onProviderClick={handleProviderClick}
-            onCategoryClick={handleCategoryClick}
-          />
           <DiscoverContent
-            selectedCategory={selectedCategory}
-            selectedProvider={selectedProvider}
             genreMovies={genreMovies}
             genreTVShows={genreTVShows}
           />

@@ -13,6 +13,7 @@ import { usePreferencesStore } from "@/stores/preferences";
 import { getTmdbLanguageCode } from "@/utils/language";
 
 import { EDITOR_PICKS_MOVIES, EDITOR_PICKS_TV_SHOWS } from "../discoverContent";
+import { useSelectedCategory } from "../hooks/useSelectedCategory";
 
 export interface FeaturedMedia extends Partial<Movie & TVShow> {
   children?: ReactNode;
@@ -24,20 +25,22 @@ export interface FeaturedMedia extends Partial<Movie & TVShow> {
 }
 
 interface FeaturedCarouselProps {
-  category?: "movies" | "tvshows" | "editorpicks";
   onShowDetails: (media: FeaturedMedia) => void;
   children?: ReactNode;
   searching?: boolean;
   shorter?: boolean;
+  forcedCategory?: "movies" | "tvshows" | "editorpicks";
 }
 
 export function FeaturedCarousel({
-  category = "movies",
   onShowDetails,
   children,
   searching,
   shorter,
+  forcedCategory,
 }: FeaturedCarouselProps) {
+  const { selectedCategory } = useSelectedCategory();
+  const effectiveCategory = forcedCategory || selectedCategory;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [logoUrl, setLogoUrl] = useState<string | undefined>();
@@ -56,7 +59,7 @@ export function FeaturedCarousel({
   useEffect(() => {
     const fetchFeaturedMedia = async () => {
       try {
-        if (category === "movies") {
+        if (effectiveCategory === "movies") {
           const data = await get<any>("/movie/popular", {
             api_key: conf().TMDB_READ_API_KEY,
             language: formattedLanguage,
@@ -67,7 +70,7 @@ export function FeaturedCarousel({
               type: "movie" as const,
             })),
           );
-        } else if (category === "tvshows") {
+        } else if (effectiveCategory === "tvshows") {
           const data = await get<any>("/tv/popular", {
             api_key: conf().TMDB_READ_API_KEY,
             language: formattedLanguage,
@@ -78,7 +81,7 @@ export function FeaturedCarousel({
               type: "show" as const,
             })),
           );
-        } else if (category === "editorpicks") {
+        } else if (effectiveCategory === "editorpicks") {
           // Fetch editor picks movies
           const moviePromises = EDITOR_PICKS_MOVIES.slice(0, 3).map((item) =>
             get<any>(`/movie/${item.id}`, {
@@ -121,7 +124,7 @@ export function FeaturedCarousel({
     };
 
     fetchFeaturedMedia();
-  }, [formattedLanguage, category]);
+  }, [formattedLanguage, effectiveCategory]);
 
   const handlePrevSlide = () => {
     setCurrentIndex((prev) => (prev - 1 + media.length) % media.length);

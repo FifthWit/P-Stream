@@ -16,11 +16,13 @@ import { useLanguageStore } from "@/stores/language";
 import { getTmdbLanguageCode } from "@/utils/language";
 import { MediaItem } from "@/utils/mediaTypes";
 
+import { DiscoverNavigation } from "./components/DiscoverNavigation";
 import type { FeaturedMedia } from "./components/FeaturedCarousel";
 import { LazyMediaCarousel } from "./components/LazyMediaCarousel";
 import { LazyTabContent } from "./components/LazyTabContent";
 import { MediaCarousel } from "./components/MediaCarousel";
 import { ScrollToTopButton } from "./components/ScrollToTopButton";
+import { useSelectedCategory } from "./hooks/useSelectedCategory";
 
 const shuffleArray = <T,>(array: T[]): T[] => {
   const shuffled = [...array];
@@ -86,21 +88,19 @@ export const EDITOR_PICKS_TV_SHOWS = shuffleArray([
 ]);
 
 interface DiscoverContentProps {
-  selectedCategory?: string;
-  selectedProvider?: {
-    name: string;
-    id: string;
-  };
   genreMovies?: { [id: number]: Movie[] | TVShow[] };
   genreTVShows?: { [id: number]: Movie[] | TVShow[] };
 }
 
 export function DiscoverContent({
-  selectedCategory = "movies",
-  selectedProvider = { name: "", id: "" },
   genreMovies,
   genreTVShows,
 }: DiscoverContentProps) {
+  const { selectedCategory, setSelectedCategory } = useSelectedCategory();
+  const [selectedProvider, setSelectedProvider] = useState({
+    name: "",
+    id: "",
+  });
   const [genres, setGenres] = useState<Genre[]>([]);
   const [tvGenres, setTVGenres] = useState<Genre[]>([]);
   const [providerMovies, setProviderMovies] = useState<Movie[]>([]);
@@ -121,6 +121,32 @@ export function DiscoverContent({
   const isMoviesTab = selectedCategory === "movies";
   const isTVShowsTab = selectedCategory === "tvshows";
   const isEditorPicksTab = selectedCategory === "editorpicks";
+
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category as "movies" | "tvshows" | "editorpicks");
+  };
+
+  const handleProviderClick = (id: string, name: string) => {
+    setSelectedProvider({ name, id });
+  };
+
+  const handleCategoryClick = (id: string, name: string) => {
+    const categorySlugBase = name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const movieElement = document.getElementById(
+      `carousel-${categorySlugBase}-movie`,
+    );
+    const tvElement = document.getElementById(
+      `carousel-${categorySlugBase}-tv`,
+    );
+
+    const element = selectedCategory === "tvshows" ? tvElement : movieElement;
+    if (element) {
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  };
 
   // Fetch provider content when selectedProvider changes
   useEffect(() => {
@@ -369,6 +395,14 @@ export function DiscoverContent({
 
   return (
     <div className="relative min-h-screen">
+      <DiscoverNavigation
+        selectedCategory={selectedCategory}
+        genres={genres}
+        tvGenres={tvGenres}
+        onCategoryChange={handleCategoryChange}
+        onProviderClick={handleProviderClick}
+        onCategoryClick={handleCategoryClick}
+      />
       {/* Content Section with Lazy Loading Tabs */}
       <div className="w-full md:w-[90%] max-w-[2400px] mx-auto">
         {/* Movies Tab */}
