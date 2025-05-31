@@ -192,10 +192,28 @@ export function FeaturedCarousel({
 
   const handlePrevSlide = () => {
     setCurrentIndex((prev) => (prev - 1 + media.length) % media.length);
+    // Reset autoplay timer
+    if (autoPlayInterval.current) {
+      clearInterval(autoPlayInterval.current);
+    }
+    if (isAutoPlaying) {
+      autoPlayInterval.current = setInterval(() => {
+        setCurrentIndex((prev) => (prev + 1) % media.length);
+      }, 5000);
+    }
   };
 
   const handleNextSlide = () => {
     setCurrentIndex((prev) => (prev + 1) % media.length);
+    // Reset autoplay timer
+    if (autoPlayInterval.current) {
+      clearInterval(autoPlayInterval.current);
+    }
+    if (isAutoPlaying) {
+      autoPlayInterval.current = setInterval(() => {
+        setCurrentIndex((prev) => (prev + 1) % media.length);
+      }, 5000);
+    }
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -243,7 +261,7 @@ export function FeaturedCarousel({
     if (isAutoPlaying && media.length > 0) {
       autoPlayInterval.current = setInterval(() => {
         setCurrentIndex((prev) => (prev + 1) % media.length);
-      }, 5000);
+      }, 8000); // 8 second timer for carousel images
     }
 
     return () => {
@@ -344,7 +362,18 @@ export function FeaturedCarousel({
           <button
             key={`dot-${item.id}`}
             type="button"
-            onClick={() => setCurrentIndex(index)}
+            onClick={() => {
+              setCurrentIndex(index);
+              // Reset autoplay timer when clicking dots
+              if (autoPlayInterval.current) {
+                clearInterval(autoPlayInterval.current);
+              }
+              if (isAutoPlaying) {
+                autoPlayInterval.current = setInterval(() => {
+                  setCurrentIndex((prev) => (prev + 1) % media.length);
+                }, 5000);
+              }
+            }}
             className={`w-2.5 h-2.5 rounded-full transition-all ${
               index === currentIndex
                 ? "bg-white scale-125"
