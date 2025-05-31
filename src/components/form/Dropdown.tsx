@@ -1,7 +1,8 @@
-import { Listbox, Transition } from "@headlessui/react";
+import { Listbox } from "@headlessui/react";
 import React, { Fragment } from "react";
 
 import { Icon, Icons } from "@/components/Icon";
+import { Transition } from "@/components/utils/Transition";
 
 export interface OptionItem {
   id: string;
@@ -24,12 +25,12 @@ export function Dropdown(props: DropdownProps) {
   return (
     <div className={`relative my-4 w-fit max-w-[25rem] ${props.className}`}>
       <Listbox value={props.selectedItem} onChange={props.setSelectedItem}>
-        {() => (
+        {({ open }) => (
           <>
             {customButton ? (
               <Listbox.Button as={Fragment}>{customButton}</Listbox.Button>
             ) : (
-              <Listbox.Button className="relative w-full rounded-lg bg-dropdown-background hover:bg-dropdown-hoverBackground py-3 pl-3 pr-10 text-left text-white shadow-md focus:outline-none tabbable cursor-pointer">
+              <Listbox.Button className="relative z-[101] w-full rounded-lg bg-dropdown-background hover:bg-dropdown-hoverBackground py-3 pl-3 pr-10 text-left text-white shadow-md focus:outline-none tabbable cursor-pointer">
                 <span className="flex gap-4 items-center truncate">
                   {props.selectedItem.leftIcon
                     ? props.selectedItem.leftIcon
@@ -45,33 +46,28 @@ export function Dropdown(props: DropdownProps) {
               </Listbox.Button>
             )}
             <Transition
-              as={Fragment}
-              leave="transition ease-in duration-100"
-              leaveFrom="opacity-100"
-              leaveTo="opacity-0"
+              animation="slide-down"
+              show={open}
+              className={`absolute z-[100] min-w-[200px] max-h-60 overflow-auto rounded-lg bg-dropdown-background py-1 text-white shadow-lg ring-1 ring-black ring-opacity-5 scrollbar-thin scrollbar-track-background-secondary scrollbar-thumb-type-secondary focus:outline-none ${
+                direction === "up" ? "bottom-full mb-4" : "top-full"
+              } right-0`}
             >
-              <Listbox.Options
-                className={`absolute z-[100] mt-1 min-w-[200px] max-h-60 overflow-auto rounded-lg bg-dropdown-background py-1 text-white shadow-lg ring-1 ring-black ring-opacity-5 scrollbar-thin scrollbar-track-background-secondary scrollbar-thumb-type-secondary focus:outline-none ${
-                  direction === "up" ? "bottom-full mb-4" : "top-full"
-                } right-0`}
-              >
-                {props.options.map((opt) => (
-                  <Listbox.Option
-                    className={({ active }) =>
-                      `cursor-pointer flex gap-4 items-center relative select-none py-2 px-4 mx-1 rounded-lg ${
-                        active
-                          ? "bg-background-secondaryHover text-type-link"
-                          : "text-type-secondary"
-                      }`
-                    }
-                    key={opt.id}
-                    value={opt}
-                  >
-                    {opt.leftIcon ? opt.leftIcon : null}
-                    {opt.name}
-                  </Listbox.Option>
-                ))}
-              </Listbox.Options>
+              {props.options.map((opt) => (
+                <Listbox.Option
+                  className={({ active }) =>
+                    `cursor-pointer flex gap-4 items-center relative select-none py-2 px-4 mx-1 rounded-lg ${
+                      active
+                        ? "bg-background-secondaryHover text-type-link"
+                        : "text-type-secondary"
+                    }`
+                  }
+                  key={opt.id}
+                  value={opt}
+                >
+                  {opt.leftIcon ? opt.leftIcon : null}
+                  {opt.name}
+                </Listbox.Option>
+              ))}
             </Transition>
           </>
         )}
