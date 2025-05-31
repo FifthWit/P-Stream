@@ -44,7 +44,8 @@ export const SearchBarInput = forwardRef<HTMLInputElement, SearchBarProps>(
               true,
             "transition-colors duration-300": true,
             "bg-search-background/50": !focused && lightTheme,
-            "bg-search-background": focused || props.isSticky,
+            "bg-search-background":
+              focused || props.isSticky || !props.isInFeatured,
           })}
         >
           <Flare.Light

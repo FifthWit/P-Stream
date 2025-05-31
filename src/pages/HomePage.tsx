@@ -239,13 +239,19 @@ export function HomePage() {
           </div>
         )}
         {!(showBookmarks || showWatching) && !enableDiscover ? (
-          <div className="flex flex-col translate-y-[-30px] items-center justify-center">
+          <div className="flex flex-col translate-y-[-30px] items-center justify-center pt-20">
             <p className="text-[18.5px] pb-3">{emptyText}</p>
           </div>
         ) : null}
-        {(showBookmarks || showWatching) && enableDiscover && (
-          <div className="pb-10" />
-        )}
+        {enableDiscover &&
+          (enableFeatured ? (
+            <div className="pb-0" />
+          ) : showBookmarks || showWatching ? (
+            <div className="pb-10" />
+          ) : (
+            <div className="pb-20" />
+          ))}
+        {/* there... perfect. */}
       </WideContainer>
       {enableDiscover && !search ? (
         <div className="w-full max-w-[100dvw] justify-center items-center">
