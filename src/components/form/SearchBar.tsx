@@ -51,7 +51,7 @@ export const SearchBarInput = forwardRef<HTMLInputElement, SearchBarProps>(
             <div
               className={c(
                 "absolute bottom-0 left-5 top-0 flex max-h-14 items-center text-search-icon cursor-pointer z-10",
-                "transition-colors duration-300",
+                "transition-colors duration-100",
                 props.isInFeatured
                   ? props.isSticky
                     ? ""

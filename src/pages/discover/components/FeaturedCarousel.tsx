@@ -120,11 +120,7 @@ export function FeaturedCarousel({
     <div
       className={classNames(
         "relative w-full transition-[height] duration-300 ease-in-out",
-        searching
-          ? "h-24"
-          : shorter
-            ? "h-[70vh] md:h-[75vh]"
-            : "h-[70vh] md:h-[100vh]",
+        searching ? "h-24" : shorter ? "h-[75vh]" : "h-[75vh] md:h-[100vh]",
       )}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -226,7 +222,7 @@ export function FeaturedCarousel({
               {currentMedia.overview}
             </p>
             <div
-              className="flex gap-4"
+              className="flex gap-4 justify-center items-center sm:justify-start"
               onMouseEnter={() => setIsAutoPlaying(false)}
               onMouseLeave={() => setIsAutoPlaying(true)}
             >
@@ -237,19 +233,21 @@ export function FeaturedCarousel({
                   )
                 }
                 theme="secondary"
+                className="w-full sm:w-auto text-base"
               >
                 <Icon icon={Icons.PLAY} className="text-white" />
-                <span className="text-white text-sm">Play Now</span>
+                <span className="text-white">Play Now</span>
               </Button>
               <Button
                 onClick={() => onShowDetails(currentMedia)}
                 theme="secondary"
+                className="w-full sm:w-auto text-base"
               >
                 <Icon
                   icon={Icons.CIRCLE_QUESTION}
                   className="text-white scale-100"
                 />
-                <span className="text-white text-sm">More Info</span>
+                <span className="text-white">More Info</span>
               </Button>
             </div>
           </div>
