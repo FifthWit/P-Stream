@@ -404,7 +404,7 @@ export function FeaturedCarousel({
         </div>
       </div>
       {children && (
-        <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 pointer-events-none pt-14 md:pt-0">
           <div className="pointer-events-auto z-50">{children}</div>
         </div>
       )}
