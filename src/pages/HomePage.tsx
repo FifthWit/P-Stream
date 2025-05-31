@@ -70,6 +70,7 @@ export function HomePage() {
   const detailsModal = useModal("details");
   const [genres, setGenres] = useState<any[]>([]);
   const [tvGenres, setTVGenres] = useState<any[]>([]);
+  const enableDiscover = usePreferencesStore((state) => state.enableDiscover);
   const enableFeatured = usePreferencesStore((state) => state.enableFeatured);
   const userLanguage = useLanguageStore.getState().language;
   const formattedLanguage = getTmdbLanguageCode(userLanguage);
@@ -104,8 +105,6 @@ export function HomePage() {
     window.scrollTo(0, 0);
     navigate(path);
   };
-
-  const enableDiscover = usePreferencesStore((state) => state.enableDiscover);
 
   const handleShowDetails = async (media: MediaItem | FeaturedMedia) => {
     setDetailsData({

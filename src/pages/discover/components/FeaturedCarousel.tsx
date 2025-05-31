@@ -276,7 +276,7 @@ export function FeaturedCarousel({
           ? "h-24"
           : shorter
             ? windowHeight > 560
-              ? "h-[80vh]"
+              ? "h-[75vh] md:h-[85vh]"
               : "h-[100vh]"
             : "h-[80vh] md:h-[100vh]",
       )}
@@ -301,9 +301,9 @@ export function FeaturedCarousel({
               backgroundSize: "cover",
               backgroundPosition: "center",
               maskImage:
-                "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 500px)",
+                "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 700px)",
               WebkitMaskImage:
-                "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 500px)",
+                "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 700px)",
             }}
           />
         ))}

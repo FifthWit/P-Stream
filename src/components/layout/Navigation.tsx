@@ -17,6 +17,7 @@ export interface NavigationProps {
   bg?: boolean;
   noLightbar?: boolean;
   doBackground?: boolean;
+  clearBackground?: boolean;
 }
 
 export function Navigation(props: NavigationProps) {
@@ -54,10 +55,13 @@ export function Navigation(props: NavigationProps) {
       >
         <div
           className={classNames(
-            "fixed left-0 right-0 top-0 flex items-center",
+            "fixed left-0 right-0 top-0 flex items-center", // border-b border-utils-divider border-opacity-50
+            "transition-[background-color,backdrop-filter] duration-300 ease-in-out",
             props.doBackground
-              ? "bg-background-main border-b border-utils-divider border-opacity-50"
-              : null,
+              ? props.clearBackground
+                ? "backdrop-blur-md bg-transparent"
+                : "bg-background-main"
+              : "bg-transparent",
           )}
         >
           {props.doBackground ? (
@@ -67,12 +71,29 @@ export function Navigation(props: NavigationProps) {
           ) : null}
           <div className="opacity-0 absolute inset-0 block h-20 pointer-events-auto" />
           <div
-            className={`${
-              props.bg ? "opacity-100" : "opacity-0"
-            } absolute inset-0 block h-24 bg-background-main transition-opacity duration-300`}
-          >
-            <div className="absolute -bottom-24 h-24 w-full bg-gradient-to-b from-background-main to-transparent" />
-          </div>
+            className={classNames(
+              "transition-[background-color,backdrop-filter,opacity] duration-300 ease-in-out",
+              props.bg ? "opacity-100" : "opacity-0",
+              "absolute inset-0 block h-[11rem]",
+              props.clearBackground
+                ? "backdrop-blur-md bg-transparent"
+                : "bg-background-main",
+            )}
+            style={{
+              maskImage: `linear-gradient(
+                to bottom,
+                rgba(0, 0, 0, 1),
+                rgba(0, 0, 0, 1) calc(100% - 100px),
+                rgba(0, 0, 0, 0) 100%
+              )`,
+              WebkitMaskImage: `linear-gradient(
+                to bottom,
+                rgba(0, 0, 0, 1),
+                rgba(0, 0, 0, 1) calc(100% - 100px),
+                rgba(0, 0, 0, 0) 100%
+              )`,
+            }}
+          />
         </div>
       </div>
 
