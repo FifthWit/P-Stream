@@ -782,7 +782,10 @@
         "logos": "Image logos",
         "logosDescription": "Show image logos instead of text titles in the details modal and featured section. Enabled by default.",
         "logosNotice": "Most of the time, logos are English only. Other languages might want to disable this!",
-        "logosLabel": "Image logos"
+        "logosLabel": "Image logos",
+        "carouselView": "Carousel view",
+        "carouselViewDescription": "Display your currently watching and bookmark sections as carousels instead of a grid. Disabled by default.",
+        "carouselViewLabel": "Carousel view"
       }
     },
     "connections": {

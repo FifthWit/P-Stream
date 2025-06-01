@@ -120,11 +120,11 @@ export function FeaturedCarousel({
   const { width: windowWidth, height: windowHeight } = useWindowSize();
 
   const SLIDE_QUANTITY = 10;
+  const FETCH_QUANTITY = 20;
   const SLIDE_QUANTITY_EDITOR_PICKS_MOVIES = 6;
   const SLIDE_QUANTITY_EDITOR_PICKS_TV_SHOWS = 4;
   const SLIDE_DURATION = 8000;
 
-  // Fetch featured media
   useEffect(() => {
     const fetchFeaturedMedia = async () => {
       setIsLoading(true);
@@ -138,41 +138,65 @@ export function FeaturedCarousel({
             api_key: conf().TMDB_READ_API_KEY,
             language: formattedLanguage,
           });
-          setMedia(
-            data.results.slice(0, SLIDE_QUANTITY).map((movie: any) => ({
+          // Fetch movie items and randomly select
+          const allMovies = data.results
+            .slice(0, FETCH_QUANTITY)
+            .map((movie: any) => ({
               ...movie,
               type: "movie" as const,
-            })),
-          );
+            }));
+          // Shuffle
+          const shuffledMovies = [...allMovies].sort(() => 0.5 - Math.random());
+          setMedia(shuffledMovies.slice(0, SLIDE_QUANTITY));
         } else if (effectiveCategory === "tvshows") {
           const data = await get<any>("/tv/popular", {
             api_key: conf().TMDB_READ_API_KEY,
             language: formattedLanguage,
           });
-          setMedia(
-            data.results.slice(0, SLIDE_QUANTITY).map((show: any) => ({
+          // Fetch show items
+          const allShows = data.results
+            .slice(0, FETCH_QUANTITY)
+            .map((show: any) => ({
               ...show,
               type: "show" as const,
-            })),
-          );
+            }));
+          // Shuffle
+          const shuffledShows = [...allShows].sort(() => 0.5 - Math.random());
+          setMedia(shuffledShows.slice(0, SLIDE_QUANTITY));
         } else if (effectiveCategory === "editorpicks") {
-          // Fetch editor picks movies
-          const moviePromises = EDITOR_PICKS_MOVIES.slice(
-            0,
-            SLIDE_QUANTITY_EDITOR_PICKS_MOVIES,
-          ).map((item) =>
-            get<any>(`/movie/${item.id}`, {
+          // Shuffle editor picks Ids
+          const allMovieIds = EDITOR_PICKS_MOVIES.map((item) => ({
+            id: item.id,
+            type: "movie" as const,
+          }));
+          const allShowIds = EDITOR_PICKS_TV_SHOWS.map((item) => ({
+            id: item.id,
+            type: "show" as const,
+          }));
+
+          // Combine and shuffle
+          const combinedIds = [...allMovieIds, ...allShowIds].sort(
+            () => 0.5 - Math.random(),
+          );
+
+          // Select the quantity
+          const selectedMovieIds = combinedIds
+            .filter((item) => item.type === "movie")
+            .slice(0, SLIDE_QUANTITY_EDITOR_PICKS_MOVIES);
+          const selectedShowIds = combinedIds
+            .filter((item) => item.type === "show")
+            .slice(0, SLIDE_QUANTITY_EDITOR_PICKS_TV_SHOWS);
+
+          // Fetch items
+          const moviePromises = selectedMovieIds.map(({ id }) =>
+            get<any>(`/movie/${id}`, {
               api_key: conf().TMDB_READ_API_KEY,
               language: formattedLanguage,
             }),
           );
 
-          // Fetch editor picks TV shows
-          const showPromises = EDITOR_PICKS_TV_SHOWS.slice(
-            0,
-            SLIDE_QUANTITY_EDITOR_PICKS_TV_SHOWS,
-          ).map((item) =>
-            get<any>(`/tv/${item.id}`, {
+          const showPromises = selectedShowIds.map(({ id }) =>
+            get<any>(`/tv/${id}`, {
               api_key: conf().TMDB_READ_API_KEY,
               language: formattedLanguage,
             }),
@@ -192,11 +216,7 @@ export function FeaturedCarousel({
             type: "show" as const,
           }));
 
-          // Combine and shuffle
-          const combined = [...movies, ...shows].sort(
-            () => 0.5 - Math.random(),
-          );
-          setMedia(combined);
+          setMedia([...movies, ...shows]);
         }
       } catch (error) {
         console.error("Error fetching featured media:", error);
@@ -260,7 +280,7 @@ export function FeaturedCarousel({
     setTouchEnd(null);
   };
 
-  // Fetch logo when current media changes
+  // Fetch clear logo when current media changes
   useEffect(() => {
     const fetchLogo = async () => {
       // Cancel any in-progress logo fetch

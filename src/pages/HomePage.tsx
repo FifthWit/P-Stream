@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useTranslation } from "react-i18next";
 import { To, useNavigate } from "react-router-dom";
@@ -13,8 +13,10 @@ import { FeaturedCarousel } from "@/pages/discover/components/FeaturedCarousel";
 import type { FeaturedMedia } from "@/pages/discover/components/FeaturedCarousel";
 import DiscoverContent from "@/pages/discover/discoverContent";
 import { HomeLayout } from "@/pages/layouts/HomeLayout";
+import { BookmarksCarousel } from "@/pages/parts/home/BookmarksCarousel";
 import { BookmarksPart } from "@/pages/parts/home/BookmarksPart";
 import { HeroPart } from "@/pages/parts/home/HeroPart";
+import { WatchingCarousel } from "@/pages/parts/home/WatchingCarousel";
 import { WatchingPart } from "@/pages/parts/home/WatchingPart";
 import { SearchListPart } from "@/pages/parts/search/SearchListPart";
 import { SearchLoadingPart } from "@/pages/parts/search/SearchLoadingPart";
@@ -64,6 +66,11 @@ export function HomePage() {
   const detailsModal = useModal("details");
   const enableDiscover = usePreferencesStore((state) => state.enableDiscover);
   const enableFeatured = usePreferencesStore((state) => state.enableFeatured);
+  const carouselRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const enableCarouselView = usePreferencesStore(
+    (state) => state.enableCarouselView,
+  );
+  const isMobile = window.innerWidth < 768;
 
   const handleClick = (path: To) => {
     window.scrollTo(0, 0);
@@ -218,24 +225,50 @@ export function HomePage() {
         )}
         {conf().SHOW_AD ? <AdsPart /> : null}
       </div>
-      <WideContainer>
+      <WideContainer ultraWide={enableCarouselView}>
         {s.loading ? (
           <SearchLoadingPart />
         ) : s.searching ? (
-          <SearchListPart
-            searchQuery={search}
-            onShowDetails={handleShowDetails}
-          />
+          enableCarouselView ? (
+            <WideContainer>
+              <SearchListPart
+                searchQuery={search}
+                onShowDetails={handleShowDetails}
+              />
+            </WideContainer>
+          ) : (
+            <SearchListPart
+              searchQuery={search}
+              onShowDetails={handleShowDetails}
+            />
+          )
         ) : (
           <div className="flex flex-col gap-8">
-            <WatchingPart
-              onItemsChange={setShowWatching}
-              onShowDetails={handleShowDetails}
-            />
-            <BookmarksPart
-              onItemsChange={setShowBookmarks}
-              onShowDetails={handleShowDetails}
-            />
+            {enableCarouselView ? (
+              <>
+                <WatchingCarousel
+                  isMobile={isMobile}
+                  carouselRefs={carouselRefs}
+                  onShowDetails={handleShowDetails}
+                />
+                <BookmarksCarousel
+                  isMobile={isMobile}
+                  carouselRefs={carouselRefs}
+                  onShowDetails={handleShowDetails}
+                />
+              </>
+            ) : (
+              <>
+                <WatchingPart
+                  onItemsChange={setShowWatching}
+                  onShowDetails={handleShowDetails}
+                />
+                <BookmarksPart
+                  onItemsChange={setShowBookmarks}
+                  onShowDetails={handleShowDetails}
+                />
+              </>
+            )}
           </div>
         )}
         {!(showBookmarks || showWatching) && !enableDiscover ? (
@@ -252,25 +285,23 @@ export function HomePage() {
             <div className="pb-20" />
           ))}
         {/* there... perfect. */}
-      </WideContainer>
-      {enableDiscover && !search ? (
-        <div className="w-full max-w-[100dvw] justify-center items-center">
+        {enableDiscover && !search ? (
           <DiscoverContent />
-        </div>
-      ) : (
-        <div className="flex flex-col justify-center items-center h-40 space-y-4">
-          <div className="flex flex-col items-center justify-center">
-            {!search && (
-              <Button
-                className="px-py p-[0.35em] mt-3 rounded-xl text-type-dimmed box-content text-[18px] bg-largeCard-background justify-center items-center"
-                onClick={() => handleClick("/discover")}
-              >
-                {t("home.search.discover")}
-              </Button>
-            )}
+        ) : (
+          <div className="flex flex-col justify-center items-center h-40 space-y-4">
+            <div className="flex flex-col items-center justify-center">
+              {!search && (
+                <Button
+                  className="px-py p-[0.35em] mt-3 rounded-xl text-type-dimmed box-content text-[18px] bg-largeCard-background justify-center items-center"
+                  onClick={() => handleClick("/discover")}
+                >
+                  {t("home.search.discover")}
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </WideContainer>
 
       {detailsData && <DetailsModal id="details" data={detailsData} />}
     </HomeLayout>

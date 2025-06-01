@@ -61,6 +61,7 @@ export function useSettingsState(
   proxyTmdb: boolean,
   enableSkipCredits: boolean,
   enableImageLogos: boolean,
+  enableCarouselView: boolean,
 ) {
   const [proxyUrlsState, setProxyUrls, resetProxyUrls, proxyUrlsChanged] =
     useDerived(proxyUrls);
@@ -150,6 +151,12 @@ export function useSettingsState(
   ] = useDerived(enableSourceOrder);
   const [proxyTmdbState, setProxyTmdbState, resetProxyTmdb, proxyTmdbChanged] =
     useDerived(proxyTmdb);
+  const [
+    enableCarouselViewState,
+    setEnableCarouselViewState,
+    resetEnableCarouselView,
+    enableCarouselViewChanged,
+  ] = useDerived(enableCarouselView);
 
   function reset() {
     resetTheme();
@@ -171,6 +178,7 @@ export function useSettingsState(
     resetSourceOrder();
     resetEnableSourceOrder();
     resetProxyTmdb();
+    resetEnableCarouselView();
   }
 
   const changed =
@@ -191,7 +199,8 @@ export function useSettingsState(
     enableImageLogosChanged ||
     sourceOrderChanged ||
     enableSourceOrderChanged ||
-    proxyTmdbChanged;
+    proxyTmdbChanged ||
+    enableCarouselViewChanged;
 
   return {
     reset,
@@ -285,6 +294,11 @@ export function useSettingsState(
       state: proxyTmdbState,
       set: setProxyTmdbState,
       changed: proxyTmdbChanged,
+    },
+    enableCarouselView: {
+      state: enableCarouselViewState,
+      set: setEnableCarouselViewState,
+      changed: enableCarouselViewChanged,
     },
   };
 }

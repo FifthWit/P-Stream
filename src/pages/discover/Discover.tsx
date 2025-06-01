@@ -49,7 +49,7 @@ export function Discover() {
       </div>
 
       {/* Main Content */}
-      <div className="relative z-20">
+      <div className="relative z-20 px-10">
         <DiscoverContent />
       </div>
 

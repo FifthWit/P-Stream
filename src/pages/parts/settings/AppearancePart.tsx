@@ -213,6 +213,9 @@ export function AppearancePart(props: {
 
   enableImageLogos: boolean;
   setEnableImageLogos: (v: boolean) => void;
+
+  enableCarouselView: boolean;
+  setEnableCarouselView: (v: boolean) => void;
 }) {
   const { t } = useTranslation();
 
@@ -359,6 +362,30 @@ export function AppearancePart(props: {
               <Toggle enabled={props.enableImageLogos} />
               <p className="flex-1 text-white font-bold">
                 {t("settings.appearance.options.logosLabel")}
+              </p>
+            </div>
+          </div>
+
+          {/* Carousel View */}
+          <div>
+            <p className="text-white font-bold mb-3">
+              {t("settings.appearance.options.carouselView")}
+            </p>
+            <p className="max-w-[25rem] font-medium">
+              {t("settings.appearance.options.carouselViewDescription")}
+            </p>
+            <div
+              onClick={() =>
+                props.setEnableCarouselView(!props.enableCarouselView)
+              }
+              className={classNames(
+                "bg-dropdown-background hover:bg-dropdown-hoverBackground select-none my-4 cursor-pointer space-x-3 flex items-center max-w-[25rem] py-3 px-4 rounded-lg",
+                "cursor-pointer opacity-100 pointer-events-auto",
+              )}
+            >
+              <Toggle enabled={props.enableCarouselView} />
+              <p className="flex-1 text-white font-bold">
+                {t("settings.appearance.options.carouselViewLabel")}
               </p>
             </div>
           </div>

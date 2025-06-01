@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { get } from "@/backend/metadata/tmdb";
+import { WideContainer } from "@/components/layout/WideContainer";
 import { DetailsModal } from "@/components/overlays/DetailsModal";
 import { useModal } from "@/components/overlays/Modal";
 import { useIsMobile } from "@/hooks/useIsMobile";
@@ -704,8 +705,8 @@ export function DiscoverContent() {
         selectedCategory={selectedCategory}
         onCategoryChange={handleCategoryChange}
       />
-      {/* Content Section with Lazy Loading Tabs */}
-      <div className="w-full md:w-[90%] max-w-[2400px] mx-auto">
+
+      <WideContainer ultraWide classNames="!px-0">
         {/* Movies Tab */}
         <LazyTabContent isActive={isMoviesTab}>
           {renderMoviesContent()}
@@ -720,7 +721,7 @@ export function DiscoverContent() {
         <LazyTabContent isActive={isEditorPicksTab}>
           {renderEditorPicksContent()}
         </LazyTabContent>
-      </div>
+      </WideContainer>
 
       <ScrollToTopButton />
 

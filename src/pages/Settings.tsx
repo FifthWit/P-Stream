@@ -170,6 +170,11 @@ export function SettingsPage() {
   const proxyTmdb = usePreferencesStore((s) => s.proxyTmdb);
   const setProxyTmdb = usePreferencesStore((s) => s.setProxyTmdb);
 
+  const enableCarouselView = usePreferencesStore((s) => s.enableCarouselView);
+  const setEnableCarouselView = usePreferencesStore(
+    (s) => s.setEnableCarouselView,
+  );
+
   const account = useAuthStore((s) => s.account);
   const updateProfile = useAuthStore((s) => s.setAccountProfile);
   const updateDeviceName = useAuthStore((s) => s.updateDeviceName);
@@ -214,6 +219,7 @@ export function SettingsPage() {
     proxyTmdb,
     enableSkipCredits,
     enableImageLogos,
+    enableCarouselView,
   );
 
   const availableSources = useMemo(() => {
@@ -298,6 +304,7 @@ export function SettingsPage() {
     setEnableSourceOrder(state.enableSourceOrder.state);
     setFebboxToken(state.febboxToken.state);
     setProxyTmdb(state.proxyTmdb.state);
+    setEnableCarouselView(state.enableCarouselView.state);
 
     if (state.profile.state) {
       updateProfile(state.profile.state);
@@ -337,6 +344,7 @@ export function SettingsPage() {
     setBackendUrl,
     setEnableSourceOrder,
     setProxyTmdb,
+    setEnableCarouselView,
   ]);
   return (
     <SubPageLayout>
@@ -400,6 +408,8 @@ export function SettingsPage() {
             setEnableDetailsModal={state.enableDetailsModal.set}
             enableImageLogos={state.enableImageLogos.state}
             setEnableImageLogos={state.enableImageLogos.set}
+            enableCarouselView={state.enableCarouselView.state}
+            setEnableCarouselView={state.enableCarouselView.set}
           />
         </div>
         <div id="settings-captions" className="mt-28">

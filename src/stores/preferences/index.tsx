@@ -10,6 +10,7 @@ export interface PreferencesStore {
   enableFeatured: boolean;
   enableDetailsModal: boolean;
   enableImageLogos: boolean;
+  enableCarouselView: boolean;
   sourceOrder: string[];
   enableSourceOrder: boolean;
   proxyTmdb: boolean;
@@ -21,6 +22,7 @@ export interface PreferencesStore {
   setEnableFeatured(v: boolean): void;
   setEnableDetailsModal(v: boolean): void;
   setEnableImageLogos(v: boolean): void;
+  setEnableCarouselView(v: boolean): void;
   setSourceOrder(v: string[]): void;
   setEnableSourceOrder(v: boolean): void;
   setProxyTmdb(v: boolean): void;
@@ -36,6 +38,7 @@ export const usePreferencesStore = create(
       enableFeatured: true, // enabled for testing
       enableDetailsModal: false,
       enableImageLogos: true,
+      enableCarouselView: true, // enabled for testing
       sourceOrder: [],
       enableSourceOrder: false,
       proxyTmdb: false,
@@ -72,6 +75,11 @@ export const usePreferencesStore = create(
       setEnableImageLogos(v) {
         set((s) => {
           s.enableImageLogos = v;
+        });
+      },
+      setEnableCarouselView(v) {
+        set((s) => {
+          s.enableCarouselView = v;
         });
       },
       setSourceOrder(v) {
