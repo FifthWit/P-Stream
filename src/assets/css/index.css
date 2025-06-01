@@ -334,3 +334,18 @@ input[type=range].styled-slider.slider-progress::-ms-fill-lower {
     --mask-fade-distance: 20px;
   }
 }
+
+/* DetailsModal staggered scaling anime */
+@keyframes scaleIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

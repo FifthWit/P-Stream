@@ -1,6 +1,6 @@
 import classNames from "classnames";
 import { t } from "i18next";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Trans } from "react-i18next";
 import { Link } from "react-router-dom";
@@ -17,8 +17,8 @@ import {
 } from "@/backend/metadata/types/tmdb";
 import { Dropdown } from "@/components/form/Dropdown";
 import { Icon, Icons } from "@/components/Icon";
+import { MediaBookmarkButton } from "@/components/media/MediaBookmark";
 import { hasAired } from "@/components/player/utils/aired";
-import { useBookmarkStore } from "@/stores/bookmarks";
 import { useLanguageStore } from "@/stores/language";
 import { usePreferencesStore } from "@/stores/preferences";
 import { useProgressStore } from "@/stores/progress";
@@ -148,10 +148,6 @@ function DetailsContent({
   const [showVolumeBar, setShowVolumeBar] = useState(false);
   const [volume, setVolume] = useState(0.5);
 
-  const addBookmark = useBookmarkStore((s) => s.addBookmark);
-  const removeBookmark = useBookmarkStore((s) => s.removeBookmark);
-  const bookmarks = useBookmarkStore((s) => s.bookmarks);
-  const isBookmarked = !!bookmarks[data.id?.toString() ?? ""];
   const enableImageLogos = usePreferencesStore(
     (state) => state.enableImageLogos,
   );
@@ -177,23 +173,6 @@ function DetailsContent({
       setSelectedSeason(showProgress.season.number);
     }
   }, [showProgress]);
-
-  const toggleBookmark = useCallback(() => {
-    if (!data.id) return;
-    if (isBookmarked) {
-      removeBookmark(data.id.toString());
-    } else {
-      addBookmark({
-        tmdbId: data.id.toString(),
-        type: data.type ?? "movie",
-        title: data.title,
-        releaseYear: data.releaseDate
-          ? new Date(data.releaseDate).getFullYear()
-          : 0,
-        poster: data.backdrop,
-      });
-    }
-  }, [data, isBookmarked, addBookmark, removeBookmark]);
 
   const toggleMute = () => {
     if (videoRef.current) {
@@ -580,7 +559,11 @@ function DetailsContent({
                     }
                   }
                 }}
-                theme="glass"
+                theme="purple"
+                className={classNames(
+                  "gap-2 h-12 rounded-lg px-4 py-2 my-1 transition-transform hover:scale-105 duration-100",
+                  "text-md text-white flex items-center justify-center",
+                )}
               >
                 <Icon icon={Icons.PLAY} className="text-white" />
                 <span className="text-white text-sm pr-1">
@@ -597,25 +580,31 @@ function DetailsContent({
                 </span>
               </Button>
             )}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={toggleBookmark}
-                className="p-2 pt-3 hover:scale-110 transition-transform"
-              >
-                <Icon
-                  icon={isBookmarked ? Icons.BOOKMARK : Icons.BOOKMARK_OUTLINE}
-                  className="text-white"
-                />
-              </button>
+            <div className="flex items-center gap-1">
+              <MediaBookmarkButton
+                media={{
+                  id: data.id?.toString() || "",
+                  title: data.title,
+                  year: data.releaseDate
+                    ? new Date(data.releaseDate).getFullYear()
+                    : undefined,
+                  poster: data.backdrop,
+                  type: data.type || "movie",
+                }}
+              />
             </div>
           </div>
           {data.genres && data.genres.length > 0 && (
             <div className="flex flex-wrap gap-2 justify-start sm:justify-end z-[999] items-center pt-2">
-              {data.genres.map((genre) => (
+              {data.genres.map((genre, index) => (
                 <span
                   key={genre.id}
-                  className="text-[11px] px-2 py-0.5 rounded-full bg-white/20 text-white/80"
+                  className="text-[11px] px-2 py-0.5 rounded-full bg-white/20 text-white/80 transition-all duration-300 hover:scale-110 animate-[scaleIn_0.6s_ease-out_forwards]"
+                  style={{
+                    animationDelay: `${((data.genres?.length ?? 0) - 1 - index) * 60}ms`,
+                    transform: "scale(0)",
+                    opacity: 0,
+                  }}
                 >
                   {genre.name}
                 </span>
@@ -656,7 +645,7 @@ function DetailsContent({
           </div>
 
           {/* Right Column - Details */}
-          <div className="md:col-span-1">
+          <div className="md:col-span-1 bg-video-context-border p-4 rounded-lg border-buttons-primary bg-opacity-80">
             <div className="space-y-3 text-xs">
               {data.runtime && (
                 <div className="flex flex-wrap items-center gap-2 text-white/80">
@@ -1115,7 +1104,7 @@ export function DetailsModal(props: {
         >
           <div className="transition-transform duration-300 h-full">
             <Flare.Light
-              flareSize={500}
+              flareSize={300}
               cssColorVar="--colors-mediaCard-hoverAccent"
               backgroundClass="bg-mediaCard-hoverBackground duration-100"
               className="rounded-3xl bg-background-main group-hover:opacity-100"
