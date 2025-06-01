@@ -1,4 +1,5 @@
 import classNames from "classnames";
+import { useEffect, useState } from "react";
 import { Link, To, useNavigate } from "react-router-dom";
 
 import { NoUserAvatar, UserAvatar } from "@/components/Avatar";
@@ -24,10 +25,31 @@ export function Navigation(props: NavigationProps) {
   const bannerHeight = useBannerSize();
   const navigate = useNavigate();
   const { loggedIn } = useAuth();
+  const [scrollPosition, setScrollPosition] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollPosition(window.scrollY);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const handleClick = (path: To) => {
     window.scrollTo(0, 0);
     navigate(path);
+  };
+
+  // Calculate mask length based on scroll position
+  const getMaskLength = () => {
+    // When at top (0), use longer mask (200px)
+    // When scrolled down (300px+), use shorter mask (100px)
+    const maxScroll = 300;
+    const minLength = 100;
+    const maxLength = 180;
+    const scrollFactor = Math.min(scrollPosition, maxScroll) / maxScroll;
+    return minLength + (maxLength - minLength) * (1 - scrollFactor);
   };
 
   return (
@@ -83,13 +105,13 @@ export function Navigation(props: NavigationProps) {
               maskImage: `linear-gradient(
                 to bottom,
                 rgba(0, 0, 0, 1),
-                rgba(0, 0, 0, 1) calc(100% - 100px),
+                rgba(0, 0, 0, 1) calc(100% - ${getMaskLength()}px),
                 rgba(0, 0, 0, 0) 100%
               )`,
               WebkitMaskImage: `linear-gradient(
                 to bottom,
                 rgba(0, 0, 0, 1),
-                rgba(0, 0, 0, 1) calc(100% - 100px),
+                rgba(0, 0, 0, 1) calc(100% - ${getMaskLength()}px),
                 rgba(0, 0, 0, 0) 100%
               )`,
             }}
