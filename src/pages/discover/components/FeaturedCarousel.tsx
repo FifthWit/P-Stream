@@ -496,7 +496,7 @@ export function FeaturedCarousel({
               </Button>
             </div>
           </div>
-          <div className="hidden md:block">
+          <div className="hidden lg:block">
             <RandomMovieButton />
           </div>
         </div>
