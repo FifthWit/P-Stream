@@ -118,6 +118,11 @@ export function FeaturedCarousel({
   const formattedLanguage = getTmdbLanguageCode(userLanguage);
   const { width: windowWidth, height: windowHeight } = useWindowSize();
 
+  const SLIDE_QUANTITY = 10;
+  const SLIDE_QUANTITY_EDITOR_PICKS_MOVIES = 6;
+  const SLIDE_QUANTITY_EDITOR_PICKS_TV_SHOWS = 4;
+  const SLIDE_DURATION = 8000;
+
   // Fetch featured media
   useEffect(() => {
     const fetchFeaturedMedia = async () => {
@@ -133,7 +138,7 @@ export function FeaturedCarousel({
             language: formattedLanguage,
           });
           setMedia(
-            data.results.slice(0, 5).map((movie: any) => ({
+            data.results.slice(0, SLIDE_QUANTITY).map((movie: any) => ({
               ...movie,
               type: "movie" as const,
             })),
@@ -144,14 +149,17 @@ export function FeaturedCarousel({
             language: formattedLanguage,
           });
           setMedia(
-            data.results.slice(0, 5).map((show: any) => ({
+            data.results.slice(0, SLIDE_QUANTITY).map((show: any) => ({
               ...show,
               type: "show" as const,
             })),
           );
         } else if (effectiveCategory === "editorpicks") {
           // Fetch editor picks movies
-          const moviePromises = EDITOR_PICKS_MOVIES.slice(0, 3).map((item) =>
+          const moviePromises = EDITOR_PICKS_MOVIES.slice(
+            0,
+            SLIDE_QUANTITY_EDITOR_PICKS_MOVIES,
+          ).map((item) =>
             get<any>(`/movie/${item.id}`, {
               api_key: conf().TMDB_READ_API_KEY,
               language: formattedLanguage,
@@ -159,7 +167,10 @@ export function FeaturedCarousel({
           );
 
           // Fetch editor picks TV shows
-          const showPromises = EDITOR_PICKS_TV_SHOWS.slice(0, 2).map((item) =>
+          const showPromises = EDITOR_PICKS_TV_SHOWS.slice(
+            0,
+            SLIDE_QUANTITY_EDITOR_PICKS_TV_SHOWS,
+          ).map((item) =>
             get<any>(`/tv/${item.id}`, {
               api_key: conf().TMDB_READ_API_KEY,
               language: formattedLanguage,
@@ -308,7 +319,7 @@ export function FeaturedCarousel({
     if (isAutoPlaying && media.length > 0) {
       autoPlayInterval.current = setInterval(() => {
         setCurrentIndex((prev) => (prev + 1) % media.length);
-      }, 8000); // 8 second timer for carousel images
+      }, SLIDE_DURATION);
     }
 
     return () => {
