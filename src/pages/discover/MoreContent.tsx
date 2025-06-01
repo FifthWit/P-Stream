@@ -162,7 +162,7 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
             {
               api_key: conf().TMDB_READ_API_KEY,
               language: formattedLanguage,
-              page: append ? page : 1, // Use page 1 for initial load, requested page for append
+              page,
             },
           );
 
@@ -172,6 +172,7 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
             setMedias(results.results);
           }
           setHasMore(page < results.total_pages);
+          setCurrentPage(page);
           return;
         }
 
@@ -267,7 +268,8 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
 
   const handleLoadMore = async () => {
     setLoadingMore(true);
-    const nextPage = currentPage + 2;
+    const nextPage =
+      contentType === "recommendations" ? currentPage + 1 : currentPage + 2;
     await fetchContent(nextPage, true);
     setCurrentPage(nextPage);
     setLoadingMore(false);
