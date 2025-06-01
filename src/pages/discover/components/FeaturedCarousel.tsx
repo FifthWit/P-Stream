@@ -103,11 +103,12 @@ export function FeaturedCarousel({
   const effectiveCategory = forcedCategory || selectedCategory;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [media, setMedia] = useState<FeaturedMedia[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [logoUrl, setLogoUrl] = useState<string | undefined>();
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
-  const [media, setMedia] = useState<FeaturedMedia[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const logoFetchController = useRef<AbortController | null>(null);
   const autoPlayInterval = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
   const enableImageLogos = usePreferencesStore(
@@ -121,6 +122,10 @@ export function FeaturedCarousel({
   useEffect(() => {
     const fetchFeaturedMedia = async () => {
       setIsLoading(true);
+      setLogoUrl(undefined); // Clear logo when media changes
+      if (logoFetchController.current) {
+        logoFetchController.current.abort(); // Cancel any in-progress logo fetches
+      }
       try {
         if (effectiveCategory === "movies") {
           const data = await get<any>("/movie/popular", {
@@ -246,17 +251,58 @@ export function FeaturedCarousel({
   // Fetch logo when current media changes
   useEffect(() => {
     const fetchLogo = async () => {
-      if (!media[currentIndex]?.id) return;
-      const logo = await getMediaLogo(
-        media[currentIndex].id.toString(),
-        media[currentIndex].type === "movie"
-          ? TMDBContentTypes.MOVIE
-          : TMDBContentTypes.TV,
-      );
-      setLogoUrl(logo);
+      // Cancel any in-progress logo fetch
+      if (logoFetchController.current) {
+        logoFetchController.current.abort();
+      }
+
+      // Create new abort controller for this fetch
+      logoFetchController.current = new AbortController();
+
+      const currentMediaId = media[currentIndex]?.id;
+      if (!currentMediaId) {
+        setLogoUrl(undefined);
+        return;
+      }
+
+      try {
+        const logo = await getMediaLogo(
+          currentMediaId.toString(),
+          media[currentIndex].type === "movie"
+            ? TMDBContentTypes.MOVIE
+            : TMDBContentTypes.TV,
+        );
+        // Only update if this is still the current media
+        if (media[currentIndex]?.id === currentMediaId) {
+          setLogoUrl(logo);
+        }
+      } catch (error: unknown) {
+        if (error instanceof Error && error.name === "AbortError") {
+          // Ignore abort errors
+          return;
+        }
+        console.error("Error fetching logo:", error);
+        setLogoUrl(undefined);
+      }
     };
+
     fetchLogo();
+
+    return () => {
+      if (logoFetchController.current) {
+        logoFetchController.current.abort();
+      }
+    };
   }, [currentIndex, media]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (logoFetchController.current) {
+        logoFetchController.current.abort();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (isAutoPlaying && media.length > 0) {
