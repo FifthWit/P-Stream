@@ -5,6 +5,7 @@ import { Button } from "@/components/buttons/Button";
 import { IconPatch } from "@/components/buttons/IconPatch";
 import { Icon, Icons } from "@/components/Icon";
 import { MediaBookmarkButton } from "@/components/media/MediaBookmark";
+import { usePreferencesStore } from "@/stores/preferences";
 
 import { DetailsHeaderProps } from "./types";
 
@@ -15,11 +16,15 @@ export function DetailsHeader({
   onShareClick,
   showProgress,
 }: DetailsHeaderProps) {
+  const enableImageLogos = usePreferencesStore(
+    (state) => state.enableImageLogos,
+  );
+
   return (
     <>
       {/* Title and Genres Row */}
       <div className="pb-2">
-        {data.logoUrl ? (
+        {data.logoUrl && enableImageLogos ? (
           <img
             src={data.logoUrl}
             alt={data.title}

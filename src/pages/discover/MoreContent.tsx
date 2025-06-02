@@ -11,7 +11,7 @@ import { Icon, Icons } from "@/components/Icon";
 import { WideContainer } from "@/components/layout/WideContainer";
 import { MediaCard } from "@/components/media/MediaCard";
 import { MediaGrid } from "@/components/media/MediaGrid";
-import { DetailsModal } from "@/components/overlays/DetailsModal";
+import { DetailsModal } from "@/components/overlays/details/DetailsModal";
 import { useModal } from "@/components/overlays/Modal";
 import { Heading1 } from "@/components/utils/Text";
 import { SubPageLayout } from "@/pages/layouts/SubPageLayout";
