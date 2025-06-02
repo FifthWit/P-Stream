@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Trans } from "react-i18next";
 import { Link } from "react-router-dom";
+import { useCopyToClipboard } from "react-use";
 
 import {
   getMediaBackdrop,
@@ -151,6 +152,8 @@ function DetailsContent({
   const enableImageLogos = usePreferencesStore(
     (state) => state.enableImageLogos,
   );
+  const [, copyToClipboard] = useCopyToClipboard();
+  const [hasCopiedShare, setHasCopiedShare] = useState(false);
 
   const showProgress = useMemo(() => {
     if (!data.id) return null;
@@ -423,8 +426,31 @@ function DetailsContent({
     setShowEpisodeMenu(false);
   };
 
+  const handleShareClick = () => {
+    const shareUrl =
+      data.type === "movie"
+        ? `${window.location.origin}/media/tmdb-movie-${data.id}-${data.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`
+        : `${window.location.origin}/media/tmdb-tv-${data.id}-${data.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+
+    copyToClipboard(shareUrl);
+    setHasCopiedShare(true);
+    setTimeout(() => setHasCopiedShare(false), 2000);
+  };
+
   return (
     <div className="relative h-full flex flex-col">
+      {/* Share notification popup */}
+      {hasCopiedShare && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 px-4 py-2 bg-green-600 text-white rounded-lg shadow-lg transition-all duration-300 animate-[scaleIn_0.6s_ease-out_forwards]">
+          <div className="flex items-center gap-2">
+            <Icon icon={Icons.CHECKMARK} className="text-white" />
+            <span className="text-sm font-medium">
+              Link copied to clipboard!
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Backdrop - Even taller */}
       <div className="h-64 lg:h-80 xl:h-96 relative -mt-12">
         {imdbData?.trailer_url ? (
@@ -537,8 +563,8 @@ function DetailsContent({
             </h3>
           )}
         </div>
-        <div className="flex flex-col sm:flex-row justify-between items-start mb-6 relative z-10">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start mb-6 w-full">
+          <div className="flex items-center gap-4 w-full sm:w-auto">
             {!minimal && (
               <Button
                 onClick={() => {
@@ -561,6 +587,7 @@ function DetailsContent({
                 }}
                 theme="purple"
                 className={classNames(
+                  "flex-1 sm:flex-initial sm:w-auto",
                   "gap-2 h-12 rounded-lg px-4 py-2 my-1 transition-transform hover:scale-105 duration-100",
                   "text-md text-white flex items-center justify-center",
                 )}
@@ -580,7 +607,7 @@ function DetailsContent({
                 </span>
               </Button>
             )}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 flex-shrink-0">
               <MediaBookmarkButton
                 media={{
                   id: data.id?.toString() || "",
@@ -592,10 +619,23 @@ function DetailsContent({
                   type: data.type || "movie",
                 }}
               />
+              <button
+                type="button"
+                onClick={handleShareClick}
+                className="p-2 opacity-75 transition-opacity duration-300 hover:scale-110 hover:cursor-pointer hover:opacity-95"
+                title="Share"
+              >
+                <IconPatch
+                  icon={Icons.IOS_SHARE}
+                  className="transition-transform duration-300 hover:scale-110 hover:cursor-pointer"
+                />
+              </button>
             </div>
           </div>
+
+          {/* Genres on the right side of the button row for larger screens */}
           {data.genres && data.genres.length > 0 && (
-            <div className="flex flex-wrap gap-2 justify-start sm:justify-end z-[999] items-center pt-2">
+            <div className="hidden sm:flex flex-wrap gap-2 justify-end z-[999] items-center">
               {data.genres.map((genre, index) => (
                 <span
                   key={genre.id}
@@ -612,6 +652,25 @@ function DetailsContent({
             </div>
           )}
         </div>
+
+        {/* Genres below for small screens */}
+        {data.genres && data.genres.length > 0 && (
+          <div className="flex sm:hidden flex-wrap gap-2 justify-start z-[999] items-center mb-6 -mt-3">
+            {data.genres.map((genre, index) => (
+              <span
+                key={genre.id}
+                className="text-[11px] px-2 py-0.5 rounded-full bg-white/20 text-white/80 transition-all duration-300 hover:scale-110 animate-[scaleIn_0.6s_ease-out_forwards]"
+                style={{
+                  animationDelay: `${((data.genres?.length ?? 0) - 1 - index) * 60}ms`,
+                  transform: "scale(0)",
+                  opacity: 0,
+                }}
+              >
+                {genre.name}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Two Column Layout - Stacked on Mobile */}
         <div className="grid grid-cols-1 md:grid-cols-3 md:gap-6">
@@ -1097,7 +1156,7 @@ export function DetailsModal(props: {
             "group -m-[0.705em] rounded-3xl bg-background-main transition-colors duration-300 focus:relative focus:z-10",
             "max-h-[900px] max-w-[1200px]",
             "bg-mediaCard-hoverBackground bg-opacity-60 backdrop-filter backdrop-blur-lg shadow-lg overflow-hidden",
-            detailsData?.type === "movie" || props.minimal
+            props.minimal
               ? "h-[90%] md:h-[70%] lg:h-fit w-[90%] md:w-[70%] lg:w-[50%]"
               : "h-[90%] w-[90%] md:w-[70%] lg:w-[60%]",
           )}
@@ -1109,17 +1168,17 @@ export function DetailsModal(props: {
               backgroundClass="bg-mediaCard-hoverBackground duration-100"
               className="rounded-3xl bg-background-main group-hover:opacity-100"
             />
-            <Flare.Child className="pointer-events-auto relative h-full overflow-y-auto scrollbar-none">
+            <Flare.Child className="pointer-events-auto relative h-full overflow-y-auto scrollbar-none select-text">
               <div className="absolute right-4 top-4 z-10">
                 <button
                   type="button"
-                  className="text-s font-semibold text-type-secondary hover:text-white transition-transform hover:scale-95"
+                  className="text-s font-semibold text-type-secondary hover:text-white transition-transform hover:scale-95 select-none"
                   onClick={modal.hide}
                 >
                   <IconPatch icon={Icons.X} />
                 </button>
               </div>
-              <div className="pt-12">
+              <div className="pt-12 select-text">
                 {isLoading || !detailsData ? (
                   <DetailsSkeleton />
                 ) : (
