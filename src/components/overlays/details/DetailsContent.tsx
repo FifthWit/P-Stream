@@ -188,7 +188,7 @@ export function DetailsContent({ data, minimal = false }: DetailsContentProps) {
           )}
         </div>
         <div
-          className="absolute inset-0 bg-cover bg-top opacity-60 before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_center,_transparent_0%,_rgba(0,0,0,0.5)_80%)]"
+          className="absolute inset-0 bg-cover bg-top before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_center,_transparent_0%,_rgba(0,0,0,0.4)_100%)]"
           style={{
             backgroundImage: data.backdrop
               ? `url(${data.backdrop})`

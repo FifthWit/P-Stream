@@ -1,10 +1,38 @@
 import { t } from "i18next";
+import { useEffect, useState } from "react";
 import { Trans } from "react-i18next";
 
 import { DetailsRatings } from "./DetailsRatings";
 import { DetailsInfoProps } from "./types";
 
 export function DetailsInfo({ data, imdbData, rtData }: DetailsInfoProps) {
+  const [isShiftPressed, setIsShiftPressed] = useState(false);
+  const [showCopied, setShowCopied] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Shift") setIsShiftPressed(true);
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "Shift") setIsShiftPressed(false);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
+
+  const handleCopyId = async () => {
+    if (!isShiftPressed || !data.id) return;
+    await navigator.clipboard.writeText(data.id.toString());
+    setShowCopied(true);
+    setTimeout(() => setShowCopied(false), 2000);
+  };
+
   const formatRuntime = (minutes?: number | null) => {
     if (!minutes) return null;
     const hours = Math.floor(minutes / 60);
@@ -69,6 +97,19 @@ export function DetailsInfo({ data, imdbData, rtData }: DetailsInfoProps) {
           <div className="flex items-center gap-1 text-white/80">
             <span className="font-medium">{t("details.rating")}</span>{" "}
             {data.rating}
+          </div>
+        )}
+
+        {/* Hidden TMDB ID */}
+        {data.id && isShiftPressed && (
+          <div
+            className="flex items-center gap-1 text-white/80 cursor-pointer transition-opacity duration-200 select-none"
+            onClick={handleCopyId}
+            title={isShiftPressed ? "Click to copy" : "Hold Shift to show"}
+          >
+            <span className="font-medium">ID:</span>
+            <span className="font-mono">{data.id}</span>
+            {showCopied && <span className="text-green-400 ml-2">Copied!</span>}
           </div>
         )}
 
