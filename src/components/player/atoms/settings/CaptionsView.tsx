@@ -70,7 +70,14 @@ export function CustomCaptionOption() {
           reader.addEventListener("load", (event) => {
             if (!event.target || typeof event.target.result !== "string")
               return;
-            const converted = convert(event.target.result, "srt");
+
+            // Ensure the data is in UTF-8
+            const encoder = new TextEncoder();
+            const decoder = new TextDecoder("utf-8");
+            const utf8Bytes = encoder.encode(event.target.result);
+            const utf8Data = decoder.decode(utf8Bytes);
+
+            const converted = convert(utf8Data, "srt");
             setCaption({
               language: "custom",
               srtData: converted,
@@ -116,7 +123,13 @@ export function CaptionsView({
     reader.addEventListener("load", (e) => {
       if (!e.target || typeof e.target.result !== "string") return;
 
-      const converted = convert(e.target.result, "srt");
+      // Ensure the data is in UTF-8
+      const encoder = new TextEncoder();
+      const decoder = new TextDecoder("utf-8");
+      const utf8Bytes = encoder.encode(e.target.result);
+      const utf8Data = decoder.decode(utf8Bytes);
+
+      const converted = convert(utf8Data, "srt");
 
       setCaption({
         language: "custom",
@@ -125,7 +138,7 @@ export function CaptionsView({
       });
     });
 
-    reader.readAsText(firstFile);
+    reader.readAsText(firstFile, "utf-8");
   }
 
   const selectedLanguagePretty = selectedCaptionLanguage
