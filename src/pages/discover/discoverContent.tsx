@@ -23,7 +23,6 @@ import { DiscoverNavigation } from "./components/DiscoverNavigation";
 import type { FeaturedMedia } from "./components/FeaturedCarousel";
 import { LazyMediaCarousel } from "./components/LazyMediaCarousel";
 import { LazyTabContent } from "./components/LazyTabContent";
-import { MediaCarousel } from "./components/MediaCarousel";
 import { ScrollToTopButton } from "./components/ScrollToTopButton";
 
 // Provider constants moved from DiscoverNavigation
@@ -494,37 +493,13 @@ export function DiscoverContent() {
     detailsModal.show();
   };
 
-  // Render Editor Picks content
-  const renderEditorPicksContent = () => {
-    return (
-      <>
-        <LazyMediaCarousel
-          preloadedMedia={filteredGenreMovies}
-          title="Editor Picks"
-          mediaType="movie"
-          carouselRefs={carouselRefs}
-          onShowDetails={handleShowDetails}
-          moreContent
-        />
-        <LazyMediaCarousel
-          preloadedMedia={filteredGenreTVShows}
-          title="Editor Picks"
-          mediaType="tv"
-          carouselRefs={carouselRefs}
-          onShowDetails={handleShowDetails}
-          moreContent
-        />
-      </>
-    );
-  };
-
   // Render Movies content with lazy loading
   const renderMoviesContent = () => {
     return (
       <>
         {/* Movie Recommendations */}
         {movieRecommendations.length > 0 && (
-          <MediaCarousel
+          <LazyMediaCarousel
             medias={movieRecommendations}
             category={movieRecommendationTitle}
             isTVShow={false}
@@ -540,8 +515,8 @@ export function DiscoverContent() {
 
         {/* In Cinemas */}
         <LazyMediaCarousel
-          category={categories[0]}
-          mediaType="movie"
+          category={categories[0].name}
+          isTVShow={false}
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
           moreContent
@@ -549,8 +524,8 @@ export function DiscoverContent() {
 
         {/* Top Rated */}
         <LazyMediaCarousel
-          category={categories[1]}
-          mediaType="movie"
+          category={categories[1].name}
+          isTVShow={false}
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
           moreContent
@@ -558,15 +533,15 @@ export function DiscoverContent() {
 
         {/* Popular */}
         <LazyMediaCarousel
-          category={categories[2]}
-          mediaType="movie"
+          category={categories[2].name}
+          isTVShow={false}
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
           moreContent
         />
 
         {/* Provider Movies */}
-        <MediaCarousel
+        <LazyMediaCarousel
           medias={providerMovies}
           category={`Movies on ${selectedProvider.name || ""}`}
           isTVShow={false}
@@ -582,7 +557,7 @@ export function DiscoverContent() {
         />
 
         {/* Genre Movies */}
-        <MediaCarousel
+        <LazyMediaCarousel
           medias={filteredGenreMovies}
           category={`${selectedGenre.name || ""}`}
           isTVShow={false}
@@ -606,7 +581,7 @@ export function DiscoverContent() {
       <>
         {/* TV Show Recommendations */}
         {tvRecommendations.length > 0 && (
-          <MediaCarousel
+          <LazyMediaCarousel
             medias={tvRecommendations}
             category={tvRecommendationTitle}
             isTVShow
@@ -622,8 +597,8 @@ export function DiscoverContent() {
 
         {/* On Air */}
         <LazyMediaCarousel
-          category={tvCategories[0]}
-          mediaType="tv"
+          category={tvCategories[0].name}
+          isTVShow
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
           moreContent
@@ -631,8 +606,8 @@ export function DiscoverContent() {
 
         {/* Top Rated */}
         <LazyMediaCarousel
-          category={tvCategories[1]}
-          mediaType="tv"
+          category={tvCategories[1].name}
+          isTVShow
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
           moreContent
@@ -640,15 +615,15 @@ export function DiscoverContent() {
 
         {/* Popular */}
         <LazyMediaCarousel
-          category={tvCategories[2]}
-          mediaType="tv"
+          category={tvCategories[2].name}
+          isTVShow
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
           moreContent
         />
 
         {/* Provider TV Shows */}
-        <MediaCarousel
+        <LazyMediaCarousel
           medias={providerTVShows}
           category={`Shows on ${selectedProvider.name || ""}`}
           isTVShow
@@ -664,7 +639,7 @@ export function DiscoverContent() {
         />
 
         {/* Genre TV Shows */}
-        <MediaCarousel
+        <LazyMediaCarousel
           medias={filteredGenreTVShows}
           category={`${selectedGenre.name || ""}`}
           isTVShow
@@ -676,6 +651,30 @@ export function DiscoverContent() {
           }))}
           onButtonClick={(id, name) => setSelectedGenre({ id, name })}
           moreLink={`/discover/more/genre/${selectedGenre.id}/tv`}
+          moreContent
+        />
+      </>
+    );
+  };
+
+  // Render Editor Picks content
+  const renderEditorPicksContent = () => {
+    return (
+      <>
+        <LazyMediaCarousel
+          preloadedMedia={filteredGenreMovies}
+          title="Editor Picks"
+          isTVShow={false}
+          carouselRefs={carouselRefs}
+          onShowDetails={handleShowDetails}
+          moreContent
+        />
+        <LazyMediaCarousel
+          preloadedMedia={filteredGenreTVShows}
+          title="Editor Picks"
+          isTVShow
+          carouselRefs={carouselRefs}
+          onShowDetails={handleShowDetails}
           moreContent
         />
       </>
