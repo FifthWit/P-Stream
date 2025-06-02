@@ -8,7 +8,6 @@ import { Link } from "react-router-dom";
 import { mediaItemToId } from "@/backend/metadata/tmdb";
 import { DotList } from "@/components/text/DotList";
 import { Flare } from "@/components/utils/Flare";
-import { useIsMobile } from "@/hooks/useIsMobile";
 import { useSearchQuery } from "@/hooks/useSearchQuery";
 import { usePreferencesStore } from "@/stores/preferences";
 import { MediaItem } from "@/utils/mediaTypes";
@@ -59,7 +58,6 @@ function MediaCardContent({
 }: MediaCardProps) {
   const { t } = useTranslation();
   const percentageString = `${Math.round(percentage ?? 0).toFixed(0)}%`;
-  const { isMobile } = useIsMobile();
 
   const isReleased = useCallback(() => checkReleased(media), [media]);
 
@@ -156,9 +154,7 @@ function MediaCardContent({
 
           {!closable && (
             <div
-              className={classNames("absolute", {
-                "bookmark-button": !isMobile,
-              })}
+              className="absolute bookmark-button"
               onClick={(e) => e.preventDefault()}
             >
               <MediaBookmarkButton media={media} />
