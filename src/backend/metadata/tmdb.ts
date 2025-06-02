@@ -11,10 +11,13 @@ import { MWMediaMeta, MWMediaType, MWSeasonMeta } from "./types/mw";
 import {
   ExternalIdMovieSearchResult,
   TMDBContentTypes,
+  TMDBCredits,
   TMDBEpisodeShort,
   TMDBMediaResult,
   TMDBMovieData,
   TMDBMovieSearchResult,
+  TMDBPerson,
+  TMDBPersonImages,
   TMDBSearchResult,
   TMDBSeason,
   TMDBSeasonMetaResult,
@@ -423,4 +426,37 @@ export async function getMediaLogo(
     console.error("Failed to fetch TMDB logo:", err);
     return undefined;
   }
+}
+
+export async function getMediaCredits(
+  id: string,
+  type: TMDBContentTypes,
+): Promise<TMDBCredits> {
+  const endpoint = type === TMDBContentTypes.MOVIE ? "movie" : "tv";
+  return get<TMDBCredits>(`/${endpoint}/${id}/credits`);
+}
+
+export async function getPersonDetails(id: string): Promise<TMDBPerson> {
+  return get<TMDBPerson>(`/person/${id}`);
+}
+
+export async function getPersonImages(id: string): Promise<TMDBPersonImages> {
+  return get<TMDBPersonImages>(`/person/${id}/images`);
+}
+
+export function getPersonProfileImage(
+  profilePath: string | null,
+): string | undefined {
+  const shouldProxyTmdb = usePreferencesStore.getState().proxyTmdb;
+  const imgUrl = `https://image.tmdb.org/t/p/w185/${profilePath}`;
+
+  if (shouldProxyTmdb) {
+    const proxyUrls = getProxyUrls();
+    const proxy = getNextProxy(proxyUrls);
+    if (proxy) {
+      return `${proxy}/?destination=${imgUrl}`;
+    }
+  }
+
+  if (profilePath) return imgUrl;
 }

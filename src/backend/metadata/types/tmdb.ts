@@ -334,3 +334,50 @@ export interface TMDBSearchResult {
   total_pages: number;
   total_results: number;
 }
+
+export interface TMDBCastMember {
+  id: number;
+  name: string;
+  character: string;
+  profile_path: string | null;
+  order: number;
+}
+
+export interface TMDBCrewMember {
+  id: number;
+  name: string;
+  job: string;
+  department: string;
+  profile_path: string | null;
+}
+
+export interface TMDBCredits {
+  id: number;
+  cast: TMDBCastMember[];
+  crew: TMDBCrewMember[];
+}
+
+export interface TMDBPerson {
+  id: number;
+  name: string;
+  biography: string;
+  birthday: string | null;
+  deathday: string | null;
+  place_of_birth: string | null;
+  profile_path: string | null;
+  known_for_department: string;
+}
+
+export interface TMDBPersonImage {
+  file_path: string;
+  aspect_ratio: number;
+  height: number;
+  width: number;
+  vote_average: number;
+  vote_count: number;
+}
+
+export interface TMDBPersonImages {
+  id: number;
+  profiles: TMDBPersonImage[];
+}

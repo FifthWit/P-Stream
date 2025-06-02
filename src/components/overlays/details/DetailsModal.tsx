@@ -53,12 +53,6 @@ export function DetailsModal({ id, data, minimal }: DetailsModalProps) {
             rating: movieDetails.release_dates?.results?.find(
               (r) => r.iso_3166_1 === "US",
             )?.release_dates?.[0]?.certification,
-            director: movieDetails.credits?.crew?.find(
-              (person) => person.job === "Director",
-            )?.name,
-            actors: movieDetails.credits?.cast
-              ?.slice(0, 5)
-              .map((actor) => actor.name),
             type: "movie",
             id: movieDetails.id,
             imdbId: movieDetails.external_ids?.imdb_id,
@@ -90,12 +84,6 @@ export function DetailsModal({ id, data, minimal }: DetailsModalProps) {
             rating: showDetails.content_ratings?.results?.find(
               (r) => r.iso_3166_1 === "US",
             )?.rating,
-            director: showDetails.credits?.crew?.find(
-              (person) => person.job === "Director",
-            )?.name,
-            actors: showDetails.credits?.cast
-              ?.slice(0, 5)
-              .map((actor) => actor.name),
             type: "show",
             id: showDetails.id,
             imdbId: showDetails.external_ids?.imdb_id,

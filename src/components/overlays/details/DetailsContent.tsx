@@ -2,6 +2,7 @@ import { t } from "i18next";
 import { useEffect, useMemo, useState } from "react";
 import { useCopyToClipboard } from "react-use";
 
+import { TMDBContentTypes } from "@/backend/metadata/types/tmdb";
 import { Icon, Icons } from "@/components/Icon";
 import { useLanguageStore } from "@/stores/language";
 import { useProgressStore } from "@/stores/progress";
@@ -13,6 +14,7 @@ import { scrapeRottenTomatoes } from "@/utils/rottenTomatoesScraper";
 import { DetailsHeader } from "./DetailsHeader";
 import { DetailsInfo } from "./DetailsInfo";
 import { EpisodeCarousel } from "./EpisodeCarousel";
+import { CastCarousel } from "./PeopleCarousel";
 import { TrailerOverlay } from "./TrailerOverlay";
 import { DetailsContentProps } from "./types";
 
@@ -203,6 +205,18 @@ export function DetailsContent({ data, minimal = false }: DetailsContentProps) {
             seasons={data.seasonData.seasons}
             mediaId={data.id}
             mediaTitle={data.title}
+          />
+        )}
+
+        {/* Cast Carousel */}
+        {data.id && (
+          <CastCarousel
+            mediaId={data.id.toString()}
+            mediaType={
+              data.type === "movie"
+                ? TMDBContentTypes.MOVIE
+                : TMDBContentTypes.TV
+            }
           />
         )}
       </div>
