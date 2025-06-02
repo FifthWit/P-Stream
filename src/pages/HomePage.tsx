@@ -140,7 +140,7 @@ export function HomePage() {
       {/* User Content */}
       {!search &&
         (enableCarouselView ? (
-          <WideContainer ultraWide>
+          <WideContainer ultraWide classNames="!px-3 md:!px-9">
             <WatchingCarousel
               carouselRefs={carouselRefs}
               onShowDetails={handleShowDetails}
@@ -166,7 +166,7 @@ export function HomePage() {
         ))}
 
       {/* Under user content */}
-      <WideContainer ultraWide>
+      <WideContainer ultraWide classNames="!px-3 md:!px-9">
         {/* Empty text */}
         {!(showBookmarks || showWatching) && !enableDiscover ? (
           <div className="flex flex-col translate-y-[-30px] items-center justify-center pt-20">
