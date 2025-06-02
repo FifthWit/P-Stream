@@ -17,7 +17,7 @@ import { MediaBookmarkButton } from "./MediaBookmark";
 import { Button } from "../buttons/Button";
 import { IconPatch } from "../buttons/IconPatch";
 import { Icon, Icons } from "../Icon";
-import { DetailsModal } from "../overlays/DetailsModal";
+import { DetailsModal } from "../overlays/details/DetailsModal";
 import { useModal } from "../overlays/Modal";
 
 export interface MediaCardProps {

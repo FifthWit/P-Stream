@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { Icons } from "@/components/Icon";
-import { DetailsModal } from "@/components/overlays/DetailsModal";
+import { DetailsModal } from "@/components/overlays/details/DetailsModal";
 import { useModal } from "@/components/overlays/Modal";
 import { usePlayerStore } from "@/stores/player/store";
 
