@@ -27,6 +27,7 @@ export function WatchPartyView({ id }: { id: string }) {
   const [backendName, setBackendName] = useState("");
   const [editingCode, setEditingCode] = useState(false);
   const [customCode, setCustomCode] = useState("");
+  const [hasCopiedShare, setHasCopiedShare] = useState(false);
   const backendUrl = useBackendUrl();
   const [isValidating, setIsValidating] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -162,6 +163,8 @@ export function WatchPartyView({ id }: { id: string }) {
       const url = new URL(window.location.href);
       url.searchParams.set("watchparty", roomCode);
       navigator.clipboard.writeText(url.toString());
+      setHasCopiedShare(true);
+      setTimeout(() => setHasCopiedShare(false), 2000);
     }
   };
 
@@ -268,7 +271,11 @@ export function WatchPartyView({ id }: { id: string }) {
                           <input
                             type="text"
                             readOnly
-                            value={roomCode || ""}
+                            value={
+                              hasCopiedShare
+                                ? t("watchParty.linkCopied")
+                                : roomCode || ""
+                            }
                             className="bg-transparent border-none text-center font-mono tracking-widest w-full outline-none cursor-pointer text-type-logo text-[min(2rem,4vw)]"
                             onClick={(e) => {
                               if (e.target instanceof HTMLInputElement) {

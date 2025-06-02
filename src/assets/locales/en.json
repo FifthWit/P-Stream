@@ -200,8 +200,6 @@
   "details": {
     "resume": "Resume",
     "play": "Play",
-    "director": "Director:",
-    "cast": "Cast:",
     "runtime": "Runtime:",
     "language": "Language:",
     "releaseDate": "Release Date:",
@@ -977,7 +975,7 @@
     "aheadOfHost": "Ahead of host by {{seconds}} seconds",
     "showStatusOverlay": "Show status overlay",
     "leaveWatchParty": "Leave Watch Party",
-    "shareCode": "Share this code with friends (click to copy)",
+    "shareCode": "Share this code with friends (click to copy link)",
     "connectedAsGuest": "Connected to watch party as guest",
     "hostParty": "Host a Watch Party",
     "joinParty": "Join a Watch Party",
@@ -990,6 +988,7 @@
     "invalidRoom": "Unable to connect to this room",
     "contentMismatch": "Cannot join watch party: The content does not match the host's content.",
     "episodeMismatch": "Cannot join watch party: You are watching a different episode than the host.",
-    "validating": "Validating watch party..."
+    "validating": "Validating watch party...",
+    "linkCopied": "Copied!"
   }
 }
