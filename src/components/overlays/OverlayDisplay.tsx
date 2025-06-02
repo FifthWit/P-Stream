@@ -76,6 +76,7 @@ export function OverlayPortal(props: {
   darken?: boolean;
   show?: boolean;
   close?: () => void;
+  durationClass?: string;
 }) {
   const [portalElement, setPortalElement] = useState<Element | null>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -106,6 +107,7 @@ export function OverlayPortal(props: {
                     animation="slide-up"
                     className="absolute inset-0 pointer-events-none"
                     isChild
+                    durationClass={props.durationClass ?? "duration-200"}
                   >
                     {/* a tabable index that does nothing - used so focus trap doesn't error when nothing is rendered yet */}
                     <div

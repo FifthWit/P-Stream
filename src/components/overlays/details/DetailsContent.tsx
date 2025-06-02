@@ -1,10 +1,11 @@
 import { t } from "i18next";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useCopyToClipboard } from "react-use";
 
 import { TMDBContentTypes } from "@/backend/metadata/types/tmdb";
 import { Icon, Icons } from "@/components/Icon";
 import { useLanguageStore } from "@/stores/language";
+import { usePreferencesStore } from "@/stores/preferences";
 import { useProgressStore } from "@/stores/progress";
 import { shouldShowProgress } from "@/stores/progress/utils";
 import { scrapeIMDb } from "@/utils/imdbScraper";
@@ -26,7 +27,12 @@ export function DetailsContent({ data, minimal = false }: DetailsContentProps) {
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
   const [, copyToClipboard] = useCopyToClipboard();
   const [hasCopiedShare, setHasCopiedShare] = useState(false);
+  const [logoHeight, setLogoHeight] = useState<number>(0);
+  const logoRef = useRef<HTMLDivElement>(null);
   const progress = useProgressStore((s) => s.items);
+  const enableImageLogos = usePreferencesStore(
+    (state) => state.enableImageLogos,
+  );
 
   const showProgress = useMemo(() => {
     if (!data.id) return null;
@@ -41,6 +47,20 @@ export function DetailsContent({ data, minimal = false }: DetailsContentProps) {
       setSelectedSeason(showProgress.season.number);
     }
   }, [showProgress]);
+
+  // Add effect to measure logo height
+  useEffect(() => {
+    if (logoRef.current) {
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          setLogoHeight(entry.contentRect.height);
+        }
+      });
+
+      resizeObserver.observe(logoRef.current);
+      return () => resizeObserver.disconnect();
+    }
+  }, []);
 
   useEffect(() => {
     const fetchExternalData = async () => {
@@ -133,38 +153,85 @@ export function DetailsContent({ data, minimal = false }: DetailsContentProps) {
         />
       )}
 
-      {/* Backdrop - Even taller */}
-      <div className="h-64 lg:h-80 xl:h-96 relative -mt-12">
+      {/* Backdrop */}
+      <div
+        className="relative -mt-12 z-20"
+        style={{
+          height: `${Math.max(500, logoHeight + 400)}px`,
+        }}
+      >
+        {/* Title/Logo positioned on backdrop */}
+        <div ref={logoRef} className="absolute inset-x-0 bottom-20 z-30 px-6">
+          {data.logoUrl && enableImageLogos ? (
+            <img
+              src={data.logoUrl}
+              alt={data.title}
+              className="max-w-[16rem] md:max-w-[20rem] lg:max-w-[30rem] max-h-[12rem] object-contain drop-shadow-lg bg-transparent"
+              style={{ background: "none" }}
+            />
+          ) : (
+            <h3 className="text-3xl md:text-4xl font-bold text-white drop-shadow-lg">
+              {data.title}
+            </h3>
+          )}
+        </div>
         <div
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute inset-0 bg-cover bg-center opacity-60 before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_center,_transparent_0%,_rgba(0,0,0,0.5)_80%)]"
           style={{
             backgroundImage: data.backdrop
               ? `url(${data.backdrop})`
               : undefined,
             maskImage:
-              "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 60px)",
+              "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 120px)",
             WebkitMaskImage:
-              "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 60px)",
+              "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 120px)",
+            zIndex: -1,
           }}
         />
       </div>
 
       {/* Content */}
-      <div className="px-6 pb-6 mt-[-70px] flex-grow">
+      <div className="px-6 pb-6 mt-[-70px] flex-grow relative z-30">
         <DetailsHeader
           data={data}
           onPlayClick={handlePlayClick}
           onTrailerClick={() => setShowTrailer(true)}
           onShareClick={handleShareClick}
           showProgress={showProgress}
+          voteAverage={data.voteAverage}
+          voteCount={data.voteCount}
+          releaseDate={data.releaseDate}
+          seasons={
+            data.type === "show" ? data.seasonData?.seasons.length : undefined
+          }
         />
 
         {/* Two Column Layout - Stacked on Mobile */}
-        <div className="grid grid-cols-1 md:grid-cols-3 md:gap-6">
-          {/* Left Column - Description */}
+        <div className="grid grid-cols-1 md:grid-cols-3 md:gap-6 pt-4">
+          {/* Left Column - Main Content (2/3) */}
           <div className="md:col-span-2">
+            {/* Description */}
             {data.overview && (
               <p className="text-sm text-white/90 mb-6">{data.overview}</p>
+            )}
+
+            {/* Genres */}
+            {data.genres && data.genres.length > 0 && (
+              <div className="flex flex-wrap gap-2 items-center">
+                {data.genres.map((genre, index) => (
+                  <span
+                    key={genre.id}
+                    className="text-[11px] px-2 py-0.5 rounded-full bg-white/20 text-white/80 transition-all duration-300 hover:scale-110 animate-[scaleIn_0.6s_ease-out_forwards]"
+                    style={{
+                      animationDelay: `${((data.genres?.length ?? 0) - 1 - index) * 60}ms`,
+                      transform: "scale(0)",
+                      opacity: 0,
+                    }}
+                  >
+                    {genre.name}
+                  </span>
+                ))}
+              </div>
             )}
 
             {/* Director and Cast */}
@@ -190,8 +257,10 @@ export function DetailsContent({ data, minimal = false }: DetailsContentProps) {
             </div>
           </div>
 
-          {/* Right Column - Details */}
-          <DetailsInfo data={data} imdbData={imdbData} rtData={rtData} />
+          {/* Right Column - Details Info (1/3) */}
+          <div className="md:col-span-1">
+            <DetailsInfo data={data} imdbData={imdbData} rtData={rtData} />
+          </div>
         </div>
 
         {/* Episodes Carousel for TV Shows */}

@@ -1,3 +1,5 @@
+import { ShowProgressResult } from "@/stores/progress/utils";
+
 export interface DetailsContent {
   title: string;
   overview?: string;
@@ -102,7 +104,11 @@ export interface DetailsHeaderProps {
   onPlayClick: () => void;
   onTrailerClick: () => void;
   onShareClick: () => void;
-  showProgress?: any;
+  showProgress: ShowProgressResult | null;
+  voteAverage?: number;
+  voteCount?: number;
+  releaseDate?: string;
+  seasons?: number;
 }
 
 export interface DetailsInfoProps {

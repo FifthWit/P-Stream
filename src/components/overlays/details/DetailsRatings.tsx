@@ -31,34 +31,6 @@ export function DetailsRatings({
 
   return (
     <div className="space-y-1">
-      {voteAverage !== undefined &&
-        voteCount !== undefined &&
-        voteCount > 0 && (
-          <>
-            <div className="flex items-center gap-1 text-white/80">
-              <span className="font-medium">{t("details.rating")}</span>{" "}
-              <span className="text-white/90">
-                {imdbData?.imdb_rating
-                  ? `${imdbData.imdb_rating.toFixed(1)}/10 (IMDb)`
-                  : `${voteAverage.toFixed(1)}/10 (TMDB)`}
-              </span>
-            </div>
-            {/* Rating Progress Bar */}
-            <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-              <div
-                className={`h-full ${getRatingColor(imdbData?.imdb_rating || voteAverage)} transition-all duration-500`}
-                style={{
-                  width: `${((imdbData?.imdb_rating || voteAverage) / 10) * 100}%`,
-                }}
-              />
-            </div>
-            <div className="text-white/60 text-[10px] text-right">
-              {formatVoteCount(imdbData?.votes || voteCount)}{" "}
-              {t("details.votes")}
-            </div>
-          </>
-        )}
-
       {/* External Links */}
       <div className="flex gap-3 mt-2">
         {mediaId && (
@@ -66,7 +38,12 @@ export function DetailsRatings({
             href={`https://www.themoviedb.org/${mediaType === "show" ? "tv" : "movie"}/${mediaId}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-8 h-8 rounded-full bg-[#0d253f] flex items-center justify-center transition-transform hover:scale-110"
+            className="w-8 h-8 rounded-full bg-[#0d253f] flex items-center justify-center transition-transform hover:scale-110 animate-[scaleIn_0.6s_ease-out_forwards]"
+            style={{
+              animationDelay: "0ms",
+              transform: "scale(0)",
+              opacity: 0,
+            }}
             title={t("details.tmdb")}
           >
             <Icon icon={Icons.TMDB} className="text-white" />
@@ -77,7 +54,12 @@ export function DetailsRatings({
             href={`https://www.imdb.com/title/${imdbId}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center transition-transform hover:scale-110"
+            className="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center transition-transform hover:scale-110 animate-[scaleIn_0.6s_ease-out_forwards]"
+            style={{
+              animationDelay: "60ms",
+              transform: "scale(0)",
+              opacity: 0,
+            }}
             title={t("details.imdb")}
           >
             <Icon icon={Icons.IMDB} className="text-black" />
@@ -86,7 +68,15 @@ export function DetailsRatings({
         {rtData && (
           <div className="flex items-center gap-1">
             <div className="flex flex-col items-center justify-center gap-1">
-              <div className="flex items-center gap-1" title="Tomatometer">
+              <div
+                className="flex items-center gap-1 animate-[scaleIn_0.6s_ease-out_forwards]"
+                style={{
+                  animationDelay: "120ms",
+                  transform: "scale(0)",
+                  opacity: 0,
+                }}
+                title="Tomatometer"
+              >
                 <img
                   src={getRTIcon(rtData.tomatoIcon)}
                   alt="Tomatometer"
@@ -99,6 +89,27 @@ export function DetailsRatings({
             </div>
           </div>
         )}
+      </div>
+      <div className="pt-4">
+        {voteAverage !== undefined &&
+          voteCount !== undefined &&
+          voteCount > 0 && (
+            <>
+              {/* Rating Progress Bar */}
+              <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className={`h-full ${getRatingColor(imdbData?.imdb_rating || voteAverage)} transition-all duration-500`}
+                  style={{
+                    width: `${((imdbData?.imdb_rating || voteAverage) / 10) * 100}%`,
+                  }}
+                />
+              </div>
+              <div className="text-white/60 text-[10px] text-right">
+                {formatVoteCount(imdbData?.votes || voteCount)}{" "}
+                {t("details.votes")}
+              </div>
+            </>
+          )}
       </div>
     </div>
   );

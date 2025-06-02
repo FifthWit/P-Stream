@@ -72,15 +72,15 @@ export function DetailsInfo({ data, imdbData, rtData }: DetailsInfoProps) {
           </div>
         )}
 
-        {/* Ratings and External Links */}
+        {/* External Ratings */}
         <DetailsRatings
-          voteAverage={data.voteAverage}
-          voteCount={data.voteCount}
           imdbData={imdbData}
           rtData={rtData}
           mediaId={data.id}
           mediaType={data.type}
           imdbId={data.imdbId}
+          voteAverage={data.voteAverage}
+          voteCount={data.voteCount}
         />
       </div>
     </div>

@@ -113,19 +113,22 @@ export function DetailsModal({ id, data, minimal }: DetailsModalProps) {
   }, [modal, data, isLoading]);
 
   return (
-    <OverlayPortal darken close={modal.hide} show={modal.isShown}>
+    <OverlayPortal
+      darken
+      close={modal.hide}
+      show={modal.isShown}
+      durationClass="duration-400"
+    >
       <Helmet>
         <html data-no-scroll />
       </Helmet>
-      <div className="flex absolute inset-0 items-center justify-center">
+      <div className="flex absolute inset-0 items-center justify-center pt-safe">
         <Flare.Base
           className={classNames(
-            "group -m-[0.705em] rounded-3xl bg-background-main transition-colors duration-300 focus:relative focus:z-10",
+            "group -m-[0.705em] rounded-3xl bg-background-main",
             "max-h-[900px] max-w-[1200px]",
             "bg-mediaCard-hoverBackground bg-opacity-60 backdrop-filter backdrop-blur-lg shadow-lg overflow-hidden",
-            minimal
-              ? "h-[90%] md:h-[70%] lg:h-fit w-[90%] md:w-[70%] lg:w-[50%]"
-              : "h-[90%] w-[90%] md:w-[70%] lg:w-[60%]",
+            "h-[97%] w-[95%]",
           )}
         >
           <div className="transition-transform duration-300 h-full">
@@ -136,7 +139,7 @@ export function DetailsModal({ id, data, minimal }: DetailsModalProps) {
               className="rounded-3xl bg-background-main group-hover:opacity-100"
             />
             <Flare.Child className="pointer-events-auto relative h-full overflow-y-auto scrollbar-none select-text">
-              <div className="absolute right-4 top-4 z-10">
+              <div className="absolute right-4 top-4 z-50">
                 <button
                   type="button"
                   className="text-s font-semibold text-type-secondary hover:text-white transition-transform hover:scale-95 select-none"
@@ -145,7 +148,7 @@ export function DetailsModal({ id, data, minimal }: DetailsModalProps) {
                   <IconPatch icon={Icons.X} />
                 </button>
               </div>
-              <div className="pt-12 select-text">
+              <div className="select-text">
                 {isLoading || !detailsData ? (
                   <DetailsSkeleton />
                 ) : (
