@@ -117,7 +117,7 @@ export function DetailsModal({ id, data, minimal }: DetailsModalProps) {
       darken
       close={modal.hide}
       show={modal.isShown}
-      durationClass="duration-400"
+      durationClass="duration-500"
     >
       <Helmet>
         <html data-no-scroll />

@@ -109,6 +109,10 @@ export interface DetailsHeaderProps {
   voteCount?: number;
   releaseDate?: string;
   seasons?: number;
+  imdbData?: {
+    rating: number;
+    votes: number;
+  };
 }
 
 export interface DetailsInfoProps {

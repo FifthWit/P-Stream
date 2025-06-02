@@ -79,7 +79,19 @@ export function DetailsContent({ data, minimal = false }: DetailsContentProps) {
           undefined,
           formattedLanguage,
         );
-        setImdbData(imdbMetadata);
+        // Transform the data to match the expected format
+        if (
+          typeof imdbMetadata.imdb_rating === "number" &&
+          typeof imdbMetadata.votes === "number"
+        ) {
+          setImdbData({
+            rating: imdbMetadata.imdb_rating,
+            votes: imdbMetadata.votes,
+            trailer_url: imdbMetadata.trailer_url || null,
+          });
+        } else {
+          setImdbData(null);
+        }
 
         // Fetch Rotten Tomatoes data
         if (data.type === "movie") {
@@ -176,15 +188,16 @@ export function DetailsContent({ data, minimal = false }: DetailsContentProps) {
           )}
         </div>
         <div
-          className="absolute inset-0 bg-cover bg-center opacity-60 before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_center,_transparent_0%,_rgba(0,0,0,0.5)_80%)]"
+          className="absolute inset-0 bg-cover bg-top opacity-60 before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_center,_transparent_0%,_rgba(0,0,0,0.5)_80%)]"
           style={{
             backgroundImage: data.backdrop
               ? `url(${data.backdrop})`
               : undefined,
+            backgroundPosition: "center top",
             maskImage:
-              "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 120px)",
+              "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 150px)",
             WebkitMaskImage:
-              "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 120px)",
+              "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 150px)",
             zIndex: -1,
           }}
         />
@@ -204,6 +217,7 @@ export function DetailsContent({ data, minimal = false }: DetailsContentProps) {
           seasons={
             data.type === "show" ? data.seasonData?.seasons.length : undefined
           }
+          imdbData={imdbData}
         />
 
         {/* Two Column Layout - Stacked on Mobile */}
