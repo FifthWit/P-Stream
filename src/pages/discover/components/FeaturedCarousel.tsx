@@ -4,6 +4,7 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWindowSize } from "react-use";
 
+import { isExtensionActive } from "@/backend/extension/messaging";
 import { get, getMediaLogo } from "@/backend/metadata/tmdb";
 import { TMDBContentTypes } from "@/backend/metadata/types/tmdb";
 import { Button } from "@/components/buttons/Button";
@@ -13,6 +14,7 @@ import { conf } from "@/setup/config";
 import { useDiscoverStore } from "@/stores/discover";
 import { useLanguageStore } from "@/stores/language";
 import { usePreferencesStore } from "@/stores/preferences";
+import { scrapeIMDb } from "@/utils/imdbScraper";
 import { getTmdbLanguageCode } from "@/utils/language";
 
 import { EDITOR_PICKS_MOVIES, EDITOR_PICKS_TV_SHOWS } from "../discoverContent";
@@ -25,6 +27,14 @@ export interface FeaturedMedia extends Partial<Movie & TVShow> {
   title?: string;
   name?: string;
   type: "movie" | "show";
+  vote_average?: number;
+  vote_count?: number;
+  number_of_seasons?: number;
+  imdb_rating?: number;
+  imdb_votes?: number;
+  external_ids?: {
+    imdb_id?: string;
+  };
 }
 
 interface FeaturedCarouselProps {
@@ -33,6 +43,11 @@ interface FeaturedCarouselProps {
   searching?: boolean;
   shorter?: boolean;
   forcedCategory?: "movies" | "tvshows" | "editorpicks";
+}
+
+interface IMDbRatingData {
+  rating: number;
+  votes: number;
 }
 
 function FeaturedCarouselSkeleton({ shorter }: { shorter?: boolean }) {
@@ -109,6 +124,10 @@ export function FeaturedCarousel({
   const [logoUrl, setLogoUrl] = useState<string | undefined>();
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [imdbRatings, setImdbRatings] = useState<
+    Record<string, IMDbRatingData>
+  >({});
+  const hasExtension = useRef<boolean>(false);
   const logoFetchController = useRef<AbortController | null>(null);
   const autoPlayInterval = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
@@ -119,11 +138,51 @@ export function FeaturedCarousel({
   const formattedLanguage = getTmdbLanguageCode(userLanguage);
   const { width: windowWidth, height: windowHeight } = useWindowSize();
 
+  const currentMedia = media[currentIndex];
+
   const SLIDE_QUANTITY = 10;
   const FETCH_QUANTITY = 20;
   const SLIDE_QUANTITY_EDITOR_PICKS_MOVIES = 6;
   const SLIDE_QUANTITY_EDITOR_PICKS_TV_SHOWS = 4;
   const SLIDE_DURATION = 8000;
+
+  // Check for extension on mount
+  useEffect(() => {
+    isExtensionActive().then((active) => {
+      hasExtension.current = active;
+    });
+  }, []);
+
+  // Fetch IMDb ratings when media changes
+  useEffect(() => {
+    const fetchImdbRatings = async () => {
+      if (!hasExtension.current || !currentMedia?.external_ids?.imdb_id) return;
+
+      try {
+        const imdbData = await scrapeIMDb(currentMedia.external_ids.imdb_id);
+        // Only update if we have both rating and votes as non-null numbers
+        if (
+          typeof imdbData.imdb_rating === "number" &&
+          typeof imdbData.votes === "number"
+        ) {
+          const ratingData: IMDbRatingData = {
+            rating: imdbData.imdb_rating,
+            votes: imdbData.votes,
+          };
+          setImdbRatings((prev) => ({
+            ...prev,
+            [currentMedia.external_ids!.imdb_id!]: ratingData,
+          }));
+        }
+      } catch (error) {
+        console.error("Error fetching IMDb ratings:", error);
+      }
+    };
+
+    if (currentMedia) {
+      fetchImdbRatings();
+    }
+  }, [currentMedia]);
 
   useEffect(() => {
     const fetchFeaturedMedia = async () => {
@@ -134,32 +193,56 @@ export function FeaturedCarousel({
       }
       try {
         if (effectiveCategory === "movies") {
-          const data = await get<any>("/movie/popular", {
+          // First get the list of popular movies
+          const listData = await get<any>("/movie/popular", {
             api_key: conf().TMDB_READ_API_KEY,
             language: formattedLanguage,
           });
-          // Fetch movie items and randomly select
-          const allMovies = data.results
+
+          // Then fetch full details for each movie to get external_ids
+          const moviePromises = listData.results
             .slice(0, FETCH_QUANTITY)
-            .map((movie: any) => ({
-              ...movie,
-              type: "movie" as const,
-            }));
+            .map((movie: any) =>
+              get<any>(`/movie/${movie.id}`, {
+                api_key: conf().TMDB_READ_API_KEY,
+                language: formattedLanguage,
+                append_to_response: "external_ids",
+              }),
+            );
+
+          const movieDetails = await Promise.all(moviePromises);
+          const allMovies = movieDetails.map((movie) => ({
+            ...movie,
+            type: "movie" as const,
+          }));
+
           // Shuffle
           const shuffledMovies = [...allMovies].sort(() => 0.5 - Math.random());
           setMedia(shuffledMovies.slice(0, SLIDE_QUANTITY));
         } else if (effectiveCategory === "tvshows") {
-          const data = await get<any>("/tv/popular", {
+          // First get the list of popular shows
+          const listData = await get<any>("/tv/popular", {
             api_key: conf().TMDB_READ_API_KEY,
             language: formattedLanguage,
           });
-          // Fetch show items
-          const allShows = data.results
+
+          // Then fetch full details for each show to get external_ids
+          const showPromises = listData.results
             .slice(0, FETCH_QUANTITY)
-            .map((show: any) => ({
-              ...show,
-              type: "show" as const,
-            }));
+            .map((show: any) =>
+              get<any>(`/tv/${show.id}`, {
+                api_key: conf().TMDB_READ_API_KEY,
+                language: formattedLanguage,
+                append_to_response: "external_ids",
+              }),
+            );
+
+          const showDetails = await Promise.all(showPromises);
+          const allShows = showDetails.map((show) => ({
+            ...show,
+            type: "show" as const,
+          }));
+
           // Shuffle
           const shuffledShows = [...allShows].sort(() => 0.5 - Math.random());
           setMedia(shuffledShows.slice(0, SLIDE_QUANTITY));
@@ -192,6 +275,7 @@ export function FeaturedCarousel({
             get<any>(`/movie/${id}`, {
               api_key: conf().TMDB_READ_API_KEY,
               language: formattedLanguage,
+              append_to_response: "external_ids",
             }),
           );
 
@@ -199,6 +283,7 @@ export function FeaturedCarousel({
             get<any>(`/tv/${id}`, {
               api_key: conf().TMDB_READ_API_KEY,
               language: formattedLanguage,
+              append_to_response: "external_ids",
             }),
           );
 
@@ -358,7 +443,6 @@ export function FeaturedCarousel({
     return <FeaturedCarouselSkeleton shorter={shorter} />;
   }
 
-  const currentMedia = media[currentIndex];
   const mediaTitle = currentMedia.title || currentMedia.name;
 
   let searchClasses = "";
@@ -470,7 +554,7 @@ export function FeaturedCarousel({
           searchClasses,
         )}
       >
-        <div className="container mx-auto px-8 md:px-4 flex justify-between items-end w-full">
+        <div className="container mx-auto px-8 lg:px-4 flex justify-between items-end w-full">
           <div className="max-w-3xl">
             {logoUrl && enableImageLogos ? (
               <img
@@ -484,6 +568,58 @@ export function FeaturedCarousel({
                 {mediaTitle}
               </h1>
             )}
+            {/* TMDB Rating and Year/Seasons */}
+            <div className="flex items-center gap-2 text-sm text-white/80 mb-4">
+              {currentMedia?.vote_average && (
+                <div className="flex items-center gap-1">
+                  <Icon icon={Icons.TMDB} />
+                  <span>{currentMedia.vote_average.toFixed(1)}</span>
+                  {currentMedia.vote_count && (
+                    <span className="text-white/60">
+                      ({currentMedia.vote_count.toLocaleString()})
+                    </span>
+                  )}
+                </div>
+              )}
+              {currentMedia?.external_ids?.imdb_id &&
+                imdbRatings[currentMedia.external_ids.imdb_id] && (
+                  <>
+                    <span className="text-white/60">•</span>
+                    <div className="flex items-center gap-1">
+                      <Icon icon={Icons.IMDB} className="text-yellow-400" />
+                      <span>
+                        {imdbRatings[
+                          currentMedia.external_ids.imdb_id
+                        ].rating.toFixed(1)}
+                      </span>
+                      <span className="text-white/60">
+                        (
+                        {imdbRatings[
+                          currentMedia.external_ids.imdb_id
+                        ].votes.toLocaleString()}
+                        )
+                      </span>
+                    </div>
+                  </>
+                )}
+              {currentMedia?.release_date && (
+                <>
+                  <span className="text-white/60">•</span>
+                  <span>
+                    {new Date(currentMedia.release_date).getFullYear()}
+                  </span>
+                </>
+              )}
+              {currentMedia?.type === "show" &&
+                currentMedia?.number_of_seasons && (
+                  <>
+                    <span className="text-white/60">•</span>
+                    <span>
+                      {currentMedia.number_of_seasons} {t("details.seasons")}
+                    </span>
+                  </>
+                )}
+            </div>
             <p className="text-lg text-white mb-6 line-clamp-3 md:line-clamp-4">
               {currentMedia.overview}
             </p>
