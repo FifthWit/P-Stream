@@ -4,15 +4,14 @@ import { useTranslation } from "react-i18next";
 import { EditButton } from "@/components/buttons/EditButton";
 import { Icons } from "@/components/Icon";
 import { SectionHeading } from "@/components/layout/SectionHeading";
-import { MediaCard } from "@/components/media/MediaCard";
 import { WatchedMediaCard } from "@/components/media/WatchedMediaCard";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import { CarouselNavButtons } from "@/pages/discover/components/CarouselNavButtons";
 import { useBookmarkStore } from "@/stores/bookmarks";
 import { useProgressStore } from "@/stores/progress";
 import { MediaItem } from "@/utils/mediaTypes";
 
 interface BookmarksCarouselProps {
-  isMobile: boolean;
   carouselRefs: React.MutableRefObject<{
     [key: string]: HTMLDivElement | null;
   }>;
@@ -33,7 +32,6 @@ function MediaCardSkeleton() {
 }
 
 export function BookmarksCarousel({
-  isMobile,
   carouselRefs,
   onShowDetails,
 }: BookmarksCarouselProps) {
@@ -43,6 +41,8 @@ export function BookmarksCarousel({
   const [editing, setEditing] = useState(false);
   const removeBookmark = useBookmarkStore((s) => s.removeBookmark);
   const pressTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const { isMobile } = useIsMobile();
 
   const bookmarksLength = useBookmarkStore(
     (state) => Object.keys(state.bookmarks).length,
@@ -133,7 +133,7 @@ export function BookmarksCarousel({
       <SectionHeading
         title={t("home.bookmarks.sectionTitle") || "Bookmarks"}
         icon={Icons.BOOKMARK}
-        className="ml-2 md:ml-8 mt-2 -mb-10"
+        className="ml-2 md:ml-8 mt-2 -mb-5"
       >
         <div className="mr-6">
           <EditButton

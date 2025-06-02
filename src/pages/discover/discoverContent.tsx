@@ -5,7 +5,6 @@ import { get } from "@/backend/metadata/tmdb";
 import { WideContainer } from "@/components/layout/WideContainer";
 import { DetailsModal } from "@/components/overlays/DetailsModal";
 import { useModal } from "@/components/overlays/Modal";
-import { useIsMobile } from "@/hooks/useIsMobile";
 import {
   Genre,
   Movie,
@@ -167,8 +166,6 @@ export function DiscoverContent() {
   const { t } = useTranslation();
 
   const carouselRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
-
-  const { isMobile } = useIsMobile();
 
   const userLanguage = useLanguageStore.getState().language;
   const formattedLanguage = getTmdbLanguageCode(userLanguage);
@@ -505,7 +502,6 @@ export function DiscoverContent() {
           preloadedMedia={filteredGenreMovies}
           title="Editor Picks"
           mediaType="movie"
-          isMobile={isMobile}
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
           moreContent
@@ -514,7 +510,6 @@ export function DiscoverContent() {
           preloadedMedia={filteredGenreTVShows}
           title="Editor Picks"
           mediaType="tv"
-          isMobile={isMobile}
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
           moreContent
@@ -533,7 +528,6 @@ export function DiscoverContent() {
             medias={movieRecommendations}
             category={movieRecommendationTitle}
             isTVShow={false}
-            isMobile={isMobile}
             carouselRefs={carouselRefs}
             onShowDetails={handleShowDetails}
             moreLink={`/discover/more/recommendations/${movieRecommendationSourceId}/movie`}
@@ -548,7 +542,6 @@ export function DiscoverContent() {
         <LazyMediaCarousel
           category={categories[0]}
           mediaType="movie"
-          isMobile={isMobile}
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
           moreContent
@@ -558,7 +551,6 @@ export function DiscoverContent() {
         <LazyMediaCarousel
           category={categories[1]}
           mediaType="movie"
-          isMobile={isMobile}
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
           moreContent
@@ -568,7 +560,6 @@ export function DiscoverContent() {
         <LazyMediaCarousel
           category={categories[2]}
           mediaType="movie"
-          isMobile={isMobile}
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
           moreContent
@@ -579,7 +570,6 @@ export function DiscoverContent() {
           medias={providerMovies}
           category={`Movies on ${selectedProvider.name || ""}`}
           isTVShow={false}
-          isMobile={isMobile}
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
           relatedButtons={MOVIE_PROVIDERS.map((p) => ({
@@ -596,7 +586,6 @@ export function DiscoverContent() {
           medias={filteredGenreMovies}
           category={`${selectedGenre.name || ""}`}
           isTVShow={false}
-          isMobile={isMobile}
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
           relatedButtons={genres.map((g) => ({
@@ -621,7 +610,6 @@ export function DiscoverContent() {
             medias={tvRecommendations}
             category={tvRecommendationTitle}
             isTVShow
-            isMobile={isMobile}
             carouselRefs={carouselRefs}
             onShowDetails={handleShowDetails}
             moreLink={`/discover/more/recommendations/${tvRecommendationSourceId}/tv`}
@@ -636,7 +624,6 @@ export function DiscoverContent() {
         <LazyMediaCarousel
           category={tvCategories[0]}
           mediaType="tv"
-          isMobile={isMobile}
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
           moreContent
@@ -646,7 +633,6 @@ export function DiscoverContent() {
         <LazyMediaCarousel
           category={tvCategories[1]}
           mediaType="tv"
-          isMobile={isMobile}
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
           moreContent
@@ -656,7 +642,6 @@ export function DiscoverContent() {
         <LazyMediaCarousel
           category={tvCategories[2]}
           mediaType="tv"
-          isMobile={isMobile}
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
           moreContent
@@ -667,7 +652,6 @@ export function DiscoverContent() {
           medias={providerTVShows}
           category={`Shows on ${selectedProvider.name || ""}`}
           isTVShow
-          isMobile={isMobile}
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
           relatedButtons={TV_PROVIDERS.map((p) => ({
@@ -684,7 +668,6 @@ export function DiscoverContent() {
           medias={filteredGenreTVShows}
           category={`${selectedGenre.name || ""}`}
           isTVShow
-          isMobile={isMobile}
           carouselRefs={carouselRefs}
           onShowDetails={handleShowDetails}
           relatedButtons={tvGenres.map((g) => ({

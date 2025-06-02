@@ -5,13 +5,13 @@ import { EditButton } from "@/components/buttons/EditButton";
 import { Icons } from "@/components/Icon";
 import { SectionHeading } from "@/components/layout/SectionHeading";
 import { WatchedMediaCard } from "@/components/media/WatchedMediaCard";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import { CarouselNavButtons } from "@/pages/discover/components/CarouselNavButtons";
 import { useProgressStore } from "@/stores/progress";
 import { shouldShowProgress } from "@/stores/progress/utils";
 import { MediaItem } from "@/utils/mediaTypes";
 
 interface WatchingCarouselProps {
-  isMobile: boolean;
   carouselRefs: React.MutableRefObject<{
     [key: string]: HTMLDivElement | null;
   }>;
@@ -32,7 +32,6 @@ function MediaCardSkeleton() {
 }
 
 export function WatchingCarousel({
-  isMobile,
   carouselRefs,
   onShowDetails,
 }: WatchingCarouselProps) {
@@ -42,6 +41,8 @@ export function WatchingCarousel({
   const [editing, setEditing] = useState(false);
   const removeItem = useProgressStore((s) => s.removeItem);
   const pressTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const { isMobile } = useIsMobile();
 
   const itemsLength = useProgressStore((state) => {
     return Object.entries(state.items).filter(
@@ -125,7 +126,7 @@ export function WatchingCarousel({
       <SectionHeading
         title={t("home.continueWatching.sectionTitle")}
         icon={Icons.CLOCK}
-        className="ml-2 md:ml-8 mt-2 -mb-10"
+        className="ml-2 md:ml-8 mt-2 -mb-5"
       >
         <div className="mr-6">
           <EditButton

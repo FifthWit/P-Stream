@@ -70,7 +70,6 @@ export function HomePage() {
   const enableCarouselView = usePreferencesStore(
     (state) => state.enableCarouselView,
   );
-  const isMobile = window.innerWidth < 768;
 
   const handleClick = (path: To) => {
     window.scrollTo(0, 0);
@@ -85,23 +84,8 @@ export function HomePage() {
     detailsModal.show();
   };
 
-  // const { loggedIn } = useAuth(); // Adjust padding for popup show button based on logged in state
-
   return (
     <HomeLayout showBg={showBg}>
-      {/* <a
-        onClick={() => modal.show()}
-        className={` text-white tabbable rounded-full z-50 fixed top-5 ${
-          loggedIn
-            ? "right-[7.5rem] lg:right-[12.5rem] lg:text-2xl"
-            : "right-[7.5rem] text-xl lg:text-lg"
-        }`}
-        style={{ animation: "pulse 1s infinite" }}
-      >
-        <IconPill icon={Icons.WARNING}>
-          <span className="font-bold select-none">READ</span>
-        </IconPill>
-      </a> */}
       <div className="mb-2">
         <Helmet>
           <style type="text/css">{`
@@ -112,97 +96,7 @@ export function HomePage() {
           <title>{t("global.name")}</title>
         </Helmet>
 
-        {/* Popup 
-        <FancyModal
-          id="notice"
-          title="We're changing our backend server!"
-          oneTime
-        >
-          <div>
-            <p>
-              On <strong>January 8th</strong>, the backend server will change
-              from:
-            </p>
-            <p>
-              <strong>server.vidbinge.com</strong> →{" "}
-              <strong>server.fifthwit.tech</strong>
-            </p>
-            <br />
-            <p>
-              You will need to <strong>migrate your account </strong> to the new
-              server or choose to continue using the old server by updating your
-              settings.
-            </p>
-            <br />
-            <p>
-              <strong>What You Need to Know:</strong>
-            </p>
-            <ul>
-              <li>
-                1. <strong>Migrating Your Account:</strong> Your data (e.g.,
-                bookmarks) will not be automatically transferred. You&apos;ll
-                need to migrate your account from the settings page. Or from
-                below.
-              </li>
-              <li>
-                2. <strong>Staying on the Old Server:</strong> If you don&apos;t
-                want to change to the new server, your data will remain safe on{" "}
-                <strong>server.vidbinge.com</strong>. You can change the Backend
-                URL in your settings to &quot;https://server.vidbinge.com&quot;.
-              </li>
-            </ul>
-            <br />
-            <p>
-              <strong>Steps to Move Your Data:</strong>
-            </p>
-            <ol>
-              <li>
-                1. Log into your account on <strong>server.vidbinge.com</strong>
-                .
-              </li>
-              <li>
-                (If you already are logged in, press here:{" "}
-                <a href="/migration" className="text-type-link">
-                  Migrate my data.
-                </a>
-                )
-              </li>
-              <li>
-                2. Go to the <strong>Settings</strong> page.
-              </li>
-              <li>
-                3. Scroll down to{" "}
-                <strong>Connections &gt; Custom Server</strong>.
-              </li>
-              <li>
-                3. Press the &quot;Migrate my data to a new server.&quot;
-                button.
-              </li>
-              <li>
-                4. Enter the new server url:{" "}
-                <strong>https://server.fifthwit.tech</strong> and press
-                &quot;Migrate&quot;.
-              </li>
-              <li>5. Login to your account with the same passphrase!</li>
-            </ol>
-            <br />
-            <p>
-              Thank you for your understanding and support during this
-              transition! If you have questions or need help, feel free to reach
-              out on the{" "}
-              <a
-                href="https://discord.com/invite/7z6znYgrTG"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-type-link"
-              >
-                P-Stream Discord
-              </a>
-              !
-            </p>
-          </div>
-        </FancyModal>
-        */}
+        {/* Page Header */}
         {enableFeatured ? (
           <FeaturedCarousel
             forcedCategory="editorpicks"
@@ -223,59 +117,64 @@ export function HomePage() {
             showTitle
           />
         )}
+
         {conf().SHOW_AD ? <AdsPart /> : null}
       </div>
-      <WideContainer ultraWide={enableCarouselView}>
-        {s.loading ? (
-          <SearchLoadingPart />
-        ) : s.searching ? (
-          enableCarouselView ? (
-            <WideContainer>
+
+      {/* Search */}
+      {search && (
+        <WideContainer>
+          {s.loading ? (
+            <SearchLoadingPart />
+          ) : (
+            s.searching && (
               <SearchListPart
                 searchQuery={search}
                 onShowDetails={handleShowDetails}
               />
-            </WideContainer>
-          ) : (
-            <SearchListPart
-              searchQuery={search}
+            )
+          )}
+        </WideContainer>
+      )}
+
+      {/* User Content */}
+      {!search &&
+        (enableCarouselView ? (
+          <WideContainer ultraWide>
+            <WatchingCarousel
+              carouselRefs={carouselRefs}
               onShowDetails={handleShowDetails}
             />
-          )
+            <BookmarksCarousel
+              carouselRefs={carouselRefs}
+              onShowDetails={handleShowDetails}
+            />
+          </WideContainer>
         ) : (
-          <div className="flex flex-col gap-8">
-            {enableCarouselView ? (
-              <>
-                <WatchingCarousel
-                  isMobile={isMobile}
-                  carouselRefs={carouselRefs}
-                  onShowDetails={handleShowDetails}
-                />
-                <BookmarksCarousel
-                  isMobile={isMobile}
-                  carouselRefs={carouselRefs}
-                  onShowDetails={handleShowDetails}
-                />
-              </>
-            ) : (
-              <>
-                <WatchingPart
-                  onItemsChange={setShowWatching}
-                  onShowDetails={handleShowDetails}
-                />
-                <BookmarksPart
-                  onItemsChange={setShowBookmarks}
-                  onShowDetails={handleShowDetails}
-                />
-              </>
-            )}
-          </div>
-        )}
+          <WideContainer>
+            <div className="flex flex-col gap-8">
+              <WatchingPart
+                onItemsChange={setShowWatching}
+                onShowDetails={handleShowDetails}
+              />
+              <BookmarksPart
+                onItemsChange={setShowBookmarks}
+                onShowDetails={handleShowDetails}
+              />
+            </div>
+          </WideContainer>
+        ))}
+
+      {/* Under user content */}
+      <WideContainer ultraWide>
+        {/* Empty text */}
         {!(showBookmarks || showWatching) && !enableDiscover ? (
           <div className="flex flex-col translate-y-[-30px] items-center justify-center pt-20">
             <p className="text-[18.5px] pb-3">{emptyText}</p>
           </div>
         ) : null}
+
+        {/* Discover Spacing */}
         {enableDiscover &&
           (enableFeatured ? (
             <div className="pb-4" />
@@ -285,6 +184,8 @@ export function HomePage() {
             <div className="pb-20" />
           ))}
         {/* there... perfect. */}
+
+        {/* Discover section or discover button */}
         {enableDiscover && !search ? (
           <DiscoverContent />
         ) : (

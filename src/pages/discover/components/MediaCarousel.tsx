@@ -8,6 +8,7 @@ import { Dropdown, OptionItem } from "@/components/form/Dropdown";
 import { Icon, Icons } from "@/components/Icon";
 import { MediaCard } from "@/components/media/MediaCard";
 import { Flare } from "@/components/utils/Flare";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import { Media } from "@/pages/discover/common";
 import { useDiscoverStore } from "@/stores/discover";
 import { MediaItem } from "@/utils/mediaTypes";
@@ -19,7 +20,6 @@ interface MediaCarouselProps {
   medias: Media[];
   category: string;
   isTVShow: boolean;
-  isMobile: boolean;
   carouselRefs: React.MutableRefObject<{
     [key: string]: HTMLDivElement | null;
   }>;
@@ -79,7 +79,6 @@ export function MediaCarousel({
   medias,
   category,
   isTVShow,
-  isMobile,
   carouselRefs,
   onShowDetails,
   genreId,
@@ -99,6 +98,8 @@ export function MediaCarousel({
   );
   const categorySlug = `${category.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${isTVShow ? "tv" : "movie"}`;
   const browser = !!window.chrome;
+  const { isMobile } = useIsMobile();
+
   let isScrolling = false;
 
   const handleWheel = (e: React.WheelEvent) => {

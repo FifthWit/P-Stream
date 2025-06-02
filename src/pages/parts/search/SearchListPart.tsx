@@ -20,7 +20,7 @@ function SearchSuffix(props: { failed?: boolean; results?: number }) {
   const icon: Icons = props.failed ? Icons.WARNING : Icons.EYE_SLASH;
 
   return (
-    <div className="mb-24 mt-40  flex flex-col items-center justify-center space-y-3 text-center">
+    <div className="mt-40 flex flex-col items-center justify-center space-y-3 text-center">
       <IconPatch
         icon={icon}
         className={`text-xl ${
@@ -35,7 +35,7 @@ function SearchSuffix(props: { failed?: boolean; results?: number }) {
             <>
               <p>{t("home.search.allResults")}</p>
               <Button
-                className="px-py p-[0.3em] mt-3 rounded-xl text-type-dimmed box-content text-[17px] bg-largeCard-background text-buttons-secondaryText justify-center items-center"
+                className="px-py p-[0.3em] mt-3 rounded-xl text-type-dimmed box-content text-[17px] bg-largeCard-background justify-center items-center"
                 onClick={() => navigate("/discover")}
               >
                 {t("home.search.discoverMore")}
