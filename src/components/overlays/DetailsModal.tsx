@@ -126,6 +126,44 @@ interface DetailsContent {
   logoUrl?: string;
 }
 
+function TrailerOverlay({
+  trailerUrl,
+  onClose,
+}: {
+  trailerUrl: string;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center transition-opacity duration-300"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-[90%] max-w-6xl aspect-video"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <video
+          className="w-full h-full object-contain"
+          autoPlay
+          controls
+          playsInline
+        >
+          <source src={trailerUrl} type="video/mp4" />
+        </video>
+
+        {/* Close Button */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
+        >
+          <Icon icon={Icons.X} className="text-white" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function DetailsContent({
   data,
   minimal = false,
@@ -136,8 +174,7 @@ function DetailsContent({
   const [imdbData, setImdbData] = useState<any>(null);
   const [rtData, setRtData] = useState<any>(null);
   const [, setIsLoadingImdb] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
-  const [isPaused, setIsPaused] = useState(false);
+  const [showTrailer, setShowTrailer] = useState(false);
   const [showEpisodeMenu, setShowEpisodeMenu] = useState(false);
   const [customSeason, setCustomSeason] = useState("");
   const [customEpisode, setCustomEpisode] = useState("");
@@ -176,64 +213,6 @@ function DetailsContent({
       setSelectedSeason(showProgress.season.number);
     }
   }, [showProgress]);
-
-  const toggleMute = () => {
-    if (videoRef.current) {
-      const newMuted = !videoRef.current.muted;
-      videoRef.current.muted = newMuted;
-      setIsMuted(newMuted);
-      setShowVolumeBar(!newMuted);
-    }
-  };
-
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVolume = parseFloat(e.target.value);
-    setVolume(newVolume);
-    if (videoRef.current) {
-      videoRef.current.volume = newVolume;
-      if (newVolume === 0) {
-        videoRef.current.muted = true;
-        setIsMuted(true);
-        setShowVolumeBar(false);
-      } else {
-        videoRef.current.muted = false;
-        setIsMuted(false);
-        setShowVolumeBar(true);
-      }
-    }
-  };
-
-  // Hide volume bar after 2 seconds of inactivity
-  useEffect(() => {
-    if (!showVolumeBar || isMuted) return;
-    const timeout = setTimeout(() => setShowVolumeBar(false), 2000);
-    return () => clearTimeout(timeout);
-  }, [showVolumeBar, isMuted, volume]);
-
-  // Hide volume bar when clicking outside
-  useEffect(() => {
-    if (!showVolumeBar) return;
-    const handleClick = (e: MouseEvent) => {
-      const bar = document.getElementById("vertical-volume-bar");
-      if (bar && !bar.contains(e.target as Node)) {
-        setShowVolumeBar(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [showVolumeBar]);
-
-  const togglePlay = () => {
-    if (videoRef.current) {
-      if (videoRef.current.paused) {
-        videoRef.current.play();
-        setIsPaused(false);
-      } else {
-        videoRef.current.pause();
-        setIsPaused(true);
-      }
-    }
-  };
 
   useEffect(() => {
     const fetchExternalData = async () => {
@@ -451,95 +430,28 @@ function DetailsContent({
         </div>
       )}
 
+      {/* Trailer Overlay */}
+      {showTrailer && imdbData?.trailer_url && (
+        <TrailerOverlay
+          trailerUrl={imdbData.trailer_url}
+          onClose={() => setShowTrailer(false)}
+        />
+      )}
+
       {/* Backdrop - Even taller */}
       <div className="h-64 lg:h-80 xl:h-96 relative -mt-12">
-        {imdbData?.trailer_url ? (
-          <div
-            className="absolute inset-0"
-            style={{
-              maskImage:
-                "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 60px)",
-              WebkitMaskImage:
-                "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 60px)",
-            }}
-          >
-            <video
-              ref={videoRef}
-              className="absolute inset-0 w-full h-full object-cover cursor-pointer"
-              autoPlay
-              loop
-              muted={isMuted}
-              playsInline
-              poster={data.backdrop}
-              onClick={togglePlay}
-            >
-              <source src={imdbData.trailer_url} type="video/mp4" />
-            </video>
-            <div className="absolute top-4 left-4 z-10 flex flex-col items-center">
-              <button
-                type="button"
-                onClick={toggleMute}
-                onMouseEnter={() => !isMuted && setShowVolumeBar(true)}
-                className="p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
-                title={isMuted ? "Unmute" : "Mute"}
-              >
-                <Icon
-                  icon={isMuted ? Icons.VOLUME_X : Icons.VOLUME}
-                  className="text-white"
-                />
-              </button>
-              {/* Volume Bar */}
-              {showVolumeBar && !isMuted && (
-                <div
-                  id="vertical-volume-bar"
-                  className="mt-2 h-32 w-8 bg-black/70 rounded-full flex items-center justify-center relative shadow-lg"
-                  style={{
-                    transition: "opacity 0.2s",
-                  }}
-                >
-                  <input
-                    type="range"
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    value={volume}
-                    onChange={handleVolumeChange}
-                    className="absolute left-1/2 -translate-x-1/2 w-24 h-1.5 rotate-[-90deg] bg-mediaCard-barColor accent-mediaCard-barColor cursor-pointer"
-                    style={{
-                      position: "absolute",
-                      top: "50%",
-                      left: "50%",
-                      transform: "translate(-50%, -50%) rotate(-90deg)",
-                      width: "100px",
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-            {isPaused && (
-              <button
-                type="button"
-                onClick={togglePlay}
-                className="absolute inset-0 flex items-center justify-center z-10"
-              >
-                <Icon icon={Icons.PLAY} className="text-white text-4xl" />
-              </button>
-            )}
-          </div>
-        ) : (
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{
-              backgroundImage: data.backdrop
-                ? `url(${data.backdrop})`
-                : undefined,
-              maskImage:
-                "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 60px)",
-              WebkitMaskImage:
-                "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 60px)",
-            }}
-          />
-        )}
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: data.backdrop
+              ? `url(${data.backdrop})`
+              : undefined,
+            maskImage:
+              "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 60px)",
+            WebkitMaskImage:
+              "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 60px)",
+          }}
+        />
       </div>
       {/* Content */}
       <div
@@ -608,6 +520,19 @@ function DetailsContent({
               </Button>
             )}
             <div className="flex items-center gap-1 flex-shrink-0">
+              {imdbData?.trailer_url && (
+                <button
+                  type="button"
+                  onClick={() => setShowTrailer(true)}
+                  className="p-2 opacity-75 transition-opacity duration-300 hover:scale-110 hover:cursor-pointer hover:opacity-95"
+                  title={t("details.trailer")}
+                >
+                  <IconPatch
+                    icon={Icons.FILM}
+                    className="transition-transform duration-300 hover:scale-110 hover:cursor-pointer"
+                  />
+                </button>
+              )}
               <MediaBookmarkButton
                 media={{
                   id: data.id?.toString() || "",
@@ -635,7 +560,7 @@ function DetailsContent({
 
           {/* Genres on the right side of the button row for larger screens */}
           {data.genres && data.genres.length > 0 && (
-            <div className="hidden sm:flex flex-wrap gap-2 justify-end z-[999] items-center">
+            <div className="hidden sm:flex flex-wrap gap-2 justify-end items-center">
               {data.genres.map((genre, index) => (
                 <span
                   key={genre.id}
@@ -655,7 +580,7 @@ function DetailsContent({
 
         {/* Genres below for small screens */}
         {data.genres && data.genres.length > 0 && (
-          <div className="flex sm:hidden flex-wrap gap-2 justify-start z-[999] items-center mb-6 -mt-3">
+          <div className="flex sm:hidden flex-wrap gap-2 justify-start items-center mb-6 -mt-3">
             {data.genres.map((genre, index) => (
               <span
                 key={genre.id}
