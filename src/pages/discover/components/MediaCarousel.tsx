@@ -124,6 +124,7 @@ export function MediaCarousel({
     categoryName: string,
     isTVShowCondition: boolean,
   ): string {
+    // Handle provider-specific categories
     const providerMatch = categoryName.match(
       /^Popular (Movies|Shows) on (.+)$/,
     );
@@ -137,24 +138,24 @@ export function MediaCarousel({
       });
     }
 
-    if (categoryName === "Now Playing") {
-      return t("discover.carousel.title.inCinemas");
+    // Handle special categories
+    const specialCategories: { [key: string]: string } = {
+      "Now Playing": "inCinemas",
+      "Editor Picks": isTVShowCondition
+        ? "editorPicksShows"
+        : "editorPicksMovies",
+      "Latest Releases": "latestReleases",
+      "4K Releases": "4kReleases",
+      "Top Rated": "topRated",
+      "Most Popular": "popular",
+      "On The Air": "onTheAir",
+    };
+
+    if (specialCategories[categoryName]) {
+      return t(`discover.carousel.title.${specialCategories[categoryName]}`);
     }
 
-    if (categoryName === "Editor Picks") {
-      return isTVShow
-        ? t("discover.carousel.title.editorPicksShows")
-        : t("discover.carousel.title.editorPicksMovies");
-    }
-
-    if (categoryName === "Latest Releases") {
-      return t("discover.carousel.title.latestReleases");
-    }
-
-    if (categoryName === "4K Releases") {
-      return t("discover.carousel.title.4kReleases");
-    }
-
+    // Handle provider categories
     if (
       categoryName.includes("Movies on") ||
       categoryName.includes("Shows on")
@@ -176,12 +177,14 @@ export function MediaCarousel({
         : t("discover.carousel.title.moviesOn", { provider: providerName });
     }
 
+    // Handle recommendations
     if (categoryName.includes("Because You Watched")) {
       return t("discover.carousel.title.recommended", {
         title: categoryName.split("Because You Watched:")[1],
       });
     }
 
+    // Handle generic categories
     return isTVShowCondition
       ? t("discover.carousel.title.tvshows", { category: categoryName })
       : t("discover.carousel.title.movies", { category: categoryName });
