@@ -28,45 +28,54 @@ export function DetailsHeader({
   return (
     <div className="space-y-4">
       {/* TMDB Rating and Year/Seasons */}
-      <div className="flex items-center gap-2 text-sm text-white/80">
-        {voteAverage && (
-          <div className="flex items-center gap-1">
-            <Icon icon={Icons.TMDB} />
-            <span>{voteAverage.toFixed(1)}</span>
-            {voteCount && (
-              <span className="text-white/60">
-                ({voteCount.toLocaleString()})
-              </span>
-            )}
-          </div>
-        )}
-        {imdbData?.rating && (
-          <>
-            <span className="text-white/60">•</span>
+      <div className="flex flex-wrap items-center gap-2 text-sm text-white/80">
+        {/* Ratings Group */}
+        <div className="flex items-center gap-2">
+          {voteAverage && (
             <div className="flex items-center gap-1">
-              <Icon icon={Icons.IMDB} className="text-yellow-400" />
-              <span>{imdbData.rating.toFixed(1)}</span>
-              {imdbData.votes && (
+              <Icon icon={Icons.TMDB} />
+              <span>{voteAverage.toFixed(1)}</span>
+              {voteCount && (
                 <span className="text-white/60">
-                  ({imdbData.votes.toLocaleString()})
+                  ({voteCount.toLocaleString()})
                 </span>
               )}
             </div>
-          </>
-        )}
-        {releaseDate && (
-          <>
-            <span className="text-white/60">•</span>
-            <span>{formatDate(releaseDate)}</span>
-          </>
-        )}
-        {seasons && (
-          <>
-            <span className="text-white/60">•</span>
-            <span>
-              {seasons} {t("details.seasons")}
-            </span>
-          </>
+          )}
+          {imdbData?.rating && (
+            <>
+              <span className="text-white/60">•</span>
+              <div className="flex items-center gap-1">
+                <Icon icon={Icons.IMDB} className="text-yellow-400" />
+                <span>{imdbData.rating.toFixed(1)}</span>
+                {imdbData.votes && (
+                  <span className="text-white/60">
+                    ({imdbData.votes.toLocaleString()})
+                  </span>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Release Date and Seasons Group */}
+        {(releaseDate || seasons) && (
+          <div className="flex items-center gap-2">
+            {releaseDate && (
+              <>
+                <span className="text-white/60">•</span>
+                <span>{formatDate(releaseDate)}</span>
+              </>
+            )}
+            {seasons && (
+              <>
+                <span className="text-white/60">•</span>
+                <span>
+                  {seasons} {t("details.seasons")}
+                </span>
+              </>
+            )}
+          </div>
         )}
       </div>
 
