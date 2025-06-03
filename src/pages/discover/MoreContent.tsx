@@ -5,6 +5,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useWindowSize } from "react-use";
 
 import { get } from "@/backend/metadata/tmdb";
+import {
+  getLatest4KReleases,
+  getLatestReleases,
+} from "@/backend/metadata/traktApi";
 import { Button } from "@/components/buttons/Button";
 import { Dropdown, OptionItem } from "@/components/form/Dropdown";
 import { Icon, Icons } from "@/components/Icon";
@@ -22,7 +26,7 @@ import { ProgressMediaItem, useProgressStore } from "@/stores/progress";
 import { getTmdbLanguageCode } from "@/utils/language";
 import { MediaItem } from "@/utils/mediaTypes";
 
-import { Genre, categories, tvCategories } from "./common";
+import { Genre, Movie, categories, tvCategories } from "./common";
 import {
   EDITOR_PICKS_MOVIES,
   EDITOR_PICKS_TV_SHOWS,
@@ -123,6 +127,18 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
         const isTVShow = mediaType === "tv";
         let endpoint = "";
 
+        // Map category URLs to their corresponding TMDB endpoints
+        const categoryEndpointMap: { [key: string]: string } = {
+          // Movie categories
+          "now-playing-movie": "/movie/now_playing",
+          "top-rated-movie": "/movie/top_rated",
+          "most-popular-movie": "/movie/popular",
+          // TV categories
+          "on-the-air-tv": "/tv/on_the_air",
+          "top-rated-tv": "/tv/top_rated",
+          "most-popular-tv": "/tv/popular",
+        };
+
         // Handle recommendations separately
         if (contentType === "recommendations") {
           // Get title from progress store instead of fetching details
@@ -141,10 +157,21 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
             },
           );
 
+          const processedResults = results.results.map((item: any) => {
+            const isItemTVShow = Boolean(item.first_air_date);
+            return {
+              ...item,
+              type: isItemTVShow ? "show" : "movie",
+              // Keep both dates in the raw data
+              first_air_date: item.first_air_date,
+              release_date: item.release_date,
+            };
+          });
+
           if (append) {
-            setMedias((prev) => [...prev, ...results.results]);
+            setMedias((prev) => [...prev, ...processedResults]);
           } else {
-            setMedias(results.results);
+            setMedias(processedResults);
           }
           setHasMore(page < results.total_pages);
           setCurrentPage(page);
@@ -153,35 +180,90 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
 
         // Handle editor picks separately
         if (category?.includes("editor-picks")) {
-          const editorPicks = isTVShow
+          const isEditorPicksTV = category.includes("tv");
+          const editorPicks = isEditorPicksTV
             ? EDITOR_PICKS_TV_SHOWS
             : EDITOR_PICKS_MOVIES;
 
           // Fetch details for all editor picks
           const promises = editorPicks.map((item) =>
-            get<any>(`/${isTVShow ? "tv" : "movie"}/${item.id}`, {
+            get<any>(`/${isEditorPicksTV ? "tv" : "movie"}/${item.id}`, {
               api_key: conf().TMDB_READ_API_KEY,
               language: formattedLanguage,
             }),
           );
 
           const results = await Promise.all(promises);
-          setMedias(results);
+          const validResults = results.map((item) => ({
+            ...item,
+            type: isEditorPicksTV ? "show" : "movie",
+            release_date: isEditorPicksTV
+              ? item.first_air_date
+              : item.release_date,
+          }));
+          setMedias(validResults);
           setHasMore(false);
           return;
         }
 
-        // Determine the correct endpoint based on the type
-        if (contentType === "category") {
-          const categoryList = isTVShow ? tvCategories : categories;
-          const categoryData = categoryList.find((c) => c.urlPath === id);
-          if (categoryData) {
-            endpoint = categoryData.endpoint;
-          } else {
-            endpoint = isTVShow ? "/discover/tv" : "/discover/movie";
+        // Handle Trakt categories separately
+        if (
+          category?.includes("latest-releases") ||
+          category?.includes("4k-releases")
+        ) {
+          try {
+            const traktFunction = category?.includes("latest-releases")
+              ? getLatestReleases
+              : getLatest4KReleases;
+
+            const traktData = await traktFunction();
+            const moviePromises = traktData.tmdb_ids
+              .slice((page - 1) * 20, page * 20)
+              .map((tmdbId: number) =>
+                get<any>(`/movie/${tmdbId}`, {
+                  api_key: conf().TMDB_READ_API_KEY,
+                  language: formattedLanguage,
+                }).catch(() => null),
+              );
+
+            const results = await Promise.all(moviePromises);
+            const validMovies = results
+              .filter((movie: any): movie is Movie => movie !== null)
+              .map((movie: Movie) => {
+                const isItemTVShow = Boolean(movie.first_air_date);
+                return {
+                  ...movie,
+                  type: isItemTVShow ? "show" : "movie",
+                  // Keep both dates in the raw data
+                  first_air_date: movie.first_air_date,
+                  release_date: movie.release_date,
+                };
+              });
+
+            if (append) {
+              setMedias((prev) => [...prev, ...validMovies]);
+            } else {
+              setMedias(validMovies);
+            }
+            setHasMore(traktData.tmdb_ids.length > page * 20);
+            return;
+          } catch (error) {
+            console.error(`Error fetching ${category}:`, error);
           }
-        } else {
+        }
+
+        // Determine the correct endpoint based on the category
+        if (category && categoryEndpointMap[category]) {
+          endpoint = categoryEndpointMap[category];
+        } else if (contentType === "provider") {
           endpoint = isTVShow ? "/discover/tv" : "/discover/movie";
+        } else if (contentType === "genre") {
+          endpoint = isTVShow ? "/discover/tv" : "/discover/movie";
+        }
+
+        if (!endpoint) {
+          console.error("No endpoint found for category:", category);
+          return;
         }
 
         const allResults: any[] = [];
@@ -203,7 +285,18 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
           }
 
           const data = await get<any>(endpoint, params);
-          allResults.push(...data.results);
+          const processedResults = data.results.map((item: any) => {
+            const isItemTVShow = Boolean(item.first_air_date);
+            return {
+              ...item,
+              type: isItemTVShow ? "show" : "movie",
+              // Keep both dates in the raw data
+              first_air_date: item.first_air_date,
+              release_date: item.release_date,
+            };
+          });
+
+          allResults.push(...processedResults);
 
           // Check if we've reached the end
           if (currentPageNum >= data.total_pages) {
@@ -259,10 +352,34 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
       });
     }
 
-    if (category === "editor-picks-tv" || category === "editor-picks-movie") {
-      return category === "editor-picks-tv"
+    if (category?.includes("editor-picks")) {
+      return category.includes("tv")
         ? t("discover.carousel.title.editorPicksShows")
         : t("discover.carousel.title.editorPicksMovies");
+    }
+
+    if (category?.includes("latest-releases")) {
+      return t("discover.carousel.title.latestReleases");
+    }
+
+    if (category?.includes("4k-releases")) {
+      return t("discover.carousel.title.4kReleases");
+    }
+
+    // Map category URLs to their display titles
+    const categoryTitleMap: { [key: string]: string } = {
+      // Movie categories
+      "now-playing-movie": t("discover.carousel.title.nowPlaying"),
+      "top-rated-movie": t("discover.carousel.title.topRated"),
+      "most-popular-movie": t("discover.carousel.title.popular"),
+      // TV categories
+      "on-the-air-tv": t("discover.carousel.title.onTheAir"),
+      "top-rated-tv": t("discover.carousel.title.topRated"),
+      "most-popular-tv": t("discover.carousel.title.popular"),
+    };
+
+    if (category && categoryTitleMap[category]) {
+      return categoryTitleMap[category];
     }
 
     if (!contentType || !id) return "";
@@ -620,34 +737,52 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
         {renderGenreButtons()}
 
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 3xl:grid-cols-8 4xl:grid-cols-10 pt-8">
-          {medias.map((media) => (
-            <div
-              key={media.id}
-              style={{ userSelect: "none" }}
-              onContextMenu={(e: React.MouseEvent<HTMLDivElement>) =>
-                e.preventDefault()
-              }
-            >
-              <MediaCard
-                media={{
-                  id: media.id.toString(),
-                  title: media.title || media.name || "",
-                  poster: `https://image.tmdb.org/t/p/w342${media.poster_path}`,
-                  type: mediaType === "tv" ? "show" : "movie",
-                  year:
-                    mediaType === "tv"
-                      ? media.first_air_date
-                        ? parseInt(media.first_air_date.split("-")[0], 10)
-                        : undefined
-                      : media.release_date
-                        ? parseInt(media.release_date.split("-")[0], 10)
-                        : undefined,
-                }}
-                onShowDetails={handleShowDetails}
-                linkable={!category?.includes("upcoming")}
-              />
-            </div>
-          ))}
+          {medias.map((media) => {
+            // Determine if this is a TV show based on the presence of first_air_date
+            const isTVShow = Boolean(media.first_air_date);
+            const releaseDate = isTVShow
+              ? media.first_air_date
+              : media.release_date;
+            const year = releaseDate
+              ? parseInt(releaseDate.split("-")[0], 10)
+              : undefined;
+
+            const mediaItem: MediaItem = {
+              id: media.id.toString(),
+              title: media.title || media.name || "",
+              poster: `https://image.tmdb.org/t/p/w342${media.poster_path}`,
+              type: isTVShow ? "show" : "movie",
+              year,
+              release_date: releaseDate ? new Date(releaseDate) : undefined,
+            };
+
+            console.log("Final MediaCard item:", {
+              id: mediaItem.id,
+              title: mediaItem.title,
+              year: mediaItem.year,
+              release_date: mediaItem.release_date?.toISOString(),
+              type: mediaItem.type,
+              raw_first_air_date: media.first_air_date,
+              raw_release_date: media.release_date,
+              isTVShow,
+            });
+
+            return (
+              <div
+                key={media.id}
+                style={{ userSelect: "none" }}
+                onContextMenu={(e: React.MouseEvent<HTMLDivElement>) =>
+                  e.preventDefault()
+                }
+              >
+                <MediaCard
+                  media={mediaItem}
+                  onShowDetails={handleShowDetails}
+                  linkable={!category?.includes("upcoming")}
+                />
+              </div>
+            );
+          })}
         </div>
         {hasMore && (
           <div className="flex justify-center mt-8">

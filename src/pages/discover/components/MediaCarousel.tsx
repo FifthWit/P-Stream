@@ -147,6 +147,14 @@ export function MediaCarousel({
         : t("discover.carousel.title.editorPicksMovies");
     }
 
+    if (categoryName === "Latest Releases") {
+      return t("discover.carousel.title.latestReleases");
+    }
+
+    if (categoryName === "4K Releases") {
+      return t("discover.carousel.title.4kReleases");
+    }
+
     if (
       categoryName.includes("Movies on") ||
       categoryName.includes("Shows on")

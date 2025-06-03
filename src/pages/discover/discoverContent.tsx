@@ -2,6 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { get } from "@/backend/metadata/tmdb";
+import {
+  getLatest4KReleases,
+  getLatestReleases,
+} from "@/backend/metadata/traktApi";
 import { WideContainer } from "@/components/layout/WideContainer";
 import { DetailsModal } from "@/components/overlays/details/DetailsModal";
 import { useModal } from "@/components/overlays/Modal";
@@ -163,6 +167,11 @@ export function DiscoverContent() {
   const [selectedTVSource, setSelectedTVSource] = useState<string>("");
   const progressStore = useProgressStore();
   const { t } = useTranslation();
+  const [latestReleases, setLatestReleases] = useState<Movie[]>([]);
+  const [latest4KReleases, setLatest4KReleases] = useState<Movie[]>([]);
+  const [isLoadingLatest, setIsLoadingLatest] = useState(false);
+  const [isLoading4K, setIsLoading4K] = useState(false);
+  const [isTraktAvailable, setIsTraktAvailable] = useState(false);
 
   const carouselRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
@@ -485,6 +494,98 @@ export function DiscoverContent() {
     t,
   ]);
 
+  // Fetch latest releases from Trakt
+  useEffect(() => {
+    const fetchLatestReleases = async () => {
+      if (!isMoviesTab) return;
+      setIsLoadingLatest(true);
+      try {
+        const traktData = await getLatestReleases();
+        const moviePromises = traktData.tmdb_ids.slice(0, 20).map(
+          (id) =>
+            get<any>(`/movie/${id}`, {
+              api_key: conf().TMDB_READ_API_KEY,
+              language: formattedLanguage,
+            }).catch(() => null), // Handle failed TMDB fetches gracefully
+        );
+
+        const results = await Promise.all(moviePromises);
+        const validMovies = results
+          .filter((movie): movie is Movie => movie !== null)
+          .map((movie) => ({
+            ...movie,
+            type: "movie" as const,
+          }));
+        setLatestReleases(validMovies);
+        setIsTraktAvailable(true);
+      } catch (error) {
+        console.error("Error fetching latest releases:", error);
+        setIsTraktAvailable(false);
+        // Fallback to TMDB if Trakt fails
+        const data = await get<any>("/movie/now_playing", {
+          api_key: conf().TMDB_READ_API_KEY,
+          language: formattedLanguage,
+        });
+        setLatestReleases(
+          data.results.map((movie: any) => ({
+            ...movie,
+            type: "movie" as const,
+          })),
+        );
+      } finally {
+        setIsLoadingLatest(false);
+      }
+    };
+
+    fetchLatestReleases();
+  }, [isMoviesTab, formattedLanguage]);
+
+  // Fetch 4K releases from Trakt
+  useEffect(() => {
+    const fetch4KReleases = async () => {
+      if (!isMoviesTab) return;
+      setIsLoading4K(true);
+      try {
+        const traktData = await getLatest4KReleases();
+        const moviePromises = traktData.tmdb_ids.slice(0, 20).map(
+          (id) =>
+            get<any>(`/movie/${id}`, {
+              api_key: conf().TMDB_READ_API_KEY,
+              language: formattedLanguage,
+            }).catch(() => null), // Handle failed TMDB fetches gracefully
+        );
+
+        const results = await Promise.all(moviePromises);
+        const validMovies = results
+          .filter((movie): movie is Movie => movie !== null)
+          .map((movie) => ({
+            ...movie,
+            type: "movie" as const,
+          }));
+        setLatest4KReleases(validMovies);
+        setIsTraktAvailable(true);
+      } catch (error) {
+        console.error("Error fetching 4K releases:", error);
+        setIsTraktAvailable(false);
+        // Fallback to TMDB if Trakt fails
+        const data = await get<any>("/movie/popular", {
+          api_key: conf().TMDB_READ_API_KEY,
+          language: formattedLanguage,
+        });
+        setLatest4KReleases(
+          data.results.map((movie: any) => ({
+            ...movie,
+            type: "movie" as const,
+          })),
+        );
+      } finally {
+        setIsLoading4K(false);
+      }
+    };
+
+    fetch4KReleases();
+  }, [isMoviesTab, formattedLanguage]);
+
   const handleShowDetails = async (media: MediaItem | FeaturedMedia) => {
     setDetailsData({
       id: Number(media.id),
@@ -513,14 +614,25 @@ export function DiscoverContent() {
           />
         )}
 
-        {/* In Cinemas */}
-        <LazyMediaCarousel
-          category={categories[0].name}
-          isTVShow={false}
-          carouselRefs={carouselRefs}
-          onShowDetails={handleShowDetails}
-          moreContent
-        />
+        {/* Latest Releases or In Cinemas */}
+        {isTraktAvailable ? (
+          <LazyMediaCarousel
+            medias={isLoadingLatest ? undefined : latestReleases}
+            category="Latest Releases"
+            isTVShow={false}
+            carouselRefs={carouselRefs}
+            onShowDetails={handleShowDetails}
+            moreContent
+          />
+        ) : (
+          <LazyMediaCarousel
+            category={categories[0].name}
+            isTVShow={false}
+            carouselRefs={carouselRefs}
+            onShowDetails={handleShowDetails}
+            moreContent
+          />
+        )}
 
         {/* Top Rated */}
         <LazyMediaCarousel
@@ -531,14 +643,25 @@ export function DiscoverContent() {
           moreContent
         />
 
-        {/* Popular */}
-        <LazyMediaCarousel
-          category={categories[2].name}
-          isTVShow={false}
-          carouselRefs={carouselRefs}
-          onShowDetails={handleShowDetails}
-          moreContent
-        />
+        {/* 4K Releases or Popular */}
+        {isTraktAvailable ? (
+          <LazyMediaCarousel
+            medias={isLoading4K ? undefined : latest4KReleases}
+            category="4K Releases"
+            isTVShow={false}
+            carouselRefs={carouselRefs}
+            onShowDetails={handleShowDetails}
+            moreContent
+          />
+        ) : (
+          <LazyMediaCarousel
+            category={categories[2].name}
+            isTVShow={false}
+            carouselRefs={carouselRefs}
+            onShowDetails={handleShowDetails}
+            moreContent
+          />
+        )}
 
         {/* Provider Movies */}
         <LazyMediaCarousel
