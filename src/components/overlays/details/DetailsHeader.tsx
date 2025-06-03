@@ -1,6 +1,11 @@
 import classNames from "classnames";
 import { t } from "i18next";
+import { useEffect, useState } from "react";
 
+import {
+  TraktReleaseResponse,
+  getReleaseDetails,
+} from "@/backend/metadata/traktApi";
 import { Button } from "@/components/buttons/Button";
 import { IconPatch } from "@/components/buttons/IconPatch";
 import { Icon, Icons } from "@/components/Icon";
@@ -20,6 +25,65 @@ export function DetailsHeader({
   seasons,
   imdbData,
 }: DetailsHeaderProps) {
+  const [releaseInfo, setReleaseInfo] = useState<TraktReleaseResponse | null>(
+    null,
+  );
+
+  useEffect(() => {
+    const fetchReleaseInfo = async () => {
+      if (data.id) {
+        try {
+          const info = await getReleaseDetails(data.id.toString());
+          setReleaseInfo(info);
+        } catch (error) {
+          console.error("Failed to fetch release info:", error);
+        }
+      }
+    };
+    fetchReleaseInfo();
+  }, [data.id]);
+
+  const getQualityIndicator = () => {
+    if (!releaseInfo) return null;
+
+    const hasDigitalRelease = !!releaseInfo.digital_release_date;
+    const hasTheatricalRelease = !!releaseInfo.theatrical_release_date;
+
+    if (hasDigitalRelease) {
+      const digitalReleaseDate = new Date(releaseInfo.digital_release_date!);
+      const twoDaysAfter = new Date(digitalReleaseDate);
+      twoDaysAfter.setDate(twoDaysAfter.getDate() + 2);
+
+      if (new Date() >= twoDaysAfter) {
+        return <span className="text-green-400">HD</span>;
+      }
+    }
+
+    if (hasTheatricalRelease) {
+      const theatricalReleaseDate = new Date(
+        releaseInfo.theatrical_release_date!,
+      );
+      const fortyFiveDaysAfter = new Date(theatricalReleaseDate);
+      fortyFiveDaysAfter.setDate(fortyFiveDaysAfter.getDate() + 45);
+
+      if (new Date() >= fortyFiveDaysAfter) {
+        return (
+          <div className="px-2 py-1 rounded-lg backdrop-blur-sm bg-gray-600/40">
+            <span className="text-green-400">HD</span>
+          </div>
+        );
+      }
+
+      return (
+        <div className="px-2 py-1 rounded-lg backdrop-blur-sm bg-gray-600/40">
+          <span className="text-yellow-400">CAM</span>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return null;
     return new Date(dateString).getFullYear();
@@ -29,6 +93,14 @@ export function DetailsHeader({
     <div className="space-y-4">
       {/* TMDB Rating and Year/Seasons */}
       <div className="flex flex-wrap items-center gap-2 text-sm text-white/80">
+        {/* Quality Indicator */}
+        {getQualityIndicator() && (
+          <>
+            {getQualityIndicator()}
+            <span className="text-white/60">•</span>
+          </>
+        )}
+
         {/* Ratings Group */}
         <div className="flex items-center gap-2">
           {voteAverage && (

@@ -15,6 +15,8 @@ export interface TraktReleaseResponse {
   quality?: string;
   source?: string;
   group?: string;
+  theatrical_release_date?: string;
+  digital_release_date?: string;
 }
 
 export type TraktContentType = "movie" | "episode";
