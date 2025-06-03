@@ -756,17 +756,6 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
               release_date: releaseDate ? new Date(releaseDate) : undefined,
             };
 
-            console.log("Final MediaCard item:", {
-              id: mediaItem.id,
-              title: mediaItem.title,
-              year: mediaItem.year,
-              release_date: mediaItem.release_date?.toISOString(),
-              type: mediaItem.type,
-              raw_first_air_date: media.first_air_date,
-              raw_release_date: media.release_date,
-              isTVShow,
-            });
-
             return (
               <div
                 key={media.id}
