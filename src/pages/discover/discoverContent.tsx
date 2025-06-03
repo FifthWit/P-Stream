@@ -634,15 +634,6 @@ export function DiscoverContent() {
           />
         )}
 
-        {/* Top Rated */}
-        <LazyMediaCarousel
-          category={categories[1].name}
-          isTVShow={false}
-          carouselRefs={carouselRefs}
-          onShowDetails={handleShowDetails}
-          moreContent
-        />
-
         {/* 4K Releases or Popular */}
         {isTraktAvailable ? (
           <LazyMediaCarousel
@@ -662,6 +653,15 @@ export function DiscoverContent() {
             moreContent
           />
         )}
+
+        {/* Top Rated */}
+        <LazyMediaCarousel
+          category={categories[1].name}
+          isTVShow={false}
+          carouselRefs={carouselRefs}
+          onShowDetails={handleShowDetails}
+          moreContent
+        />
 
         {/* Provider Movies */}
         <LazyMediaCarousel
