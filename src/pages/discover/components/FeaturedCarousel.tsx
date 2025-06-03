@@ -6,6 +6,10 @@ import { useWindowSize } from "react-use";
 
 import { isExtensionActive } from "@/backend/extension/messaging";
 import { get, getMediaLogo } from "@/backend/metadata/tmdb";
+import {
+  TraktReleaseResponse,
+  getReleaseDetails,
+} from "@/backend/metadata/traktApi";
 import { TMDBContentTypes } from "@/backend/metadata/types/tmdb";
 import { Button } from "@/components/buttons/Button";
 import { Icon, Icons } from "@/components/Icon";
@@ -137,6 +141,9 @@ export function FeaturedCarousel({
   const userLanguage = useLanguageStore.getState().language;
   const formattedLanguage = getTmdbLanguageCode(userLanguage);
   const { width: windowWidth, height: windowHeight } = useWindowSize();
+  const [releaseInfo, setReleaseInfo] = useState<TraktReleaseResponse | null>(
+    null,
+  );
 
   const currentMedia = media[currentIndex];
 
@@ -435,6 +442,20 @@ export function FeaturedCarousel({
     };
   }, [isAutoPlaying, media.length]);
 
+  useEffect(() => {
+    const fetchReleaseInfo = async () => {
+      if (currentMedia?.id) {
+        try {
+          const info = await getReleaseDetails(currentMedia.id.toString());
+          setReleaseInfo(info);
+        } catch (error) {
+          console.error("Failed to fetch release info:", error);
+        }
+      }
+    };
+    fetchReleaseInfo();
+  }, [currentMedia?.id]);
+
   if (isLoading) {
     return <FeaturedCarouselSkeleton shorter={shorter} />;
   }
@@ -448,6 +469,47 @@ export function FeaturedCarousel({
   let searchClasses = "";
   if (searching) searchClasses = "opacity-0 transition-opacity duration-300";
   else searchClasses = "opacity-100 transition-opacity duration-300";
+
+  const getQualityIndicator = () => {
+    if (!releaseInfo) return null;
+
+    const hasDigitalRelease = !!releaseInfo.digital_release_date;
+    const hasTheatricalRelease = !!releaseInfo.theatrical_release_date;
+
+    if (hasDigitalRelease) {
+      const digitalReleaseDate = new Date(releaseInfo.digital_release_date!);
+      const twoDaysAfter = new Date(digitalReleaseDate);
+      twoDaysAfter.setDate(twoDaysAfter.getDate() + 2);
+
+      if (new Date() >= twoDaysAfter) {
+        return <span className="text-green-400">HD</span>;
+      }
+    }
+
+    if (hasTheatricalRelease) {
+      const theatricalReleaseDate = new Date(
+        releaseInfo.theatrical_release_date!,
+      );
+      const fortyFiveDaysAfter = new Date(theatricalReleaseDate);
+      fortyFiveDaysAfter.setDate(fortyFiveDaysAfter.getDate() + 45);
+
+      if (new Date() >= fortyFiveDaysAfter) {
+        return (
+          <div className="px-2 py-1 rounded-lg backdrop-blur-sm bg-gray-600/40">
+            <span className="text-green-400">HD</span>
+          </div>
+        );
+      }
+
+      return (
+        <div className="px-2 py-1 rounded-lg backdrop-blur-sm bg-gray-600/40">
+          <span className="text-yellow-400">CAM</span>
+        </div>
+      );
+    }
+
+    return null;
+  };
 
   return (
     <div
@@ -570,6 +632,13 @@ export function FeaturedCarousel({
             )}
             {/* TMDB Rating and Year/Seasons */}
             <div className="flex items-center gap-2 text-sm text-white/80 mb-4">
+              {/* Quality Indicator */}
+              {getQualityIndicator() && (
+                <>
+                  {getQualityIndicator()}
+                  <span className="text-white/60">•</span>
+                </>
+              )}
               {currentMedia?.vote_average && (
                 <div className="flex items-center gap-1">
                   <Icon icon={Icons.TMDB} />
