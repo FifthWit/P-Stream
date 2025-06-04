@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Icons } from "@/components/Icon";
 import { DetailsModal } from "@/components/overlays/details/DetailsModal";
@@ -10,10 +10,15 @@ import { VideoPlayerButton } from "./Button";
 export function InfoButton() {
   const meta = usePlayerStore((s) => s.meta);
   const modal = useModal("player-details");
+  const setHasOpenOverlay = usePlayerStore((s) => s.setHasOpenOverlay);
   const [detailsData, setDetailsData] = useState<{
     id: number;
     type: "movie" | "show";
   } | null>(null);
+
+  useEffect(() => {
+    setHasOpenOverlay(modal.isShown);
+  }, [setHasOpenOverlay, modal.isShown]);
 
   const handleClick = async () => {
     if (!meta?.tmdbId) return;
