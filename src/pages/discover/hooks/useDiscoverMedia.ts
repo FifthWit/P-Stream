@@ -276,10 +276,20 @@ export function useDiscoverMedia({
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [sectionTitle, setSectionTitle] = useState<string>("");
+  const [currentContentType, setCurrentContentType] =
+    useState<string>(contentType);
 
   const { t } = useTranslation();
   const userLanguage = useLanguageStore.getState().language;
   const formattedLanguage = getTmdbLanguageCode(userLanguage);
+
+  // Reset media when content type or media type changes
+  useEffect(() => {
+    if (contentType !== currentContentType) {
+      setMedia([]);
+      setCurrentContentType(contentType);
+    }
+  }, [contentType, currentContentType]);
 
   const fetchTMDBMedia = useCallback(
     async (endpoint: string, params: Record<string, any> = {}) => {
@@ -477,7 +487,7 @@ export function useDiscoverMedia({
 
     try {
       const data = await attemptFetch(contentType);
-      setMedia(data.results);
+      setMedia((prevMedia) => [...prevMedia, ...data.results]);
       setHasMore(data.hasMore);
     } catch (err) {
       console.error("Error fetching media:", err);
@@ -488,7 +498,7 @@ export function useDiscoverMedia({
         console.info(`Falling back from ${contentType} to ${fallbackType}`);
         try {
           const fallbackData = await attemptFetch(fallbackType);
-          setMedia(fallbackData.results);
+          setMedia((prevMedia) => [...prevMedia, ...fallbackData.results]);
           setHasMore(fallbackData.hasMore);
           setError(null); // Clear error if fallback succeeds
         } catch (fallbackErr) {

@@ -21,7 +21,7 @@ export interface TraktReleaseResponse {
 
 export type TraktContentType = "movie" | "episode";
 
-export const TRAKT_BASE_URL = "https://airdate.up.railway.app";
+export const TRAKT_BASE_URL = "https://fed-airdate.pstream.org";
 
 export async function getLatestReleases(): Promise<TraktLatestResponse> {
   const response = await fetch(`${TRAKT_BASE_URL}/latest`);

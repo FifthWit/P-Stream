@@ -503,7 +503,7 @@ export function MediaCarousel({
           <div className="md:w-12" />
 
           {media.length > 0
-            ? media.map((item) => (
+            ? media.slice(0, 20).map((item) => (
                 <div
                   onContextMenu={(e: React.MouseEvent<HTMLDivElement>) =>
                     e.preventDefault()

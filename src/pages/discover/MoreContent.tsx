@@ -88,7 +88,7 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
 
   // Handle content visibility
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading || currentPage > 1) {
       // Small delay to ensure smooth transition
       const timer = setTimeout(() => {
         setIsContentVisible(true);
@@ -96,7 +96,7 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
       return () => clearTimeout(timer);
     }
     setIsContentVisible(false);
-  }, [isLoading, mediaItems]);
+  }, [isLoading, mediaItems, currentPage]);
 
   const handleBack = () => {
     if (lastView) {
