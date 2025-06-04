@@ -487,7 +487,10 @@ export function useDiscoverMedia({
 
     try {
       const data = await attemptFetch(contentType);
-      setMedia((prevMedia) => [...prevMedia, ...data.results]);
+      setMedia((prevMedia) => {
+        // If page is 1, replace the media array, otherwise append
+        return page === 1 ? data.results : [...prevMedia, ...data.results];
+      });
       setHasMore(data.hasMore);
     } catch (err) {
       console.error("Error fetching media:", err);
@@ -498,7 +501,12 @@ export function useDiscoverMedia({
         console.info(`Falling back from ${contentType} to ${fallbackType}`);
         try {
           const fallbackData = await attemptFetch(fallbackType);
-          setMedia((prevMedia) => [...prevMedia, ...fallbackData.results]);
+          setMedia((prevMedia) => {
+            // If page is 1, replace the media array, otherwise append
+            return page === 1
+              ? fallbackData.results
+              : [...prevMedia, ...fallbackData.results];
+          });
           setHasMore(fallbackData.hasMore);
           setError(null); // Clear error if fallback succeeds
         } catch (fallbackErr) {
@@ -521,11 +529,17 @@ export function useDiscoverMedia({
     fetchTraktMedia,
     fetchEditorPicks,
     t,
+    page,
   ]);
 
   useEffect(() => {
+    // Reset media when content type, media type, or id changes
+    if (contentType !== currentContentType || page === 1) {
+      setMedia([]);
+      setCurrentContentType(contentType);
+    }
     fetchMedia();
-  }, [fetchMedia]);
+  }, [fetchMedia, contentType, currentContentType, page, id]);
 
   return {
     media,
