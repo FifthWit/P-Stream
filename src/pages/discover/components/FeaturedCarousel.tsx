@@ -474,7 +474,7 @@ export function FeaturedCarousel({
   else searchClasses = "opacity-100 transition-opacity duration-300";
 
   const getQualityIndicator = () => {
-    if (!releaseInfo) return null;
+    if (!releaseInfo || currentMedia.type === "show") return null;
 
     const hasDigitalRelease = !!releaseInfo.digital_release_date;
     const hasTheatricalRelease = !!releaseInfo.theatrical_release_date;
