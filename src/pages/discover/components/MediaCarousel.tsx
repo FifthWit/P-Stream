@@ -306,7 +306,7 @@ export function MediaCarousel({
         <div className="flex items-center justify-between ml-2 md:ml-8 mt-2">
           <div className="flex gap-4 items-center">
             <h2 className="text-2xl cursor-default font-bold text-white md:text-2xl pl-5 text-balance">
-              Loading...
+              {t("discover.carousel.title.loading")}
             </h2>
           </div>
         </div>

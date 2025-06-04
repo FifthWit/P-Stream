@@ -309,10 +309,19 @@ export function useDiscoverMedia({
   const fetchTraktMedia = useCallback(
     async (traktFunction: () => Promise<TraktLatestResponse>) => {
       try {
-        const { tmdb_ids: tmdbIds } = await traktFunction();
+        // Create a timeout promise
+        const timeoutPromise = new Promise<TraktLatestResponse>((_, reject) => {
+          setTimeout(() => reject(new Error("Trakt request timed out")), 3000);
+        });
+
+        // Race between the Trakt request and timeout
+        const { tmdb_ids: tmdbIds } = await Promise.race([
+          traktFunction(),
+          timeoutPromise,
+        ]);
 
         // Fetch details for each TMDB ID
-        const mediaPromises = tmdbIds.map(async (tmdbId) => {
+        const mediaPromises = tmdbIds.map(async (tmdbId: number) => {
           const endpoint = `/${mediaType}/${tmdbId}`;
           const data = await get<any>(endpoint, {
             api_key: conf().TMDB_READ_API_KEY,
@@ -370,18 +379,14 @@ export function useDiscoverMedia({
     setIsLoading(true);
     setError(null);
 
-    try {
+    const attemptFetch = async (type: DiscoverContentType) => {
       let data;
 
       // Map content types to their endpoints and handling logic
-      switch (contentType) {
+      switch (type) {
         case "popular":
           data = await fetchTMDBMedia(`/${mediaType}/popular`);
-          setSectionTitle(
-            mediaType === "movie"
-              ? t("discover.carousel.title.moviesOn", { provider: "Popular" })
-              : t("discover.carousel.title.tvshowsOn", { provider: "Popular" }),
-          );
+          setSectionTitle(t("discover.carousel.title.popular"));
           break;
 
         case "topRated":
@@ -464,9 +469,14 @@ export function useDiscoverMedia({
           break;
 
         default:
-          throw new Error(`Unsupported content type: ${contentType}`);
+          throw new Error(`Unsupported content type: ${type}`);
       }
 
+      return data;
+    };
+
+    try {
+      const data = await attemptFetch(contentType);
       setMedia(data.results);
       setHasMore(data.hasMore);
     } catch (err) {
@@ -475,10 +485,9 @@ export function useDiscoverMedia({
 
       // Try fallback content type if available
       if (fallbackType && fallbackType !== contentType) {
+        console.info(`Falling back from ${contentType} to ${fallbackType}`);
         try {
-          const fallbackData = await fetchTMDBMedia(
-            `/${mediaType}/${fallbackType === "popular" ? "popular" : "top_rated"}`,
-          );
+          const fallbackData = await attemptFetch(fallbackType);
           setMedia(fallbackData.results);
           setHasMore(fallbackData.hasMore);
           setError(null); // Clear error if fallback succeeds
@@ -495,13 +504,13 @@ export function useDiscoverMedia({
     mediaType,
     id,
     fallbackType,
+    genreName,
+    providerName,
+    mediaTitle,
     fetchTMDBMedia,
     fetchTraktMedia,
     fetchEditorPicks,
     t,
-    genreName,
-    providerName,
-    mediaTitle,
   ]);
 
   useEffect(() => {

@@ -898,6 +898,7 @@
     },
     "carousel": {
       "title": {
+        "loading": "Loading...",
         "movies": "{{category}} Movies",
         "tvshows": "{{category}} Shows",
         "inCinemas": "In Cinemas",
