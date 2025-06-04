@@ -19,9 +19,32 @@ export interface TraktReleaseResponse {
   digital_release_date?: string;
 }
 
+export interface PaginatedTraktResponse {
+  tmdb_ids: number[];
+  hasMore: boolean;
+  totalCount: number;
+}
+
 export type TraktContentType = "movie" | "episode";
 
 export const TRAKT_BASE_URL = "https://fed-airdate.pstream.org";
+
+// Pagination utility
+export function paginateResults(
+  results: TraktLatestResponse,
+  page: number,
+  pageSize: number = 20,
+): PaginatedTraktResponse {
+  const startIndex = (page - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedIds = results.tmdb_ids.slice(startIndex, endIndex);
+
+  return {
+    tmdb_ids: paginatedIds,
+    hasMore: endIndex < results.tmdb_ids.length,
+    totalCount: results.tmdb_ids.length,
+  };
+}
 
 // Base function to fetch from Trakt API
 async function fetchFromTrakt(endpoint: string): Promise<TraktLatestResponse> {

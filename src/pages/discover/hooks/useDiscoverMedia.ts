@@ -6,6 +6,7 @@ import {
   TraktLatestResponse,
   getLatest4KReleases,
   getLatestReleases,
+  paginateResults,
 } from "@/backend/metadata/traktApi";
 import { conf } from "@/setup/config";
 import { useLanguageStore } from "@/stores/language";
@@ -325,10 +326,13 @@ export function useDiscoverMedia({
         });
 
         // Race between the Trakt request and timeout
-        const { tmdb_ids: tmdbIds } = await Promise.race([
-          traktFunction(),
-          timeoutPromise,
-        ]);
+        const response = await Promise.race([traktFunction(), timeoutPromise]);
+
+        // Paginate the results
+        const { tmdb_ids: tmdbIds, hasMore: hasMoreResults } = paginateResults(
+          response,
+          page,
+        );
 
         // Fetch details for each TMDB ID
         const mediaPromises = tmdbIds.map(async (tmdbId: number) => {
@@ -346,14 +350,14 @@ export function useDiscoverMedia({
         const results = await Promise.all(mediaPromises);
         return {
           results,
-          hasMore: false, // Trakt endpoints don't support pagination
+          hasMore: hasMoreResults,
         };
       } catch (err) {
         console.error("Error fetching Trakt media:", err);
         throw err;
       }
     },
-    [mediaType, formattedLanguage],
+    [mediaType, formattedLanguage, page],
   );
 
   const fetchEditorPicks = useCallback(async () => {
