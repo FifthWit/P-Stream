@@ -138,7 +138,7 @@ export function MediaCarousel({
 
   // Set up intersection observer for lazy loading
   const { targetRef, isIntersecting } = useIntersectionObserver({
-    rootMargin: "200px",
+    rootMargin: "300px",
   });
 
   // Handle provider/genre selection
@@ -300,14 +300,25 @@ export function MediaCarousel({
     })();
 
   // Loading state
-  if (!isIntersecting) {
+  if (!isIntersecting || !sectionTitle) {
     return (
       <div ref={targetRef as React.RefObject<HTMLDivElement>}>
         <div className="flex items-center justify-between ml-2 md:ml-8 mt-2">
           <div className="flex gap-4 items-center">
             <h2 className="text-2xl cursor-default font-bold text-white md:text-2xl pl-5 text-balance">
-              {sectionTitle}
+              Loading...
             </h2>
+          </div>
+        </div>
+        <div className="relative overflow-hidden carousel-container md:pb-4">
+          <div className="grid grid-flow-col auto-cols-max gap-4 pt-0 overflow-x-scroll scrollbar-none rounded-xl overflow-y-hidden md:pl-8 md:pr-8">
+            <div className="md:w-12" />
+            {Array.from({ length: 10 }).map(() => (
+              <MediaCardSkeleton
+                key={`loading-skeleton-${Math.random().toString(36).substring(7)}`}
+              />
+            ))}
+            <div className="md:w-12" />
           </div>
         </div>
       </div>
@@ -522,7 +533,7 @@ export function MediaCarousel({
               ))
             : Array.from({ length: 10 }).map(() => (
                 <MediaCardSkeleton
-                  key={`skeleton-${categorySlug}-${Math.random().toString(36).substring(7)}`}
+                  key={`loading-skeleton-${Math.random().toString(36).substring(7)}`}
                 />
               ))}
 
