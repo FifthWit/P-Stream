@@ -3,9 +3,20 @@ import { useTranslation } from "react-i18next";
 
 import { get } from "@/backend/metadata/tmdb";
 import {
+  GENRE_TO_TRAKT_MAP,
+  PROVIDER_TO_TRAKT_MAP,
   TraktLatestResponse,
+  getActionReleases,
+  getAppleTVReleases,
+  getDisneyReleases,
+  getDramaReleases,
+  getHBOReleases,
+  getHuluReleases,
   getLatest4KReleases,
   getLatestReleases,
+  getNetflixMovies,
+  getNetflixTVShows,
+  getPrimeReleases,
   paginateResults,
 } from "@/backend/metadata/traktApi";
 import { conf } from "@/setup/config";
@@ -360,6 +371,56 @@ export function useDiscoverMedia({
     [mediaType, formattedLanguage, page],
   );
 
+  // Get Trakt function for provider
+  const getTraktProviderFunction = useCallback(
+    (providerId: string) => {
+      const trakt =
+        PROVIDER_TO_TRAKT_MAP[providerId as keyof typeof PROVIDER_TO_TRAKT_MAP];
+      if (!trakt) return null;
+
+      // Handle TV vs Movies for Netflix
+      if (trakt === "netflix" && mediaType === "tv") {
+        return getNetflixTVShows;
+      }
+      if (trakt === "netflix" && mediaType === "movie") {
+        return getNetflixMovies;
+      }
+
+      // Map provider to corresponding Trakt function
+      switch (trakt) {
+        case "appletv":
+          return getAppleTVReleases;
+        case "prime":
+          return getPrimeReleases;
+        case "hulu":
+          return getHuluReleases;
+        case "disney":
+          return getDisneyReleases;
+        case "hbo":
+          return getHBOReleases;
+        default:
+          return null;
+      }
+    },
+    [mediaType],
+  );
+
+  // Get Trakt function for genre
+  const getTraktGenreFunction = useCallback((genreId: string) => {
+    const trakt =
+      GENRE_TO_TRAKT_MAP[genreId as keyof typeof GENRE_TO_TRAKT_MAP];
+    if (!trakt) return null;
+
+    switch (trakt) {
+      case "action":
+        return getActionReleases;
+      case "drama":
+        return getDramaReleases;
+      default:
+        return null;
+    }
+  }, []);
+
   const fetchEditorPicks = useCallback(async () => {
     const picks =
       mediaType === "movie" ? EDITOR_PICKS_MOVIES : EDITOR_PICKS_TV_SHOWS;
@@ -395,6 +456,8 @@ export function useDiscoverMedia({
 
     const attemptFetch = async (type: DiscoverContentType) => {
       let data;
+      let traktGenreFunction;
+      let traktProviderFunction;
 
       // Map content types to their endpoints and handling logic
       switch (type) {
@@ -438,31 +501,102 @@ export function useDiscoverMedia({
 
         case "genre":
           if (!id) throw new Error("Genre ID is required");
-          data = await fetchTMDBMedia(`/discover/${mediaType}`, {
-            with_genres: id,
-          });
-          setSectionTitle(
-            mediaType === "movie"
-              ? t("discover.carousel.title.movies", { category: genreName })
-              : t("discover.carousel.title.tvshows", { category: genreName }),
-          );
+
+          // Try to use Trakt genre endpoint if available
+          traktGenreFunction = getTraktGenreFunction(id);
+          if (traktGenreFunction) {
+            try {
+              data = await fetchTraktMedia(traktGenreFunction);
+              setSectionTitle(
+                mediaType === "movie"
+                  ? t("discover.carousel.title.movies", { category: genreName })
+                  : t("discover.carousel.title.tvshows", {
+                      category: genreName,
+                    }),
+              );
+            } catch (traktErr) {
+              console.error(
+                "Trakt genre fetch failed, falling back to TMDB:",
+                traktErr,
+              );
+              // Fall back to TMDB
+              data = await fetchTMDBMedia(`/discover/${mediaType}`, {
+                with_genres: id,
+              });
+              setSectionTitle(
+                mediaType === "movie"
+                  ? t("discover.carousel.title.movies", { category: genreName })
+                  : t("discover.carousel.title.tvshows", {
+                      category: genreName,
+                    }),
+              );
+            }
+          } else {
+            // Use TMDB if no Trakt endpoint exists for this genre
+            data = await fetchTMDBMedia(`/discover/${mediaType}`, {
+              with_genres: id,
+            });
+            setSectionTitle(
+              mediaType === "movie"
+                ? t("discover.carousel.title.movies", { category: genreName })
+                : t("discover.carousel.title.tvshows", { category: genreName }),
+            );
+          }
           break;
 
         case "provider":
           if (!id) throw new Error("Provider ID is required");
-          data = await fetchTMDBMedia(`/discover/${mediaType}`, {
-            with_watch_providers: id,
-            watch_region: "US",
-          });
-          setSectionTitle(
-            mediaType === "movie"
-              ? t("discover.carousel.title.moviesOn", {
-                  provider: providerName,
-                })
-              : t("discover.carousel.title.tvshowsOn", {
-                  provider: providerName,
-                }),
-          );
+
+          // Try to use Trakt provider endpoint if available
+          traktProviderFunction = getTraktProviderFunction(id);
+          if (traktProviderFunction) {
+            try {
+              data = await fetchTraktMedia(traktProviderFunction);
+              setSectionTitle(
+                mediaType === "movie"
+                  ? t("discover.carousel.title.moviesOn", {
+                      provider: providerName,
+                    })
+                  : t("discover.carousel.title.tvshowsOn", {
+                      provider: providerName,
+                    }),
+              );
+            } catch (traktErr) {
+              console.error(
+                "Trakt provider fetch failed, falling back to TMDB:",
+                traktErr,
+              );
+              // Fall back to TMDB
+              data = await fetchTMDBMedia(`/discover/${mediaType}`, {
+                with_watch_providers: id,
+                watch_region: "US",
+              });
+              setSectionTitle(
+                mediaType === "movie"
+                  ? t("discover.carousel.title.moviesOn", {
+                      provider: providerName,
+                    })
+                  : t("discover.carousel.title.tvshowsOn", {
+                      provider: providerName,
+                    }),
+              );
+            }
+          } else {
+            // Use TMDB if no Trakt endpoint exists for this provider
+            data = await fetchTMDBMedia(`/discover/${mediaType}`, {
+              with_watch_providers: id,
+              watch_region: "US",
+            });
+            setSectionTitle(
+              mediaType === "movie"
+                ? t("discover.carousel.title.moviesOn", {
+                    provider: providerName,
+                  })
+                : t("discover.carousel.title.tvshowsOn", {
+                    provider: providerName,
+                  }),
+            );
+          }
           break;
 
         case "recommendations":
@@ -534,6 +668,8 @@ export function useDiscoverMedia({
     fetchEditorPicks,
     t,
     page,
+    getTraktGenreFunction,
+    getTraktProviderFunction,
   ]);
 
   useEffect(() => {

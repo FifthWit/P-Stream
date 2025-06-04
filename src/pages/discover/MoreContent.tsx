@@ -184,7 +184,7 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
           <div className="animate-pulse">
             <div className="h-8 bg-mediaCard-hoverBackground rounded w-1/4 mb-8" />
             <MediaGrid>
-              {Array.from({ length: 20 }).map((_, i) => (
+              {Array.from({ length: 20 }).map((_, _i) => (
                 <div
                   key={`loading-skeleton-${Math.random().toString(36).substring(7)}`}
                   className="relative group cursor-default user-select-none rounded-xl p-2 bg-transparent"

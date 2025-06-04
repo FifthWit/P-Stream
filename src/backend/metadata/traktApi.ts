@@ -110,7 +110,7 @@ export const PROVIDER_TO_TRAKT_MAP = {
   "10": "prime", // Prime Video
   "15": "hulu", // Hulu
   "337": "disney", // Disney+
-  "384": "hbo", // HBO Max/Max
+  "1899": "hbo", // Max
 } as const;
 
 // Map genres to their Trakt endpoints
