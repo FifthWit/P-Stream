@@ -23,51 +23,55 @@ export type TraktContentType = "movie" | "episode";
 
 export const TRAKT_BASE_URL = "https://fed-airdate.pstream.org";
 
-export async function getLatestReleases(): Promise<TraktLatestResponse> {
-  const response = await fetch(`${TRAKT_BASE_URL}/latest`);
+// Base function to fetch from Trakt API
+async function fetchFromTrakt(endpoint: string): Promise<TraktLatestResponse> {
+  const response = await fetch(`${TRAKT_BASE_URL}${endpoint}`);
   if (!response.ok) {
-    throw new Error(`Failed to fetch latest releases: ${response.statusText}`);
+    throw new Error(`Failed to fetch from ${endpoint}: ${response.statusText}`);
   }
   return response.json();
 }
 
-export async function getLatest4KReleases(): Promise<TraktLatestResponse> {
-  const response = await fetch(`${TRAKT_BASE_URL}/latest4k`);
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch latest 4K releases: ${response.statusText}`,
-    );
-  }
-  return response.json();
-}
-
+// Release details
 export async function getReleaseDetails(
   id: string,
   season?: number,
   episode?: number,
 ): Promise<TraktReleaseResponse> {
-  let url = `${TRAKT_BASE_URL}/release/${id}`;
+  let url = `/release/${id}`;
   if (season !== undefined && episode !== undefined) {
     url += `/${season}/${episode}`;
   }
-
-  const response = await fetch(url);
+  const response = await fetch(`${TRAKT_BASE_URL}${url}`);
   if (!response.ok) {
     throw new Error(`Failed to fetch release details: ${response.statusText}`);
   }
   return response.json();
 }
 
-export async function getAppleTVReleases(): Promise<TraktLatestResponse> {
-  const response = await fetch(`${TRAKT_BASE_URL}/appletv`);
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch Apple TV releases: ${response.statusText}`,
-    );
-  }
-  return response.json();
-}
+// Latest releases
+export const getLatestReleases = () => fetchFromTrakt("/latest");
+export const getLatest4KReleases = () => fetchFromTrakt("/latest4k");
+export const getLatestTVReleases = () => fetchFromTrakt("/latesttv");
 
+// Streaming service releases
+export const getAppleTVReleases = () => fetchFromTrakt("/appletv");
+export const getNetflixMovies = () => fetchFromTrakt("/netflixmovies");
+export const getNetflixTVShows = () => fetchFromTrakt("/netflixtv");
+export const getPrimeReleases = () => fetchFromTrakt("/prime");
+export const getHuluReleases = () => fetchFromTrakt("/hulu");
+export const getDisneyReleases = () => fetchFromTrakt("/disney");
+export const getHBOReleases = () => fetchFromTrakt("/hbo");
+
+// Genre-specific releases
+export const getActionReleases = () => fetchFromTrakt("/action");
+export const getDramaReleases = () => fetchFromTrakt("/drama");
+
+// Popular content
+export const getPopularTVShows = () => fetchFromTrakt("/populartv");
+export const getPopularMovies = () => fetchFromTrakt("/popularmovies");
+
+// Type conversion utilities
 export function convertToMediaType(type: TraktContentType): MWMediaType {
   return type === "movie" ? MWMediaType.MOVIE : MWMediaType.SERIES;
 }
@@ -75,3 +79,19 @@ export function convertToMediaType(type: TraktContentType): MWMediaType {
 export function convertFromMediaType(type: MWMediaType): TraktContentType {
   return type === MWMediaType.MOVIE ? "movie" : "episode";
 }
+
+// Map provider names to their Trakt endpoints
+export const PROVIDER_TO_TRAKT_MAP = {
+  "8": "netflix", // Netflix
+  "2": "appletv", // Apple TV+
+  "10": "prime", // Prime Video
+  "15": "hulu", // Hulu
+  "337": "disney", // Disney+
+  "384": "hbo", // HBO Max/Max
+} as const;
+
+// Map genres to their Trakt endpoints
+export const GENRE_TO_TRAKT_MAP = {
+  "28": "action", // Action
+  "18": "drama", // Drama
+} as const;
