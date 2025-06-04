@@ -23,9 +23,18 @@ export function EpisodeCarousel({
   const [showEpisodeMenu, setShowEpisodeMenu] = useState(false);
   const [customSeason, setCustomSeason] = useState("");
   const [customEpisode, setCustomEpisode] = useState("");
+  const [expandedEpisodes, setExpandedEpisodes] = useState<{
+    [key: number]: boolean;
+  }>({});
+  const [truncatedEpisodes, setTruncatedEpisodes] = useState<{
+    [key: number]: boolean;
+  }>({});
   const episodeMenuRef = useRef<HTMLDivElement>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
   const activeEpisodeRef = useRef<HTMLAnchorElement>(null);
+  const descriptionRefs = useRef<{
+    [key: number]: HTMLParagraphElement | null;
+  }>({});
 
   const handleScroll = (direction: "left" | "right") => {
     if (!carouselRef.current) return;
@@ -140,6 +149,40 @@ export function EpisodeCarousel({
     (ep) => ep.season_number === selectedSeason,
   );
 
+  const toggleEpisodeExpansion = (
+    episodeId: number,
+    event: React.MouseEvent,
+  ) => {
+    event.preventDefault();
+    setExpandedEpisodes((prev) => ({
+      ...prev,
+      [episodeId]: !prev[episodeId],
+    }));
+  };
+
+  const isTextTruncated = (element: HTMLElement | null) => {
+    if (!element) return false;
+    return element.scrollHeight > element.clientHeight;
+  };
+
+  // Check truncation after render and when expanded state changes
+  useEffect(() => {
+    const checkTruncation = () => {
+      const newTruncatedState: { [key: number]: boolean } = {};
+      episodes.forEach((episode) => {
+        if (!expandedEpisodes[episode.id]) {
+          const element = descriptionRefs.current[episode.id];
+          newTruncatedState[episode.id] = isTextTruncated(element);
+        }
+      });
+      setTruncatedEpisodes(newTruncatedState);
+    };
+
+    // Wait for the transition to complete
+    const timeoutId = setTimeout(checkTruncation, 250);
+    return () => clearTimeout(timeoutId);
+  }, [episodes, expandedEpisodes]);
+
   return (
     <div className="mt-6 md:mt-0">
       {/* Season Selector */}
@@ -252,6 +295,7 @@ export function EpisodeCarousel({
                 100
               : 0;
             const isAired = hasAired(episode.air_date);
+            const isExpanded = expandedEpisodes[episode.id];
 
             return (
               <Link
@@ -259,55 +303,102 @@ export function EpisodeCarousel({
                 to={getEpisodeUrl(episode)}
                 ref={isActive ? activeEpisodeRef : null}
                 className={classNames(
-                  "flex-shrink-0 w-52 md:w-64 rounded-lg overflow-hidden transition-all duration-200 relative cursor-pointer hover:scale-95",
+                  "flex-shrink-0 transition-all duration-200 relative cursor-pointer hover:scale-95 rounded-lg overflow-hidden",
                   isActive
                     ? "bg-video-context-hoverColor/50 hover:bg-white/5"
                     : "hover:bg-white/5",
                   !isAired ? "opacity-50" : "",
+                  isExpanded ? "w-[32rem]" : "w-52 md:w-64",
+                  "h-[280px]", // Fixed height for all states
                 )}
               >
                 {/* Thumbnail */}
-                <div className="relative aspect-video w-full bg-video-context-hoverColor">
-                  {episode.still_path ? (
-                    <img
-                      src={`https://image.tmdb.org/t/p/w300${episode.still_path}`}
-                      alt={episode.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-black bg-opacity-50">
-                      <Icon
-                        icon={Icons.FILM}
-                        className="text-video-context-type-main opacity-50 text-3xl"
+                {!isExpanded && (
+                  <div className="relative h-[158px] w-full bg-video-context-hoverColor">
+                    {episode.still_path ? (
+                      <img
+                        src={`https://image.tmdb.org/t/p/w300${episode.still_path}`}
+                        alt={episode.name}
+                        className="w-full h-full object-cover"
                       />
-                    </div>
-                  )}
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-black bg-opacity-50">
+                        <Icon
+                          icon={Icons.FILM}
+                          className="text-video-context-type-main opacity-50 text-3xl"
+                        />
+                      </div>
+                    )}
 
-                  {/* Episode Number Badge */}
-                  <div className="absolute top-2 left-2 flex items-center space-x-2">
-                    <span className="p-0.5 px-2 rounded inline bg-video-context-hoverColor bg-opacity-80 text-video-context-type-main text-sm">
-                      {t("media.episodeShort")}
-                      {episode.episode_number}
-                    </span>
-                    {!isAired && (
-                      <span className="text-video-context-type-main/70 text-sm">
-                        {episode.air_date
-                          ? `(${t("details.airs")} - ${new Date(episode.air_date).toLocaleDateString()})`
-                          : `(${t("media.unreleased")})`}
+                    {/* Episode Number Badge */}
+                    <div className="absolute top-2 left-2 flex items-center space-x-2">
+                      <span className="p-0.5 px-2 rounded inline bg-video-context-hoverColor bg-opacity-80 text-video-context-type-main text-sm">
+                        {t("media.episodeShort")}
+                        {episode.episode_number}
+                      </span>
+                      {!isAired && (
+                        <span className="text-video-context-type-main/70 text-sm">
+                          {episode.air_date
+                            ? `(${t("details.airs")} - ${new Date(episode.air_date).toLocaleDateString()})`
+                            : `(${t("media.unreleased")})`}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Content */}
+                <div
+                  className={classNames(
+                    "p-3",
+                    isExpanded ? "h-full" : "h-[122px]",
+                  )}
+                >
+                  <div className="flex items-start justify-between">
+                    <h3 className="font-bold text-white line-clamp-1">
+                      {episode.name}
+                    </h3>
+                    {!isExpanded && (
+                      <span className="p-0.5 px-2 rounded inline bg-video-context-hoverColor bg-opacity-80 text-video-context-type-main text-sm">
+                        {t("media.episodeShort")}
+                        {episode.episode_number}
                       </span>
                     )}
                   </div>
-                </div>
-
-                {/* Content */}
-                <div className="p-3">
-                  <h3 className="font-bold text-white line-clamp-1">
-                    {episode.name}
-                  </h3>
                   {episode.overview && (
-                    <p className="text-sm text-white/80 mt-1.5 line-clamp-2">
-                      {episode.overview}
-                    </p>
+                    <div className="relative">
+                      <p
+                        ref={(el) => {
+                          descriptionRefs.current[episode.id] = el;
+                        }}
+                        className={classNames(
+                          "text-sm text-white/80 mt-1.5 transition-all duration-200",
+                          !isExpanded
+                            ? "line-clamp-2"
+                            : "max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent pr-2",
+                        )}
+                      >
+                        {episode.overview}
+                      </p>
+                      {!isExpanded && truncatedEpisodes[episode.id] && (
+                        <button
+                          type="button"
+                          onClick={(e) => toggleEpisodeExpansion(episode.id, e)}
+                          className="text-sm text-white/60 hover:text-white transition-opacity duration-200 opacity-0 animate-fade-in"
+                        >
+                          {t("player.menus.episodes.showMore")}
+                        </button>
+                      )}
+                      {isExpanded && (
+                        <button
+                          type="button"
+                          onClick={(e) => toggleEpisodeExpansion(episode.id, e)}
+                          className="mt-2 text-sm text-white/60 hover:text-white transition-opacity duration-200 opacity-0 animate-fade-in"
+                        >
+                          {t("player.menus.episodes.showLess")}
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
 

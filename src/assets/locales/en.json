@@ -477,7 +477,9 @@
         "loadingList": "Loading...",
         "loadingTitle": "Loading...",
         "unairedEpisodes": "One or more episodes in this season have been disabled because they haven't been aired yet.",
-        "seasons": "Seasons"
+        "seasons": "Seasons",
+        "showMore": "Show more",
+        "showLess": "Show less"
       },
       "playback": {
         "speedLabel": "Playback speed",

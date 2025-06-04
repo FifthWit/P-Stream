@@ -29,8 +29,15 @@ const config: Config = {
           "0%, 40%, 100%": { height: "0.5em", "background-color": "#282336" },
           "20%": { height: "1em", "background-color": "white" },
         },
+        "fade-in": {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
       },
-      animation: { "loading-pin": "loading-pin 1.8s ease-in-out infinite" },
+      animation: { 
+        "loading-pin": "loading-pin 1.8s ease-in-out infinite",
+        "fade-in": "fade-in 200ms ease-out forwards",
+      },
     },
   },
   plugins: [
