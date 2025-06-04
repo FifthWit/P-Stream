@@ -67,7 +67,7 @@ function FeaturedCarouselSkeleton({ shorter }: { shorter?: boolean }) {
     >
       <div className="relative w-full h-full overflow-hidden">
         <div
-          className="absolute inset-0 bg-gray-800"
+          className="absolute inset-0 bg-gray-900"
           style={{
             maskImage:
               "linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 1) 500px)",
@@ -79,10 +79,10 @@ function FeaturedCarouselSkeleton({ shorter }: { shorter?: boolean }) {
 
       {/* Navigation Buttons Skeleton */}
       <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/30">
-        <div className="w-8 h-8 bg-gray-600 rounded-full animate-pulse" />
+        <div className="w-8 h-8 bg-gray-900 rounded-full animate-pulse" />
       </div>
       <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/30">
-        <div className="w-8 h-8 bg-gray-600 rounded-full animate-pulse" />
+        <div className="w-8 h-8 bg-gray-900 rounded-full animate-pulse" />
       </div>
 
       {/* Navigation Dots Skeleton */}
@@ -90,7 +90,7 @@ function FeaturedCarouselSkeleton({ shorter }: { shorter?: boolean }) {
         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
           <div
             key={i}
-            className="w-2.5 h-2.5 rounded-full bg-gray-600 animate-pulse"
+            className="w-2.5 h-2.5 rounded-full bg-gray-900 animate-pulse"
           />
         ))}
       </div>
@@ -99,14 +99,14 @@ function FeaturedCarouselSkeleton({ shorter }: { shorter?: boolean }) {
       <div className="absolute inset-0 flex items-end pb-20 z-10">
         <div className="container mx-auto px-8 md:px-4">
           <div className="max-w-3xl">
-            <div className="h-12 w-48 bg-gray-600 rounded animate-pulse mb-6" />
+            <div className="h-12 w-48 bg-gray-900 rounded animate-pulse mb-6" />
             <div className="space-y-2 mb-6">
-              <div className="h-4 bg-gray-600 rounded animate-pulse w-3/4" />
-              <div className="h-4 bg-gray-600 rounded animate-pulse w-1/2" />
+              <div className="h-4 bg-gray-900 rounded animate-pulse w-3/4" />
+              <div className="h-4 bg-gray-900 rounded animate-pulse w-1/2" />
             </div>
             <div className="flex gap-4 justify-center items-center sm:justify-start">
-              <div className="h-10 w-32 bg-gray-600 rounded animate-pulse" />
-              <div className="h-10 w-32 bg-gray-600 rounded animate-pulse" />
+              <div className="h-10 w-32 bg-gray-900 rounded animate-pulse" />
+              <div className="h-10 w-32 bg-gray-900 rounded animate-pulse" />
             </div>
           </div>
         </div>
