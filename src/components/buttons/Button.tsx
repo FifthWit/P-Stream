@@ -53,9 +53,6 @@ export function Button(props: Props) {
   if (props.theme === "danger")
     colorClasses =
       "bg-buttons-danger hover:bg-buttons-dangerHover text-white gap-2";
-  if (props.theme === "glass")
-    colorClasses =
-      "text-white hover:scale-105 bg-buttons-purple hover:bg-buttons-purpleHover bg-opacity-45 hover:bg-opacity-60 !backdrop-blur-md border-2 border-gray-400 border-opacity-20 gap-2";
 
   let classes = classNames(
     "tabbable cursor-pointer inline-flex items-center justify-center rounded-lg font-medium transition-[transform,background-color] duration-100 active:scale-105 md:px-8",
