@@ -182,13 +182,18 @@ export function MoreContent({ onShowDetails }: MoreContentProps) {
       <SubPageLayout>
         <WideContainer>
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-700 rounded w-1/4 mb-8" />
+            <div className="h-8 bg-mediaCard-hoverBackground rounded w-1/4 mb-8" />
             <MediaGrid>
-              {Array.from({ length: 20 }).map(() => (
+              {Array.from({ length: 20 }).map((_, i) => (
                 <div
-                  key={crypto.randomUUID()}
-                  className="aspect-[2/3] bg-gray-700 rounded-lg"
-                />
+                  key={`loading-skeleton-${Math.random().toString(36).substring(7)}`}
+                  className="relative group cursor-default user-select-none rounded-xl p-2 bg-transparent"
+                >
+                  <div className="animate-pulse">
+                    <div className="w-full aspect-[2/3] bg-mediaCard-hoverBackground rounded-lg" />
+                    <div className="mt-2 h-4 bg-mediaCard-hoverBackground rounded w-3/4" />
+                  </div>
+                </div>
               ))}
             </MediaGrid>
           </div>
