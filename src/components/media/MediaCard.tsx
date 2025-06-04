@@ -104,7 +104,9 @@ function MediaCardContent({
             },
           )}
           style={{
-            backgroundImage: media.poster ? `url(${media.poster})` : undefined,
+            backgroundImage: media.poster
+              ? `url(${media.poster})`
+              : "url(/placeholder.png)",
           }}
         >
           {series ? (

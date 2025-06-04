@@ -517,7 +517,9 @@ export function MediaCarousel({
                     media={{
                       id: item.id.toString(),
                       title: item.title || item.name || "",
-                      poster: `https://image.tmdb.org/t/p/w342${item.poster_path}`,
+                      poster: item.poster_path
+                        ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
+                        : "/placeholder.png",
                       type: isTVShow ? "show" : "movie",
                       year: isTVShow
                         ? item.first_air_date
