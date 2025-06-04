@@ -99,7 +99,7 @@ export interface EpisodeCarouselProps {
   mediaTitle?: string;
 }
 
-export interface DetailsHeaderProps {
+export interface DetailsBodyProps {
   data: DetailsContent;
   onPlayClick: () => void;
   onTrailerClick: () => void;
@@ -112,6 +112,7 @@ export interface DetailsHeaderProps {
   imdbData?: {
     rating: number;
     votes: number;
+    trailer_url?: string;
   };
 }
 

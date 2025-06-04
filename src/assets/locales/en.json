@@ -212,7 +212,8 @@
     "season": "Season",
     "episode": "Episode",
     "airs": "Airs",
-    "endsAt": "Ends at {{time}}"
+    "endsAt": "Ends at {{time}}",
+    "trailer": "Trailer"
   },
   "migration": {
     "loginRequired": "You must be logged in to migrate your data! Please go back and login to continue.",

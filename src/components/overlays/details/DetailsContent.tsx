@@ -12,7 +12,7 @@ import { scrapeIMDb } from "@/utils/imdbScraper";
 import { getTmdbLanguageCode } from "@/utils/language";
 import { scrapeRottenTomatoes } from "@/utils/rottenTomatoesScraper";
 
-import { DetailsHeader } from "./DetailsHeader";
+import { DetailsBody } from "./DetailsBody";
 import { DetailsInfo } from "./DetailsInfo";
 import { EpisodeCarousel } from "./EpisodeCarousel";
 import { CastCarousel } from "./PeopleCarousel";
@@ -205,7 +205,7 @@ export function DetailsContent({ data, minimal = false }: DetailsContentProps) {
 
       {/* Content */}
       <div className="px-6 pb-6 mt-[-70px] flex-grow relative z-30">
-        <DetailsHeader
+        <DetailsBody
           data={data}
           onPlayClick={handlePlayClick}
           onTrailerClick={() => setShowTrailer(true)}

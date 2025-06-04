@@ -6,29 +6,11 @@ import { getRTIcon } from "@/utils/rottenTomatoesScraper";
 import { DetailsRatingsProps } from "./types";
 
 export function DetailsRatings({
-  voteAverage,
-  voteCount,
-  imdbData,
   rtData,
   mediaId,
   mediaType,
   imdbId,
 }: DetailsRatingsProps) {
-  const formatVoteCount = (count?: number) => {
-    if (!count) return "0";
-    if (count >= 1000) {
-      return `${Math.floor(count / 1000)}K+`;
-    }
-    return count.toString();
-  };
-
-  const getRatingColor = (rating: number) => {
-    if (rating >= 8) return "bg-green-500";
-    if (rating >= 6) return "bg-yellow-500";
-    if (rating >= 4) return "bg-orange-500";
-    return "bg-red-500";
-  };
-
   return (
     <div className="space-y-1">
       {/* External Links */}
@@ -89,27 +71,6 @@ export function DetailsRatings({
             </div>
           </div>
         )}
-      </div>
-      <div className="pt-4">
-        {voteAverage !== undefined &&
-          voteCount !== undefined &&
-          voteCount > 0 && (
-            <>
-              {/* Rating Progress Bar */}
-              <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className={`h-full ${getRatingColor(imdbData?.imdb_rating || voteAverage)} transition-all duration-500`}
-                  style={{
-                    width: `${((imdbData?.imdb_rating || voteAverage) / 10) * 100}%`,
-                  }}
-                />
-              </div>
-              <div className="text-white/60 text-[10px] text-right">
-                {formatVoteCount(imdbData?.votes || voteCount)}{" "}
-                {t("details.votes")}
-              </div>
-            </>
-          )}
       </div>
     </div>
   );
