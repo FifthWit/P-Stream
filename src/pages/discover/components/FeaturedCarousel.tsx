@@ -21,8 +21,11 @@ import { usePreferencesStore } from "@/stores/preferences";
 import { scrapeIMDb } from "@/utils/imdbScraper";
 import { getTmdbLanguageCode } from "@/utils/language";
 
-import { EDITOR_PICKS_MOVIES, EDITOR_PICKS_TV_SHOWS } from "../discoverContent";
 import { RandomMovieButton } from "./RandomMovieButton";
+import {
+  EDITOR_PICKS_MOVIES,
+  EDITOR_PICKS_TV_SHOWS,
+} from "../hooks/useDiscoverMedia";
 
 export interface FeaturedMedia extends Partial<Movie & TVShow> {
   children?: ReactNode;

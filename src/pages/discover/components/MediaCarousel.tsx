@@ -1,5 +1,5 @@
 import { Listbox } from "@headlessui/react";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { useWindowSize } from "react-use";
@@ -9,29 +9,47 @@ import { Icon, Icons } from "@/components/Icon";
 import { MediaCard } from "@/components/media/MediaCard";
 import { Flare } from "@/components/utils/Flare";
 import { useIsMobile } from "@/hooks/useIsMobile";
-import { Media } from "@/pages/discover/common";
+import {
+  DiscoverContentType,
+  MediaType,
+  useDiscoverMedia,
+  useDiscoverOptions,
+} from "@/pages/discover/hooks/useDiscoverMedia";
+import { useIntersectionObserver } from "@/pages/discover/hooks/useIntersectionObserver";
 import { useDiscoverStore } from "@/stores/discover";
+import { useProgressStore } from "@/stores/progress";
 import { MediaItem } from "@/utils/mediaTypes";
 
-import { MOVIE_PROVIDERS, TV_PROVIDERS } from "../discoverContent";
 import { CarouselNavButtons } from "./CarouselNavButtons";
 
+interface ContentConfig {
+  /** Primary content type to fetch */
+  type: DiscoverContentType;
+  /** Fallback content type if primary fails */
+  fallback?: DiscoverContentType;
+}
+
 interface MediaCarouselProps {
-  medias: Media[];
-  category: string;
+  /** Content configuration for the carousel */
+  content: ContentConfig;
+  /** Whether this is a TV show carousel */
   isTVShow: boolean;
+  /** Refs for carousel navigation */
   carouselRefs: React.MutableRefObject<{
     [key: string]: HTMLDivElement | null;
   }>;
+  /** Callback when media details should be shown */
   onShowDetails?: (media: MediaItem) => void;
-  genreId?: number;
+  /** Whether to show more content button/link */
   moreContent?: boolean;
+  /** Custom more content link */
   moreLink?: string;
-  relatedButtons?: Array<{ name: string; id: string }>;
-  onButtonClick?: (id: string, name: string) => void;
-  recommendationSources?: Array<{ id: string; title: string }>;
-  selectedRecommendationSource?: string;
-  onRecommendationSourceChange?: (id: string) => void;
+  /** Whether to show provider selection */
+  showProviders?: boolean;
+  /** Whether to show genre selection */
+  showGenres?: boolean;
+  /** Whether to show recommendations */
+  showRecommendations?: boolean;
 }
 
 function MediaCardSkeleton() {
@@ -76,30 +94,167 @@ function MoreCard({ link }: { link: string }) {
 }
 
 export function MediaCarousel({
-  medias,
-  category,
+  content,
   isTVShow,
   carouselRefs,
   onShowDetails,
-  genreId,
   moreContent,
   moreLink,
-  relatedButtons,
-  onButtonClick,
-  recommendationSources,
-  selectedRecommendationSource,
-  onRecommendationSourceChange,
+  showProviders = false,
+  showGenres = false,
+  showRecommendations = false,
 }: MediaCarouselProps) {
   const { t } = useTranslation();
   const { width: windowWidth } = useWindowSize();
   const { setLastView } = useDiscoverStore();
+  const { isMobile } = useIsMobile();
+  const browser = !!window.chrome;
+
+  // State for selected options
+  const [selectedProviderId, setSelectedProviderId] = useState<string>("");
+  const [selectedProviderName, setSelectedProviderName] = useState<string>("");
+  const [selectedGenreId, setSelectedGenreId] = useState<string>("");
+  const [selectedGenreName, setSelectedGenreName] = useState<string>("");
+  const [selectedRecommendationId, setSelectedRecommendationId] =
+    useState<string>("");
+  const [selectedRecommendationTitle, setSelectedRecommendationTitle] =
+    useState<string>("");
   const [selectedGenre, setSelectedGenre] = React.useState<OptionItem | null>(
     null,
   );
-  const categorySlug = `${category.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${isTVShow ? "tv" : "movie"}`;
-  const browser = !!window.chrome;
-  const { isMobile } = useIsMobile();
 
+  // Get available providers and genres
+  const mediaType: MediaType = isTVShow ? "tv" : "movie";
+  const { providers, genres } = useDiscoverOptions(mediaType);
+
+  // Get progress items for recommendations
+  const progressItems = useProgressStore((state) => state.items);
+  const recommendationSources = Object.entries(progressItems || {})
+    .filter(([_, item]) => item.type === (isTVShow ? "show" : "movie"))
+    .map(([id, item]) => ({
+      id,
+      title: item.title || "",
+    }));
+
+  // Set up intersection observer for lazy loading
+  const { targetRef, isIntersecting } = useIntersectionObserver({
+    rootMargin: "200px",
+  });
+
+  // Handle provider/genre selection
+  const handleProviderChange = (id: string, name: string) => {
+    setSelectedProviderId(id);
+    setSelectedProviderName(name);
+  };
+
+  const handleGenreChange = (id: string, name: string) => {
+    setSelectedGenreId(id);
+    setSelectedGenreName(name);
+  };
+
+  // Get related buttons based on type
+  const relatedButtons = showProviders
+    ? providers.map((p) => ({ id: p.id, name: p.name }))
+    : showGenres
+      ? genres.map((g) => ({ id: g.id.toString(), name: g.name }))
+      : undefined;
+
+  // Set initial provider/genre selection
+  useEffect(() => {
+    if (showProviders && providers.length > 0 && !selectedProviderId) {
+      handleProviderChange(providers[0].id, providers[0].name);
+    }
+    if (showGenres && genres.length > 0 && !selectedGenreId) {
+      handleGenreChange(genres[0].id.toString(), genres[0].name);
+    }
+  }, [
+    showProviders,
+    showGenres,
+    providers,
+    genres,
+    selectedProviderId,
+    selectedGenreId,
+  ]);
+
+  // Get the appropriate button click handler
+  const onButtonClick = showProviders
+    ? handleProviderChange
+    : showGenres
+      ? handleGenreChange
+      : undefined;
+
+  // Split buttons into visible and dropdown based on window width
+  const { visibleButtons, dropdownButtons } = React.useMemo(() => {
+    if (!relatedButtons) return { visibleButtons: [], dropdownButtons: [] };
+
+    const visible = windowWidth > 850 ? relatedButtons.slice(0, 5) : [];
+    const dropdown =
+      windowWidth > 850 ? relatedButtons.slice(5) : relatedButtons;
+
+    return { visibleButtons: visible, dropdownButtons: dropdown };
+  }, [relatedButtons, windowWidth]);
+
+  // Determine content type and ID based on selection
+  const contentType =
+    showProviders && selectedProviderId
+      ? "provider"
+      : showGenres && selectedGenreId
+        ? "genre"
+        : showRecommendations && selectedRecommendationId
+          ? "recommendations"
+          : content.type;
+
+  // Fetch media using our hook
+  const { media, sectionTitle } = useDiscoverMedia({
+    contentType,
+    mediaType,
+    id: selectedProviderId || selectedGenreId || selectedRecommendationId,
+    fallbackType: content.fallback,
+    genreName: selectedGenreName,
+    providerName: selectedProviderName,
+    mediaTitle: selectedRecommendationTitle,
+  });
+
+  // Find active button
+  const activeButton = relatedButtons?.find(
+    (btn) =>
+      btn.name === selectedGenre?.name ||
+      btn.name === sectionTitle.split(" on ")[1],
+  );
+
+  // Convert buttons to dropdown options
+  const dropdownOptions: OptionItem[] = dropdownButtons.map((button) => ({
+    id: button.id,
+    name: button.name,
+  }));
+
+  // Set selected genre if active button is in dropdown
+  React.useEffect(() => {
+    if (
+      activeButton &&
+      !visibleButtons.find((btn) => btn.id === activeButton.id)
+    ) {
+      setSelectedGenre({ id: activeButton.id, name: activeButton.name });
+    }
+  }, [activeButton, visibleButtons]);
+
+  // Set initial recommendation source
+  useEffect(() => {
+    if (
+      showRecommendations &&
+      recommendationSources.length > 0 &&
+      !selectedRecommendationId
+    ) {
+      const randomSource =
+        recommendationSources[
+          Math.floor(Math.random() * recommendationSources.length)
+        ];
+      setSelectedRecommendationId(randomSource.id);
+      setSelectedRecommendationTitle(randomSource.title);
+    }
+  }, [showRecommendations, recommendationSources, selectedRecommendationId]);
+
+  const categorySlug = `${sectionTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${isTVShow ? "tv" : "movie"}`;
   let isScrolling = false;
 
   const handleWheel = (e: React.WheelEvent) => {
@@ -120,120 +275,6 @@ export function MediaCarousel({
     }
   };
 
-  function getDisplayCategory(
-    categoryName: string,
-    isTVShowCondition: boolean,
-  ): string {
-    // Handle provider-specific categories
-    const providerMatch = categoryName.match(
-      /^Popular (Movies|Shows) on (.+)$/,
-    );
-    if (providerMatch) {
-      const type = providerMatch[1].toLowerCase();
-      const provider = providerMatch[2];
-      return t("discover.carousel.title.popularOn", {
-        type:
-          type === "movies" ? t("media.types.movie") : t("media.types.show"),
-        provider,
-      });
-    }
-
-    // Handle special categories
-    const specialCategories: { [key: string]: string } = {
-      "Now Playing": "inCinemas",
-      "Editor Picks": isTVShowCondition
-        ? "editorPicksShows"
-        : "editorPicksMovies",
-      "Latest Releases": "latestReleases",
-      "4K Releases": "4kReleases",
-      "Top Rated": "topRated",
-      "Most Popular": "popular",
-      "On The Air": "onTheAir",
-    };
-
-    if (specialCategories[categoryName]) {
-      return t(`discover.carousel.title.${specialCategories[categoryName]}`);
-    }
-
-    // Handle provider categories
-    if (
-      categoryName.includes("Movies on") ||
-      categoryName.includes("Shows on")
-    ) {
-      const providerName = categoryName.split(" on ")[1];
-      const providers = isTVShowCondition ? TV_PROVIDERS : MOVIE_PROVIDERS;
-      const provider = providers.find(
-        (p) => p.name.toLowerCase() === providerName.toLowerCase(),
-      );
-
-      if (provider) {
-        return isTVShowCondition
-          ? t("discover.carousel.title.tvshowsOn", { provider: provider.name })
-          : t("discover.carousel.title.moviesOn", { provider: provider.name });
-      }
-      // If provider not found, fall back to using the raw provider name
-      return isTVShowCondition
-        ? t("discover.carousel.title.tvshowsOn", { provider: providerName })
-        : t("discover.carousel.title.moviesOn", { provider: providerName });
-    }
-
-    // Handle recommendations
-    if (categoryName.includes("Because You Watched")) {
-      return t("discover.carousel.title.recommended", {
-        title: categoryName.split("Because You Watched:")[1],
-      });
-    }
-
-    // Handle generic categories
-    return isTVShowCondition
-      ? t("discover.carousel.title.tvshows", { category: categoryName })
-      : t("discover.carousel.title.movies", { category: categoryName });
-  }
-
-  const displayCategory = getDisplayCategory(category, isTVShow);
-
-  const filteredMedias = medias
-    .filter(
-      (media, index, self) =>
-        index ===
-        self.findIndex((m) => m.id === media.id && m.title === media.title),
-    )
-    .slice(0, 20);
-
-  const SKELETON_COUNT = 10;
-
-  const { visibleButtons, dropdownButtons } = React.useMemo(() => {
-    if (!relatedButtons) return { visibleButtons: [], dropdownButtons: [] };
-
-    const visible =
-      windowWidth > 850
-        ? relatedButtons.slice(0, 5)
-        : relatedButtons.slice(0, 0);
-
-    const dropdown =
-      windowWidth > 850 ? relatedButtons.slice(5) : relatedButtons.slice(0);
-
-    return { visibleButtons: visible, dropdownButtons: dropdown };
-  }, [relatedButtons, windowWidth]);
-
-  const activeButton = relatedButtons?.find(
-    (btn) => btn.name === category.split(" on ")[1] || btn.name === category,
-  );
-
-  const dropdownOptions: OptionItem[] = dropdownButtons.map((button) => ({
-    id: button.id,
-    name: button.name,
-  }));
-
-  React.useEffect(() => {
-    if (
-      activeButton &&
-      !visibleButtons.find((btn) => btn.id === activeButton.id)
-    ) {
-      setSelectedGenre({ id: activeButton.id, name: activeButton.name });
-    }
-  }, [activeButton, visibleButtons]);
-
   const handleMoreClick = () => {
     setLastView({
       url: window.location.pathname,
@@ -241,28 +282,60 @@ export function MediaCarousel({
     });
   };
 
+  // Generate more link
+  const generatedMoreLink =
+    moreLink ||
+    (() => {
+      const baseLink = `/discover/more`;
+      if (showProviders && selectedProviderId) {
+        return `${baseLink}/provider/${selectedProviderId}/${mediaType}`;
+      }
+      if (showGenres && selectedGenreId) {
+        return `${baseLink}/genre/${selectedGenreId}/${mediaType}`;
+      }
+      if (showRecommendations && selectedRecommendationId) {
+        return `${baseLink}/recommendations/${selectedRecommendationId}/${mediaType}`;
+      }
+      return `${baseLink}/${content.type}/${mediaType}`;
+    })();
+
+  // Loading state
+  if (!isIntersecting) {
+    return (
+      <div ref={targetRef as React.RefObject<HTMLDivElement>}>
+        <div className="flex items-center justify-between ml-2 md:ml-8 mt-2">
+          <div className="flex gap-4 items-center">
+            <h2 className="text-2xl cursor-default font-bold text-white md:text-2xl pl-5 text-balance">
+              {sectionTitle}
+            </h2>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <>
+    <div ref={targetRef as React.RefObject<HTMLDivElement>}>
       <div className="flex items-center justify-between ml-2 md:ml-8 mt-2">
         <div className="flex flex-col">
           <div className="flex items-center gap-4">
             <h2 className="text-2xl cursor-default font-bold text-white md:text-2xl pl-5 text-balance">
-              {displayCategory}
+              {sectionTitle}
             </h2>
-            {recommendationSources &&
-              recommendationSources.length > 0 &&
-              onRecommendationSourceChange && (
+            {showRecommendations &&
+              recommendationSources &&
+              recommendationSources.length > 0 && (
                 <div className="relative pr-4">
                   <Dropdown
                     selectedItem={
                       recommendationSources.find(
-                        (s) => s.id === selectedRecommendationSource,
+                        (s) => s.id === selectedRecommendationId,
                       )
                         ? {
-                            id: selectedRecommendationSource || "",
+                            id: selectedRecommendationId || "",
                             name:
                               recommendationSources.find(
-                                (s) => s.id === selectedRecommendationSource,
+                                (s) => s.id === selectedRecommendationId,
                               )?.title || "",
                           }
                         : {
@@ -270,9 +343,15 @@ export function MediaCarousel({
                             name: recommendationSources[0]?.title || "",
                           }
                     }
-                    setSelectedItem={(item) =>
-                      onRecommendationSourceChange(item.id)
-                    }
+                    setSelectedItem={(item) => {
+                      const source = recommendationSources.find(
+                        (s) => s.id === item.id,
+                      );
+                      if (source) {
+                        setSelectedRecommendationId(item.id);
+                        setSelectedRecommendationTitle(source.title);
+                      }
+                    }}
                     options={recommendationSources.map((source) => ({
                       id: source.id,
                       name: source.title,
@@ -329,10 +408,7 @@ export function MediaCarousel({
           </div>
           {moreContent && (
             <Link
-              to={
-                moreLink ||
-                `/discover/more/${categorySlug}${genreId ? `/${genreId}` : ""}`
-              }
+              to={generatedMoreLink}
               onClick={handleMoreClick}
               className="flex px-5 items-center hover:text-type-link transition-colors"
             >
@@ -348,7 +424,11 @@ export function MediaCarousel({
                 type="button"
                 key={button.id}
                 onClick={() => onButtonClick?.(button.id, button.name)}
-                className="px-3 py-1 text-sm bg-mediaCard-hoverBackground rounded-full hover:bg-mediaCard-background transition-colors whitespace-nowrap flex-shrink-0"
+                className={`px-3 py-1 text-sm rounded-full hover:bg-mediaCard-background transition-colors whitespace-nowrap flex-shrink-0 ${
+                  button.id === (selectedProviderId || selectedGenreId)
+                    ? "bg-mediaCard-background"
+                    : "bg-mediaCard-hoverBackground"
+                }`}
               >
                 {button.name}
               </button>
@@ -411,48 +491,43 @@ export function MediaCarousel({
         >
           <div className="md:w-12" />
 
-          {filteredMedias.length > 0
-            ? filteredMedias.map((media) => (
+          {media.length > 0
+            ? media.map((item) => (
                 <div
                   onContextMenu={(e: React.MouseEvent<HTMLDivElement>) =>
                     e.preventDefault()
                   }
-                  key={media.id}
+                  key={item.id}
                   className="relative mt-4 group cursor-pointer user-select-none rounded-xl p-2 bg-transparent transition-colors duration-300 w-[10rem] md:w-[11.5rem] h-auto"
                 >
                   <MediaCard
                     linkable
-                    key={media.id}
+                    key={item.id}
                     media={{
-                      id: media.id.toString(),
-                      title: media.title || media.name || "",
-                      poster: `https://image.tmdb.org/t/p/w342${media.poster_path}`,
+                      id: item.id.toString(),
+                      title: item.title || item.name || "",
+                      poster: `https://image.tmdb.org/t/p/w342${item.poster_path}`,
                       type: isTVShow ? "show" : "movie",
                       year: isTVShow
-                        ? media.first_air_date
-                          ? parseInt(media.first_air_date.split("-")[0], 10)
+                        ? item.first_air_date
+                          ? parseInt(item.first_air_date.split("-")[0], 10)
                           : undefined
-                        : media.release_date
-                          ? parseInt(media.release_date.split("-")[0], 10)
+                        : item.release_date
+                          ? parseInt(item.release_date.split("-")[0], 10)
                           : undefined,
                     }}
                     onShowDetails={onShowDetails}
                   />
                 </div>
               ))
-            : Array.from({ length: SKELETON_COUNT }).map(() => (
+            : Array.from({ length: 10 }).map(() => (
                 <MediaCardSkeleton
                   key={`skeleton-${categorySlug}-${Math.random().toString(36).substring(7)}`}
                 />
               ))}
 
-          {moreContent && (
-            <MoreCard
-              link={
-                moreLink ||
-                `/discover/more/${categorySlug}${genreId ? `/${genreId}` : ""}`
-              }
-            />
+          {moreContent && generatedMoreLink && (
+            <MoreCard link={generatedMoreLink} />
           )}
 
           <div className="md:w-12" />
@@ -465,6 +540,6 @@ export function MediaCarousel({
           />
         )}
       </div>
-    </>
+    </div>
   );
 }

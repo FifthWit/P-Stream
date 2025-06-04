@@ -170,13 +170,14 @@ function App() {
           {/* Discover pages */}
           <Route path="/discover" element={<Discover />} />
           <Route
-            path="/discover/more/:type/:id/:mediaType"
+            path="/discover/more/:contentType/:mediaType"
             element={<MoreContent />}
           />
           <Route
-            path="/discover/more/:category/:genreId?"
+            path="/discover/more/:contentType/:id/:mediaType"
             element={<MoreContent />}
           />
+          <Route path="/discover/more/:category" element={<MoreContent />} />
           {/* Settings page */}
           <Route
             path="/settings"

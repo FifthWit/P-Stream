@@ -1,0 +1,519 @@
+import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+
+import { get } from "@/backend/metadata/tmdb";
+import {
+  TraktLatestResponse,
+  getLatest4KReleases,
+  getLatestReleases,
+} from "@/backend/metadata/traktApi";
+import { conf } from "@/setup/config";
+import { useLanguageStore } from "@/stores/language";
+import { getTmdbLanguageCode } from "@/utils/language";
+
+// Shuffle array utility
+const shuffleArray = <T>(array: T[]): T[] => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
+// Editor Picks lists
+export const EDITOR_PICKS_MOVIES = shuffleArray([
+  { id: 9342, type: "movie" }, // The Mask of Zorro
+  { id: 293, type: "movie" }, // A River Runs Through It
+  { id: 370172, type: "movie" }, // No Time To Die
+  { id: 661374, type: "movie" }, // The Glass Onion
+  { id: 207, type: "movie" }, // Dead Poets Society
+  { id: 378785, type: "movie" }, // The Best of the Blues Brothers
+  { id: 335984, type: "movie" }, // Blade Runner 2049
+  { id: 13353, type: "movie" }, // It's the Great Pumpkin, Charlie Brown
+  { id: 27205, type: "movie" }, // Inception
+  { id: 106646, type: "movie" }, // The Wolf of Wall Street
+  { id: 334533, type: "movie" }, // Captain Fantastic
+  { id: 693134, type: "movie" }, // Dune: Part Two
+  { id: 765245, type: "movie" }, // Swan Song
+  { id: 264660, type: "movie" }, // Ex Machina
+  { id: 92591, type: "movie" }, // Bernie
+  { id: 976893, type: "movie" }, // Perfect Days
+  { id: 13187, type: "movie" }, // A Charlie Brown Christmas
+  { id: 11527, type: "movie" }, // Excalibur
+  { id: 120, type: "movie" }, // LOTR: The Fellowship of the Ring
+  { id: 157336, type: "movie" }, // Interstellar
+  { id: 762, type: "movie" }, // Monty Python and the Holy Grail
+  { id: 666243, type: "movie" }, // The Witcher: Nightmare of the Wolf
+  { id: 545611, type: "movie" }, // Everything Everywhere All at Once
+  { id: 329, type: "movie" }, // Jurrassic Park
+  { id: 330459, type: "movie" }, // Rogue One: A Star Wars Story
+  { id: 279, type: "movie" }, // Amadeus
+  { id: 823219, type: "movie" }, // Flow
+  { id: 22, type: "movie" }, // Pirates of the Caribbean: The Curse of the Black Pearl
+  { id: 18971, type: "movie" }, // Rosencrantz and Guildenstern Are Dead
+  { id: 26388, type: "movie" }, // Buried
+  { id: 152601, type: "movie" }, // Her
+]);
+
+export const EDITOR_PICKS_TV_SHOWS = shuffleArray([
+  { id: 456, type: "show" }, // The Simpsons
+  { id: 73021, type: "show" }, // Disenchantment
+  { id: 1434, type: "show" }, // Family Guy
+  { id: 1695, type: "show" }, // Monk
+  { id: 1408, type: "show" }, // House
+  { id: 93740, type: "show" }, // Foundation
+  { id: 60625, type: "show" }, // Rick and Morty
+  { id: 1396, type: "show" }, // Breaking Bad
+  { id: 44217, type: "show" }, // Vikings
+  { id: 90228, type: "show" }, // Dune Prophecy
+  { id: 13916, type: "show" }, // Death Note
+  { id: 71912, type: "show" }, // The Witcher
+  { id: 61222, type: "show" }, // Bojack Horseman
+  { id: 93405, type: "show" }, // Squid Game
+  { id: 87108, type: "show" }, // Chernobyl
+  { id: 105248, type: "show" }, // Cyberpunk: Edgerunners
+]);
+
+/**
+ * The type of content to fetch from various endpoints
+ */
+export type DiscoverContentType =
+  | "popular"
+  | "topRated"
+  | "onTheAir"
+  | "nowPlaying"
+  | "latest"
+  | "latest4k"
+  | "genre"
+  | "provider"
+  | "editorPicks"
+  | "recommendations";
+
+/**
+ * The type of media to fetch (movie or TV show)
+ */
+export type MediaType = "movie" | "tv";
+
+/**
+ * Props for the useDiscoverMedia hook
+ */
+export interface UseDiscoverMediaProps {
+  /** The type of content to fetch */
+  contentType: DiscoverContentType;
+  /** Whether to fetch movies or TV shows */
+  mediaType: MediaType;
+  /** ID used for genre, provider, or recommendations */
+  id?: string;
+  /** Fallback content type if primary fails */
+  fallbackType?: DiscoverContentType;
+  /** Page number for paginated results */
+  page?: number;
+  /** Genre name for display in title */
+  genreName?: string;
+  /** Provider name for display in title */
+  providerName?: string;
+  /** Media title for recommendations display */
+  mediaTitle?: string;
+}
+
+/**
+ * Media item returned from discover endpoints
+ */
+export interface DiscoverMedia {
+  /** TMDB ID of the media */
+  id: number;
+  /** Title for movies */
+  title: string;
+  /** Title for TV shows */
+  name?: string;
+  /** Poster image path */
+  poster_path: string;
+  /** Backdrop image path */
+  backdrop_path: string;
+  /** Release date for movies */
+  release_date?: string;
+  /** First air date for TV shows */
+  first_air_date?: string;
+  /** Media overview/description */
+  overview: string;
+  /** Average vote score (0-10) */
+  vote_average: number;
+  /** Number of votes */
+  vote_count: number;
+  /** Type of media (movie or show) */
+  type?: "movie" | "show";
+}
+
+/**
+ * Return type of the useDiscoverMedia hook
+ */
+export interface UseDiscoverMediaReturn {
+  /** Array of media items */
+  media: DiscoverMedia[];
+  /** Whether media is currently being fetched */
+  isLoading: boolean;
+  /** Error message if fetch failed */
+  error: string | null;
+  /** Whether there are more pages to load */
+  hasMore: boolean;
+  /** Function to refetch the current media */
+  refetch: () => Promise<void>;
+  /** Localized section title for the media carousel */
+  sectionTitle: string;
+}
+
+/**
+ * Provider interface for streaming services
+ */
+export interface Provider {
+  /** Provider name (e.g., "Netflix", "Hulu") */
+  name: string;
+  /** Provider ID from TMDB */
+  id: string;
+}
+
+/**
+ * Genre interface for media categorization
+ */
+export interface Genre {
+  /** Genre ID from TMDB */
+  id: number;
+  /** Genre name (e.g., "Action", "Drama") */
+  name: string;
+}
+
+// Static provider lists
+export const MOVIE_PROVIDERS: Provider[] = [
+  { name: "Netflix", id: "8" },
+  { name: "Apple TV+", id: "2" },
+  { name: "Amazon Prime Video", id: "10" },
+  { name: "Hulu", id: "15" },
+  { name: "Disney Plus", id: "337" },
+  { name: "Max", id: "1899" },
+  { name: "Paramount Plus", id: "531" },
+  { name: "Shudder", id: "99" },
+  { name: "Crunchyroll", id: "283" },
+  { name: "fuboTV", id: "257" },
+  { name: "AMC+", id: "526" },
+  { name: "Starz", id: "43" },
+  { name: "Lifetime", id: "157" },
+  { name: "National Geographic", id: "1964" },
+];
+
+export const TV_PROVIDERS: Provider[] = [
+  { name: "Netflix", id: "8" },
+  { name: "Apple TV+", id: "350" },
+  { name: "Amazon Prime Video", id: "10" },
+  { name: "Paramount Plus", id: "531" },
+  { name: "Hulu", id: "15" },
+  { name: "Max", id: "1899" },
+  { name: "Adult Swim", id: "318" },
+  { name: "Disney Plus", id: "337" },
+  { name: "Crunchyroll", id: "283" },
+  { name: "fuboTV", id: "257" },
+  { name: "Shudder", id: "99" },
+  { name: "Discovery +", id: "520" },
+  { name: "National Geographic", id: "1964" },
+  { name: "Fox", id: "328" },
+];
+
+/**
+ * Hook for managing providers and genres
+ */
+export function useDiscoverOptions(mediaType: MediaType) {
+  const [genres, setGenres] = useState<Genre[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const userLanguage = useLanguageStore.getState().language;
+  const formattedLanguage = getTmdbLanguageCode(userLanguage);
+
+  const providers = mediaType === "movie" ? MOVIE_PROVIDERS : TV_PROVIDERS;
+
+  useEffect(() => {
+    const fetchGenres = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const data = await get<any>(`/genre/${mediaType}/list`, {
+          api_key: conf().TMDB_READ_API_KEY,
+          language: formattedLanguage,
+        });
+        setGenres(data.genres.slice(0, 50));
+      } catch (err) {
+        console.error(`Error fetching ${mediaType} genres:`, err);
+        setError((err as Error).message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchGenres();
+  }, [mediaType, formattedLanguage]);
+
+  return {
+    genres,
+    providers,
+    isLoading,
+    error,
+  };
+}
+
+export function useDiscoverMedia({
+  contentType,
+  mediaType,
+  id,
+  fallbackType,
+  page = 1,
+  genreName,
+  providerName,
+  mediaTitle,
+}: UseDiscoverMediaProps): UseDiscoverMediaReturn {
+  const [media, setMedia] = useState<DiscoverMedia[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [sectionTitle, setSectionTitle] = useState<string>("");
+
+  const { t } = useTranslation();
+  const userLanguage = useLanguageStore.getState().language;
+  const formattedLanguage = getTmdbLanguageCode(userLanguage);
+
+  const fetchTMDBMedia = useCallback(
+    async (endpoint: string, params: Record<string, any> = {}) => {
+      try {
+        const data = await get<any>(endpoint, {
+          api_key: conf().TMDB_READ_API_KEY,
+          language: formattedLanguage,
+          page: page.toString(),
+          ...params,
+        });
+
+        return {
+          results: data.results.map((item: any) => ({
+            ...item,
+            type: mediaType === "movie" ? "movie" : "show",
+          })),
+          hasMore: page < data.total_pages,
+        };
+      } catch (err) {
+        console.error("Error fetching TMDB media:", err);
+        throw err;
+      }
+    },
+    [formattedLanguage, page, mediaType],
+  );
+
+  const fetchTraktMedia = useCallback(
+    async (traktFunction: () => Promise<TraktLatestResponse>) => {
+      try {
+        const { tmdb_ids: tmdbIds } = await traktFunction();
+
+        // Fetch details for each TMDB ID
+        const mediaPromises = tmdbIds.map(async (tmdbId) => {
+          const endpoint = `/${mediaType}/${tmdbId}`;
+          const data = await get<any>(endpoint, {
+            api_key: conf().TMDB_READ_API_KEY,
+            language: formattedLanguage,
+          });
+          return {
+            ...data,
+            type: mediaType === "movie" ? "movie" : "show",
+          };
+        });
+
+        const results = await Promise.all(mediaPromises);
+        return {
+          results,
+          hasMore: false, // Trakt endpoints don't support pagination
+        };
+      } catch (err) {
+        console.error("Error fetching Trakt media:", err);
+        throw err;
+      }
+    },
+    [mediaType, formattedLanguage],
+  );
+
+  const fetchEditorPicks = useCallback(async () => {
+    const picks =
+      mediaType === "movie" ? EDITOR_PICKS_MOVIES : EDITOR_PICKS_TV_SHOWS;
+
+    try {
+      const mediaPromises = picks.map(async (item) => {
+        const endpoint = `/${mediaType}/${item.id}`;
+        const data = await get<any>(endpoint, {
+          api_key: conf().TMDB_READ_API_KEY,
+          language: formattedLanguage,
+          append_to_response: "videos,images",
+        });
+        return {
+          ...data,
+          type: item.type,
+        };
+      });
+
+      const results = await Promise.all(mediaPromises);
+      return {
+        results,
+        hasMore: false,
+      };
+    } catch (err) {
+      console.error("Error fetching editor picks:", err);
+      throw err;
+    }
+  }, [mediaType, formattedLanguage]);
+
+  const fetchMedia = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      let data;
+
+      // Map content types to their endpoints and handling logic
+      switch (contentType) {
+        case "popular":
+          data = await fetchTMDBMedia(`/${mediaType}/popular`);
+          setSectionTitle(
+            mediaType === "movie"
+              ? t("discover.carousel.title.moviesOn", { provider: "Popular" })
+              : t("discover.carousel.title.tvshowsOn", { provider: "Popular" }),
+          );
+          break;
+
+        case "topRated":
+          data = await fetchTMDBMedia(`/${mediaType}/top_rated`);
+          setSectionTitle(t("discover.carousel.title.topRated"));
+          break;
+
+        case "onTheAir":
+          if (mediaType === "tv") {
+            data = await fetchTMDBMedia("/tv/on_the_air");
+            setSectionTitle(t("discover.carousel.title.onTheAir"));
+          } else {
+            throw new Error("onTheAir is only available for TV shows");
+          }
+          break;
+
+        case "nowPlaying":
+          if (mediaType === "movie") {
+            data = await fetchTMDBMedia("/movie/now_playing");
+            setSectionTitle(t("discover.carousel.title.inCinemas"));
+          } else {
+            throw new Error("nowPlaying is only available for movies");
+          }
+          break;
+
+        case "latest":
+          data = await fetchTraktMedia(getLatestReleases);
+          setSectionTitle(t("discover.carousel.title.latestReleases"));
+          break;
+
+        case "latest4k":
+          data = await fetchTraktMedia(getLatest4KReleases);
+          setSectionTitle(t("discover.carousel.title.4kReleases"));
+          break;
+
+        case "genre":
+          if (!id) throw new Error("Genre ID is required");
+          data = await fetchTMDBMedia(`/discover/${mediaType}`, {
+            with_genres: id,
+          });
+          setSectionTitle(
+            mediaType === "movie"
+              ? t("discover.carousel.title.movies", { category: genreName })
+              : t("discover.carousel.title.tvshows", { category: genreName }),
+          );
+          break;
+
+        case "provider":
+          if (!id) throw new Error("Provider ID is required");
+          data = await fetchTMDBMedia(`/discover/${mediaType}`, {
+            with_watch_providers: id,
+            watch_region: "US",
+          });
+          setSectionTitle(
+            mediaType === "movie"
+              ? t("discover.carousel.title.moviesOn", {
+                  provider: providerName,
+                })
+              : t("discover.carousel.title.tvshowsOn", {
+                  provider: providerName,
+                }),
+          );
+          break;
+
+        case "recommendations":
+          if (!id) throw new Error("Media ID is required for recommendations");
+          data = await fetchTMDBMedia(`/${mediaType}/${id}/recommendations`);
+          setSectionTitle(
+            t("discover.carousel.title.recommended", { title: mediaTitle }),
+          );
+          break;
+
+        case "editorPicks":
+          data = await fetchEditorPicks();
+          setSectionTitle(
+            mediaType === "movie"
+              ? t("discover.carousel.title.editorPicksMovies")
+              : t("discover.carousel.title.editorPicksShows"),
+          );
+          break;
+
+        default:
+          throw new Error(`Unsupported content type: ${contentType}`);
+      }
+
+      setMedia(data.results);
+      setHasMore(data.hasMore);
+    } catch (err) {
+      console.error("Error fetching media:", err);
+      setError((err as Error).message);
+
+      // Try fallback content type if available
+      if (fallbackType && fallbackType !== contentType) {
+        try {
+          const fallbackData = await fetchTMDBMedia(
+            `/${mediaType}/${fallbackType === "popular" ? "popular" : "top_rated"}`,
+          );
+          setMedia(fallbackData.results);
+          setHasMore(fallbackData.hasMore);
+          setError(null); // Clear error if fallback succeeds
+        } catch (fallbackErr) {
+          console.error("Error fetching fallback media:", fallbackErr);
+          setError((fallbackErr as Error).message);
+        }
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [
+    contentType,
+    mediaType,
+    id,
+    fallbackType,
+    fetchTMDBMedia,
+    fetchTraktMedia,
+    fetchEditorPicks,
+    t,
+    genreName,
+    providerName,
+    mediaTitle,
+  ]);
+
+  useEffect(() => {
+    fetchMedia();
+  }, [fetchMedia]);
+
+  return {
+    media,
+    isLoading,
+    error,
+    hasMore,
+    refetch: fetchMedia,
+    sectionTitle,
+  };
+}
