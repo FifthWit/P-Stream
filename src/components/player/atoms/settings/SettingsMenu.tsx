@@ -56,7 +56,9 @@ export function SettingsMenu({ id }: { id: string }) {
         >
           {t("player.menus.settings.qualityItem")}
           <span className="text-type-secondary text-sm">
-            {currentQuality ? qualityToString(currentQuality) : ""}
+            {currentQuality
+              ? qualityToString(currentQuality)
+              : t("player.menus.quality.auto")}
           </span>
         </Menu.ChevronLink>
         <Menu.ChevronLink
