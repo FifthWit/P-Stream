@@ -2,9 +2,11 @@ import classNames from "classnames";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 
+import { Toggle } from "@/components/buttons/Toggle";
 import { Menu } from "@/components/player/internals/ContextMenu";
 import { useOverlayRouter } from "@/hooks/useOverlayRouter";
 import { usePlayerStore } from "@/stores/player/store";
+import { usePreferencesStore } from "@/stores/preferences";
 
 function ButtonList(props: {
   options: number[];
@@ -39,6 +41,8 @@ export function PlaybackSettingsView({ id }: { id: string }) {
   const router = useOverlayRouter(id);
   const playbackRate = usePlayerStore((s) => s.mediaPlaying.playbackRate);
   const display = usePlayerStore((s) => s.display);
+  const enableThumbnails = usePreferencesStore((s) => s.enableThumbnails);
+  const setEnableThumbnails = usePreferencesStore((s) => s.setEnableThumbnails);
 
   const setPlaybackRate = useCallback(
     (v: number) => {
@@ -64,6 +68,20 @@ export function PlaybackSettingsView({ id }: { id: string }) {
             selected={playbackRate}
             onClick={setPlaybackRate}
           />
+        </div>
+      </Menu.Section>
+      <Menu.Section>
+        <div className="space-y-4 mt-3">
+          <Menu.Link
+            rightSide={
+              <Toggle
+                enabled={enableThumbnails}
+                onClick={() => setEnableThumbnails(!enableThumbnails)}
+              />
+            }
+          >
+            {t("settings.preferences.thumbnailLabel")}
+          </Menu.Link>
         </div>
       </Menu.Section>
     </>
