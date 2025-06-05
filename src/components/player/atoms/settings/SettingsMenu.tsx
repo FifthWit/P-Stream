@@ -55,7 +55,7 @@ export function SettingsMenu({ id }: { id: string }) {
           rightText={currentQuality ? qualityToString(currentQuality) : ""}
         >
           {t("player.menus.settings.qualityItem")}
-          <span className="text-type-secondary">
+          <span className="text-type-secondary text-sm">
             {currentQuality ? qualityToString(currentQuality) : ""}
           </span>
         </Menu.ChevronLink>
@@ -65,7 +65,7 @@ export function SettingsMenu({ id }: { id: string }) {
           rightText={sourceName}
         >
           {t("player.menus.settings.sourceItem")}
-          <span className="text-type-secondary">{sourceName}</span>
+          <span className="text-type-secondary text-sm">{sourceName}</span>
         </Menu.ChevronLink>
         <Menu.ChevronLink
           box
@@ -73,7 +73,7 @@ export function SettingsMenu({ id }: { id: string }) {
           rightText={sourceName}
         >
           {t("player.menus.settings.subtitleItem")}
-          <span className="text-type-secondary">
+          <span className="text-type-secondary text-sm">
             {selectedLanguagePretty ?? t("player.menus.subtitles.offChoice")}
           </span>
         </Menu.ChevronLink>
@@ -92,7 +92,7 @@ export function SettingsMenu({ id }: { id: string }) {
             disabled
           >
             {t("player.menus.settings.audioItem")}
-            <span className="text-type-secondary">
+            <span className="text-type-secondary text-sm">
               {t("player.menus.audio.default")}
             </span>
           </Menu.ChevronLink>
