@@ -12,7 +12,7 @@ function ButtonList(props: {
   onClick: (v: any) => void;
 }) {
   return (
-    <div className="flex items-center bg-video-context-buttons-list p-1 rounded-lg">
+    <div className="flex items-center bg-video-context-light/10 p-1 rounded-lg">
       {props.options.map((option) => {
         return (
           <button
@@ -20,7 +20,7 @@ function ButtonList(props: {
             className={classNames(
               "w-full px-2 py-1 rounded-md tabbable",
               props.selected === option
-                ? "bg-video-context-buttons-active text-white"
+                ? "bg-video-context-light/20 text-white"
                 : null,
             )}
             onClick={() => props.onClick(option)}

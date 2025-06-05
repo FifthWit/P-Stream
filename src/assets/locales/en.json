@@ -498,8 +498,8 @@
         "playbackItem": "Playback settings",
         "audioItem": "Audio",
         "qualityItem": "Quality",
-        "sourceItem": "Video sources",
-        "subtitleItem": "Subtitle settings",
+        "sourceItem": "Source",
+        "subtitleItem": "Subtitles",
         "videoSection": "Video settings"
       },
       "sources": {
@@ -544,6 +544,9 @@
         "watchpartyItem": "Watch Party",
         "notice": "Legacy Watch Party might not be available for some sources",
         "legacyWatchparty": "Use legacy Watch Party"
+      },
+      "audio": {
+        "default": "Default"
       }
     },
     "metadata": {
